@@ -1,5 +1,5 @@
 ---
-title: "Auto-GPT: An Autonomous GPT-4 Experiment"
+title: "Auto-GPT: An Autonomous GPT-4 Experiment (Auto-GPT：一个自主 GPT-4 实验)"
 authors: "Toran Bruce Richards (original); Yang et al. 2023 (benchmarks); Wang et al. 2023 (survey)"
 venue: "Open-source (GitHub); Related: arXiv:2306.02224, arXiv:2308.11432"
 year: 2023
@@ -15,50 +15,47 @@ status: done
 date_reviewed: 2026-05-08
 ---
 
-# Auto-GPT: An Autonomous GPT-4 Experiment
+# Auto-GPT：一个自主 GPT-4 实验
 
-## TL;DR
+## 简述
 
-Auto-GPT (released March 30, 2023) was the first widely adopted autonomous LLM agent,
-demonstrating that GPT-4 could be given goals, tools, and a self-prompting loop to operate
-independently without human intervention. Despite severe practical limitations (infinite
-loops, high cost, frequent failures, shallow reasoning), it became the fastest-growing
-GitHub repository in history (100K+ stars within weeks) and catalyzed the entire AI agent
-ecosystem. No single academic paper defines Auto-GPT; this note synthesizes the open-source
-codebase, community analysis, and related academic evaluations.
+Auto-GPT（2023 年 3 月 30 日发布）是首个被广泛采用的自主大语言模型智能体，
+展示了 GPT-4 可以被赋予目标、工具和自提示循环，在无需人工干预的情况下独立
+运行。尽管存在严重的实际局限（无限循环、高成本、频繁失败、浅层推理），它
+成为了历史上增长最快的 GitHub 仓库（数周内超过 100K 星标），并催化了整个
+AI 智能体生态系统。没有单独的学术论文定义 Auto-GPT；本笔记综合了开源代码库、
+社区分析和相关学术评估。
 
-## Motivation & Problem
+## 动机与问题
 
-By early 2023, GPT-4 demonstrated remarkable reasoning and instruction-following, but
-remained fundamentally passive -- responding only to human-provided prompts. Auto-GPT
-posed a radical question:
+到 2023 年初，GPT-4 展示了卓越的推理和指令跟随能力，但仍然根本上是被动的——
+仅响应人类提供的提示。Auto-GPT 提出了一个激进的问题：
 
-**What happens if you give GPT-4 a goal, a set of tools, and let it prompt itself in a
-loop until the goal is achieved?**
+**如果给 GPT-4 一个目标、一组工具，并让它在一个循环中自我提示，
+直到目标实现，会发生什么？**
 
-This was not a research paper but an engineering experiment -- a Python script wrapping the
-OpenAI API with web search, file I/O, code execution, and a self-prompting loop. Its
-significance was demonstrating that the "agent loop" pattern (perceive-think-act-observe)
-could be implemented with nothing more than prompt engineering.
+这不是一篇研究论文，而是一个工程实验——一个包装 OpenAI API 的 Python 脚本，
+带有网络搜索、文件 I/O、代码执行和自提示循环。其意义在于展示了"智能体循环"
+模式（感知-思考-行动-观察）仅通过提示工程就能实现。
 
-## Method
+## 方法
 
-### Autonomous Loop Architecture
+### 自主循环架构
 
 ```
-INIT: User provides agent name, role, up to 5 goals
-LOOP (until task_complete or user intervention):
-  1. CONSTRUCT PROMPT: system msg + commands + memory + history + last result
-  2. GPT-4 INFERENCE: returns JSON {thoughts: {text, reasoning, plan,
+初始化: 用户提供智能体名称、角色、最多 5 个目标
+循环 (直到 task_complete 或用户干预):
+  1. 构建提示: 系统消息 + 命令 + 记忆 + 历史 + 上次结果
+  2. GPT-4 推理: 返回 JSON {thoughts: {text, reasoning, plan,
      criticism, speak}, command: {name, args}}
-  3. EXECUTE COMMAND: dispatch to tool handler, capture output
-  4. UPDATE MEMORY: append to short-term, embed to vector DB, summarize if full
-  -> LOOP BACK TO STEP 1
+  3. 执行命令: 分派到工具处理器，捕获输出
+  4. 更新记忆: 追加到短期记忆，嵌入到向量数据库，满时进行摘要
+  -> 回到步骤 1
 ```
 
-### Self-Prompting Mechanism (Core Innovation)
+### 自提示机制（核心创新）
 
-Every GPT-4 response must follow a structured JSON format enforcing reasoning before action:
+每次 GPT-4 响应必须遵循结构化 JSON 格式，强制在行动前进行推理：
 
 ```json
 {
@@ -73,12 +70,12 @@ Every GPT-4 response must follow a structured JSON format enforcing reasoning be
 }
 ```
 
-- **`reasoning`**: Forces explicit justification linking action to goal
-- **`plan`**: Maintains multi-step continuity across iterations
-- **`criticism`**: Built-in self-reflection, predating Reflexion/LATS
-- **`speak`**: User-facing summary for optional human monitoring
+- **`reasoning`**：强制显式说明行动与目标的关联
+- **`plan`**：在迭代间维持多步连续性
+- **`criticism`**：内置自反思，先于 Reflexion/LATS
+- **`speak`**：面向用户的摘要，供可选的人类监控
 
-### System Prompt Structure
+### 系统提示结构
 
 ```
 You are <agent_name>, <role_description>.
@@ -89,173 +86,171 @@ RESPONSE FORMAT: [JSON schema above]
 PERFORMANCE EVALUATION: Continuously self-criticize; every command has a cost.
 ```
 
-### Memory System: Dual Architecture
+### 记忆系统：双重架构
 
-**Short-term memory**: Last N messages in context window (8K tokens at GPT-4 launch).
-When full, older messages are summarized via a separate LLM call, losing detail.
+**短期记忆**：上下文窗口中的最后 N 条消息（GPT-4 发布时为 8K tokens）。
+满时，较旧的消息通过单独的大语言模型调用进行摘要，丢失细节。
 
-**Long-term memory**: Action-result pairs embedded via OpenAI API and stored in vector DB
-(Pinecone/Weaviate/Milvus/Redis). At each iteration, current context queries the store
-via cosine similarity to retrieve relevant past experiences.
+**长期记忆**：动作-结果对通过 OpenAI API 嵌入并存储在向量数据库
+（Pinecone/Weaviate/Milvus/Redis）中。每次迭代时，当前上下文通过
+余弦相似度查询存储以检索相关的过去经验。
 
-**Key evolution**: By late 2023, AutoGPT **removed vector DB support entirely** -- typical
-runs did not generate enough distinct facts to justify the index overhead. Default became
-a simple JSON file for memory storage.
+**关键演变**：到 2023 年末，AutoGPT **完全移除了向量数据库支持**——
+典型运行不会产生足够多的不同事实来证明索引开销的合理性。默认变为
+使用简单的 JSON 文件进行记忆存储。
 
-### Tool / Command Set
+### 工具/命令集
 
-Core commands organized by category:
-- **Information**: google_search, browse_website
-- **File I/O**: write_to_file, read_file, append_to_file, delete_file, list_files
-- **Code**: execute_python, execute_shell, clone_repository
-- **Generation**: generate_image (DALL-E)
-- **Memory**: memory_add, memory_search
-- **Control**: do_nothing (skip cycle), task_complete (signal done)
-- **Communication**: send_tweet
+按类别组织的核心命令：
+- **信息**：google_search、browse_website
+- **文件 I/O**：write_to_file、read_file、append_to_file、delete_file、list_files
+- **代码**：execute_python、execute_shell、clone_repository
+- **生成**：generate_image (DALL-E)
+- **记忆**：memory_add、memory_search
+- **控制**：do_nothing（跳过周期）、task_complete（标志完成）
+- **通信**：send_tweet
 
-Extensible via the `@command` decorator for community plugins (email, Slack, DB, etc.).
+可通过 `@command` 装饰器扩展社区插件（email、Slack、DB 等）。
 
-## Key Innovations
+## 关键创新
 
-1. **Self-prompting loop**: First widely-known system with continuous LLM self-prompting.
-2. **Structured self-reflection**: Forced `criticism`/`plan` fields predate Reflexion/LATS.
-3. **Internet-connected autonomy**: Broadest tool set at the time (web, files, code, APIs).
-4. **Iterative goal decomposition**: Plan maintained and updated within self-prompting.
-5. **Democratization**: Made "AI agents" tangible to millions, sparking an ecosystem.
+1. **自提示循环**：首个被广泛知晓的持续大语言模型自提示系统。
+2. **结构化自反思**：强制的 `criticism`/`plan` 字段先于 Reflexion/LATS。
+3. **联网自主**：当时最广泛的工具集（网络、文件、代码、API）。
+4. **迭代目标分解**：计划在自提示中维护和更新。
+5. **民主化**：使"AI 智能体"对数百万人变得具体，引发了一个生态系统。
 
-## Experimental Setup (Community & Academic Benchmarks)
+## 实验设置（社区与学术基准）
 
 ### Auto-GPT for Online Decision Making (Yang et al., 2023, arXiv:2306.02224)
 
-The most rigorous academic evaluation of Auto-GPT-style agents:
-- **Benchmarks**: WebShop (online shopping), ALFWorld (household tasks)
-- **Models tested**: GPT-4, GPT-3.5, Claude, Vicuna
-- **Key contribution**: "Additional Opinions" algorithm -- incorporates supervised/
-  imitation-based learners as advisors alongside the LLM agent, providing lightweight
-  expert guidance without fine-tuning the foundation model
+对 Auto-GPT 风格智能体最严格的学术评估：
+- **基准测试**：WebShop（在线购物）、ALFWorld（家庭任务）
+- **测试模型**：GPT-4、GPT-3.5、Claude、Vicuna
+- **关键贡献**："Additional Opinions"算法——将基于监督/模仿的学习器作为
+  顾问与大语言模型智能体一起使用，提供轻量级的专家指导而无需微调基础模型
 
 ### AgentBench (Liu et al., 2023)
 
-Comprehensive benchmark across 8 environments: web browsing, online shopping, database
-operations, household tasks, digital card games, lateral thinking, knowledge graphs,
-operating system tasks. GPT-4 significantly outperformed all other models.
+跨 8 个环境的综合基准：网页浏览、在线购物、数据库操作、家庭任务、
+数字卡牌游戏、横向思维、知识图谱、操作系统任务。GPT-4 显著优于
+所有其他模型。
 
-### Auto-GPT-Benchmarks (Community)
+### Auto-GPT-Benchmarks（社区）
 
-The project's own benchmark suite with tasks including information retrieval, code
-generation, file management, and multi-step planning.
+项目自身的基准套件，包含信息检索、代码生成、文件管理和多步规划任务。
 
-## Results
+## 结果
 
-### Decision-Making Benchmarks (Yang et al., 2023)
+### 决策基准（Yang et al., 2023）
 
-| Model/Config               | WebShop     | ALFWorld    |
-|----------------------------|-------------|-------------|
-| GPT-4 (Auto-GPT style)    | Highest     | Highest     |
-| GPT-3.5 (Auto-GPT style)  | Moderate    | Moderate    |
-| Claude (Auto-GPT style)   | Moderate    | Moderate    |
-| Vicuna (Auto-GPT style)   | Low         | Low         |
-| + Additional Opinions      | Significant improvement across all models |
+| 模型/配置                  | WebShop     | ALFWorld    |
+|---------------------------|-------------|-------------|
+| GPT-4（Auto-GPT 风格）    | 最高        | 最高        |
+| GPT-3.5（Auto-GPT 风格）  | 中等        | 中等        |
+| Claude（Auto-GPT 风格）   | 中等        | 中等        |
+| Vicuna（Auto-GPT 风格）   | 低          | 低          |
+| + Additional Opinions      | 所有模型均显著提升 |
 
-The "Additional Opinions" method shows that hybridizing LLM agents with lightweight
-supervised learners significantly boosts performance without LLM fine-tuning.
+"Additional Opinions"方法表明，将大语言模型智能体与轻量级监督学习器
+混合使用，无需大语言模型微调即可显著提升性能。
 
-### Practical Performance (Community Observations)
+### 实际性能（社区观察）
 
-| Metric                  | Typical Observation                       |
-|-------------------------|-------------------------------------------|
-| Goal completion rate    | ~10-30% for complex multi-step tasks      |
-| Average loop iterations | 10-50+ before completion or failure       |
-| Cost per run (GPT-4)   | $1-50+ in API calls                       |
-| Infinite loop frequency | High -- most common failure mode          |
-| Token consumption       | 15-50x vs. single-prompt approach         |
+| 指标                    | 典型观察                            |
+|------------------------|-------------------------------------|
+| 目标完成率              | 复杂多步任务约 10-30%              |
+| 平均循环迭代次数        | 完成或失败前 10-50+ 次             |
+| 每次运行成本（GPT-4）   | API 调用 $1-50+                    |
+| 无限循环频率            | 高——最常见的失败模式              |
+| Token 消耗              | 比单次提示方法多 15-50 倍          |
 
-### Known Failure Modes
+### 已知失败模式
 
-1. **Infinite loops** (most common): Agent repeats actions or oscillates between two
-   states. Caused by boilerplate criticism, no loop detection, ambiguous completion criteria.
-2. **Cost explosion**: Each iteration = full GPT-4 call with large prompt. At original
-   pricing ($0.03/1K in, $0.06/1K out), runs cost $10-50+ with limited results.
-3. **Context overflow**: 8K tokens fills in 5-10 iterations. Summarization loses details,
-   causing repeated actions ("forgets" what was already tried).
-4. **Hallucinated actions**: Invents nonexistent files, fabricates search results.
-5. **Shallow exploration**: Persists with first plausible approach; no real backtracking.
-6. **Goal drift**: Gradually pursues tangential sub-goals over many iterations.
+1. **无限循环**（最常见）：智能体重复动作或在两个状态间摇摆。原因包括
+   模板化批评、无循环检测、模糊的完成标准。
+2. **成本爆炸**：每次迭代=带大提示的完整 GPT-4 调用。按原始定价
+   （输入 $0.03/1K、输出 $0.06/1K），运行花费 $10-50+ 但成果有限。
+3. **上下文溢出**：8K tokens 在 5-10 次迭代内填满。摘要丢失细节，
+   导致重复动作（"忘记"已经尝试过什么）。
+4. **幻觉动作**：编造不存在的文件、虚构搜索结果。
+5. **浅层探索**：坚持第一个看似合理的方法；无真正的回溯。
+6. **目标漂移**：在多次迭代中逐渐追求偏离的子目标。
 
-## Analysis & Insights
+## 分析与洞察
 
-### Why Auto-GPT Mattered Historically
+### 为什么 Auto-GPT 在历史上如此重要
 
-100K+ GitHub stars faster than any prior repo. Significance was demonstration, not performance:
+GitHub 星标增长速度超过任何此前的仓库。重要性在于展示而非性能：
 
-1. **Proof of concept**: Autonomous agents possible with prompt engineering alone.
-2. **Ecosystem catalyst**: Inspired BabyAGI, AgentGPT, MetaGPT, CrewAI, and dozens more.
-   Within months, "AI agents" became the dominant applied LLM paradigm.
-3. **Revealed the hard problems**: By failing publicly, identified the research agenda --
-   reliable planning, memory, cost control, error recovery, loop detection, goal tracking.
-4. **Shifted the Overton window**: Agents went from academic curiosity to mainstream
-   engineering pursuit with venture funding and enterprise interest.
+1. **概念验证**：仅通过提示工程即可实现自主智能体。
+2. **生态系统催化剂**：启发了 BabyAGI、AgentGPT、MetaGPT、CrewAI 等
+   数十个项目。几个月内，"AI 智能体"成为主导的应用大语言模型范式。
+3. **揭示了难题**：通过公开失败，确定了研究议程——可靠规划、记忆、
+   成本控制、错误恢复、循环检测、目标跟踪。
+4. **改变了 Overton 窗口**：智能体从学术好奇心变成了有风投资金和
+   企业兴趣的主流工程追求。
 
-### Architectural Analysis (Wang et al., 2023 Survey)
+### 架构分析（Wang et al., 2023 综述）
 
-Wang et al. place Auto-GPT in a three-module framework: **Profile** (static role/goals) ->
-**Memory** (context + vector DB, later removed) -> **Action** (fixed commands, no learning).
-All three modules minimally sophisticated compared to later agent systems.
+Wang et al. 将 Auto-GPT 放入三模块框架：**配置**（静态角色/目标）->
+**记忆**（上下文+向量数据库，后来被移除）-> **行动**（固定命令，无学习）。
+与后来的智能体系统相比，所有三个模块都非常简陋。
 
-### Comparison with Contemporary Systems
+### 与同期系统的比较
 
-| Feature           | Auto-GPT     | BabyAGI      | AgentGPT     | LangChain     |
+| 特性              | Auto-GPT     | BabyAGI      | AgentGPT     | LangChain     |
 |-------------------|--------------|--------------|--------------|---------------|
-| Architecture      | Full loop    | Task queue   | Full loop    | Configurable  |
-| Memory system     | Vector DB    | In-memory    | In-memory    | Various       |
-| Planning          | Self-prompt  | Task decomp  | Self-prompt  | Chains/agents |
-| Web access        | Yes          | No           | Yes          | Pluggable     |
-| Code execution    | Yes          | No           | Limited      | Yes           |
-| Human oversight   | Optional     | Optional     | In-browser   | Configurable  |
-| Learning          | None         | None         | None         | None          |
-| Primary audience  | Developers   | Developers   | Non-technical| Framework     |
+| 架构              | 完整循环     | 任务队列     | 完整循环     | 可配置        |
+| 记忆系统          | 向量数据库   | 内存         | 内存         | 多种          |
+| 规划              | 自提示       | 任务分解     | 自提示       | 链/智能体     |
+| 网络访问          | 是           | 否           | 是           | 可插拔        |
+| 代码执行          | 是           | 否           | 有限         | 是            |
+| 人类监督          | 可选         | 可选         | 浏览器内     | 可配置        |
+| 学习              | 无           | 无           | 无           | 无            |
+| 主要受众          | 开发者       | 开发者       | 非技术人员   | 框架          |
 
-## Limitations & Critiques
+## 局限性与批评
 
-1. **Reliability**: Too low for production -- frequent failures, loops, incorrect results.
-2. **Cost inefficiency**: 15-50x token consumption vs. directed prompting; no outcome guarantee.
-3. **No learning**: Each run from scratch; no transfer across sessions.
-4. **Shallow self-evaluation**: `criticism` devolves to generic platitudes, not real correction.
-5. **Safety**: Internet + code execution with minimal sandboxing poses real risks.
-6. **Prompt brittleness**: Small goal phrasing changes cause dramatically different behavior.
-7. **No principled planning**: Emergent planning with no completeness/termination guarantees.
-8. **Evaluation difficulty**: No standardized benchmarks existed at launch.
+1. **可靠性**：对生产环境来说太低——频繁失败、循环、不正确的结果。
+2. **成本低效**：比定向提示多 15-50 倍 token 消耗；无结果保证。
+3. **无学习**：每次运行从头开始；无跨会话迁移。
+4. **浅层自评估**：`criticism` 退化为泛泛的陈词滥调，非真正的纠正。
+5. **安全性**：互联网+代码执行+最小沙箱构成真正风险。
+6. **提示脆弱性**：目标措辞的微小变化导致截然不同的行为。
+7. **无原则性的规划**：涌现的规划，无完整性/终止保证。
+8. **评估困难**：发布时不存在标准化基准。
 
-## Follow-up Work
+## 后续工作
 
-- **BabyAGI** (Nakajima, 2023): Simplified agent with LLM-driven task queue prioritization.
-- **AgentGPT** (Reworkd, 2023): Web-based Auto-GPT for non-technical users.
-- **MetaGPT** (Hong et al., 2023): Multi-agent framework mimicking software company roles.
-- **Reflexion** (Shinn et al., 2023): Structured self-reflection with persistent failure memory.
-- **LATS** (Zhou et al., 2023): Tree search + agent action, enabling systematic exploration.
-- **AutoGen** (Wu et al., 2023): Multi-agent conversation framework with better oversight.
-- **CrewAI** (Moura, 2024): Role-based multi-agent orchestration.
-- **Devin** (Cognition, 2024): Software engineering agent with sandboxed execution.
-- **Claude Code, Codex CLI** (2025): Production-grade agents with improved reliability.
+- **BabyAGI** (Nakajima, 2023)：简化的智能体，带大语言模型驱动的任务队列优先级。
+- **AgentGPT** (Reworkd, 2023)：面向非技术用户的网页版 Auto-GPT。
+- **MetaGPT** (Hong et al., 2023)：模拟软件公司角色的多智能体框架。
+- **Reflexion** (Shinn et al., 2023)：结构化自反思，带持久失败记忆。
+- **LATS** (Zhou et al., 2023)：树搜索+智能体行动，实现系统性探索。
+- **AutoGen** (Wu et al., 2023)：多智能体对话框架，带更好的监督。
+- **CrewAI** (Moura, 2024)：基于角色的多智能体编排。
+- **Devin** (Cognition, 2024)：带沙箱执行的软件工程智能体。
+- **Claude Code, Codex CLI** (2025)：生产级智能体，可靠性改进。
 
-## Key Takeaways
+## 核心要点
 
-1. **The autonomous loop pattern works in principle**: Auto-GPT proved LLMs can
-   self-prompt, use tools, and make progress toward goals without human intervention,
-   establishing the core agent architecture used in all subsequent systems.
+1. **自主循环模式原则上可行**：Auto-GPT 证明了大语言模型可以自提示、
+   使用工具、并在无人干预的情况下朝目标推进，建立了所有后续系统
+   使用的核心智能体架构。
 
-2. **Reliability is the fundamental barrier**: The gap between "impressive demo" and
-   "reliable system" defined the entire agent research agenda that followed. Every
-   major agent advance since 2023 addresses a failure mode Auto-GPT exposed.
+2. **可靠性是根本障碍**："令人印象深刻的演示"与"可靠系统"之间的差距
+   定义了随后整个智能体研究议程。2023 年以来的每个重大智能体进展
+   都在解决 Auto-GPT 暴露的一个失败模式。
 
-3. **Memory management is harder than it looks**: The team's decision to remove vector
-   DB support reveals that naive retrieval-augmented memory does not solve the agent
-   memory problem -- the right abstraction for agent memory remains an open question.
+3. **记忆管理比看起来更难**：团队移除向量数据库支持的决定揭示，
+   朴素的检索增强记忆不能解决智能体记忆问题——智能体记忆的正确
+   抽象仍然是一个开放问题。
 
-4. **Self-reflection needs structure**: Free-form `criticism` is insufficient. Later
-   work (Reflexion, LATS) showed structured reflection with explicit failure analysis
-   and persistent memory is far more effective.
+4. **自反思需要结构**：自由形式的 `criticism` 是不够的。后续工作
+   （Reflexion、LATS）表明，带有显式失败分析和持久记忆的结构化
+   反思要有效得多。
 
-5. **Auto-GPT's greatest contribution was cultural**: It made "AI agents" a mainstream
-   concept, attracted massive community attention, and set the research agenda for
-   2023-2025 -- how do we make autonomous agents actually reliable?
+5. **Auto-GPT 最大的贡献是文化性的**：它使"AI 智能体"成为一个主流
+   概念，吸引了大量社区关注，并设定了 2023-2025 年的研究议程——
+   如何使自主智能体真正可靠？

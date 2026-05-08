@@ -11,268 +11,219 @@ status: done
 date_read: 2026-05-08
 ---
 
-# OSWorld: Benchmarking Multimodal Agents for Open-Ended Tasks in Real Computer Environments
+# OSWorld：在真实计算机环境中评估多模态智能体的开放式任务基准
 
-## TL;DR
+## 简要总结
 
-OSWorld is the first scalable benchmark for evaluating multimodal agents in real computer
-environments (Ubuntu, Windows, macOS). It provides 369 diverse computer tasks spanning desktop
-applications, web browsing, file operations, and multi-app workflows, each with automated
-execution-based evaluation via custom scripts. The initial evaluation reveals a dramatic capability
-gap: human experts achieve 72.36% success rate while the best agent (GPT-4V) achieves only 12.24%,
-primarily struggling with GUI grounding and operational knowledge. OSWorld established the definitive
-benchmark for desktop/computer-use agent evaluation and has driven rapid progress in the field.
+OSWorld 是首个可扩展的基准测试，用于在真实计算机环境（Ubuntu、Windows、macOS）中评估多模态智能体。它提供了 369 个多样化的计算机任务，涵盖桌面应用、网页浏览、文件操作和多应用工作流，每个任务都配有通过自定义脚本实现的自动化基于执行的评估。初始评估揭示了巨大的能力差距：人类专家达到 72.36% 的成功率，而最佳智能体（GPT-4V）仅达到 12.24%，主要在 GUI 定位和操作知识方面存在困难。OSWorld 确立了桌面/计算机使用智能体评估的权威基准，并推动了该领域的快速发展。
 
-## Motivation & Problem
+## 动机与问题
 
-Prior benchmarks for evaluating computer-use agents suffered from critical limitations:
+此前用于评估计算机使用智能体的基准测试存在关键局限性：
 
-1. **Simulated environments**: Most benchmarks used simplified simulations or mock interfaces rather
-   than real operating systems, failing to capture the complexity of actual desktop interactions
-   (window management, multi-app coordination, system dialogs, etc.).
-2. **Domain-specific scope**: Existing benchmarks focused on narrow domains -- web browsing only
-   (WebArena), mobile only (AndroidWorld), or specific applications -- missing the full breadth
-   of real computer use.
-3. **Lack of cross-platform evaluation**: No benchmark tested agents across multiple operating
-   systems (Ubuntu, Windows, macOS) to assess generalization.
-4. **Reproducibility challenges**: Without standardized initial states and automated evaluation,
-   results were difficult to reproduce and compare fairly across approaches.
-5. **No multi-application workflows**: Real computer use frequently involves coordinating across
-   multiple applications (download file from browser, edit in spreadsheet, email results), but
-   existing benchmarks tested single-application tasks in isolation.
+1. **模拟环境**：大多数基准测试使用简化的模拟或模拟界面，而非真实的操作系统，无法捕捉实际桌面交互的复杂性（窗口管理、多应用协调、系统对话框等）。
+2. **领域专属范围**：现有基准测试专注于狭窄领域 -- 仅网页浏览（WebArena）、仅移动端（AndroidWorld）或特定应用 -- 无法覆盖真实计算机使用的全部广度。
+3. **缺乏跨平台评估**：没有基准测试跨多个操作系统（Ubuntu、Windows、macOS）测试智能体以评估泛化能力。
+4. **可复现性挑战**：没有标准化的初始状态和自动化评估，结果难以跨方法公平地复现和比较。
+5. **缺乏多应用工作流**：真实的计算机使用频繁涉及跨多个应用的协调（从浏览器下载文件、在电子表格中编辑、通过邮件发送结果），但现有基准测试孤立地测试单应用任务。
 
-OSWorld's contribution: A unified, scalable, real-computer environment supporting task setup,
-execution-based evaluation, and interactive learning across real operating systems.
+OSWorld 的贡献：一个统一的、可扩展的真实计算机环境，支持任务设置、基于执行的评估和跨真实操作系统的交互式学习。
 
-## Method
+## 方法
 
-### Environment Architecture
+### 环境架构
 
 ```
 +-------------------------------------------------------------------+
-|                      OSWorld Platform                              |
+|                      OSWorld 平台                                  |
 |                                                                   |
 |  +-----------------------------+  +-----------------------------+ |
-|  |    Virtual Machine Pool     |  |    Task Configuration       | |
-|  |  +-------+ +-------+ +---+ |  |  - Initial state snapshots  | |
-|  |  |Ubuntu | |Windows| |Mac| |  |  - Task instructions (NL)   | |
-|  |  |  VM   | |  VM   | | VM| |  |  - Evaluation scripts       | |
-|  |  +-------+ +-------+ +---+ |  |  - Setup automation          | |
+|  |    虚拟机池                  |  |    任务配置                  | |
+|  |  +-------+ +-------+ +---+ |  |  - 初始状态快照              | |
+|  |  |Ubuntu | |Windows| |Mac| |  |  - 任务指令（自然语言）       | |
+|  |  |  VM   | |  VM   | | VM| |  |  - 评估脚本                  | |
+|  |  +-------+ +-------+ +---+ |  |  - 设置自动化                | |
 |  +-----------------------------+  +-----------------------------+ |
 |                                                                   |
 |  +-----------------------------+  +-----------------------------+ |
-|  |    Observation Space        |  |    Action Space              | |
-|  |  - Screenshots (1920x1080) |  |  - pyautogui mouse/keyboard | |
-|  |  - Accessibility tree (XML)|  |  - click(x, y)              | |
-|  |  - Terminal output          |  |  - type(text)               | |
-|  |  - Set-of-Marks overlay     |  |  - scroll(direction)        | |
+|  |    观察空间                  |  |    动作空间                  | |
+|  |  - 截图 (1920x1080)         |  |  - pyautogui 鼠标/键盘      | |
+|  |  - 可访问性树 (XML)          |  |  - click(x, y)              | |
+|  |  - 终端输出                  |  |  - type(text)               | |
+|  |  - Set-of-Marks 叠加层      |  |  - scroll(direction)        | |
 |  +-----------------------------+  |  - hotkey(keys)             | |
 |                                   |  - WAIT / FAIL / DONE       | |
 |                                   +-----------------------------+ |
 +-------------------------------------------------------------------+
 ```
 
-### Observation Space
+### 观察空间
 
-Agents receive observations through multiple modalities:
+智能体通过多种模态接收观察：
 
-1. **Screenshots**: High-resolution (1920x1080) screen captures of the current desktop state
-2. **Accessibility tree**: XML-formatted structural representation of UI elements with properties
-   (role, name, state, bounding box)
-3. **Terminal output**: Command-line feedback when terminal interactions are involved
-4. **Set-of-Marks (SoM)**: Visual overlay that annotates interactable UI elements with numbered
-   markers on screenshots
+1. **截图**：当前桌面状态的高分辨率 (1920x1080) 屏幕截图
+2. **可访问性树**：UI 元素的 XML 格式结构化表示，包含属性（角色、名称、状态、边界框）
+3. **终端输出**：涉及终端交互时的命令行反馈
+4. **Set-of-Marks (SoM)**：在截图上用编号标记注释可交互 UI 元素的视觉叠加层
 
-Four input configurations for agent evaluation:
-- Accessibility tree only (text-based agents)
-- Screenshot only (vision-based agents)
-- Screenshot + Accessibility tree (multimodal agents)
-- Set-of-Marks (screenshot with annotated markers)
+四种智能体评估输入配置：
+- 仅可访问性树（基于文本的智能体）
+- 仅截图（基于视觉的智能体）
+- 截图 + 可访问性树（多模态智能体）
+- Set-of-Marks（带注释标记的截图）
 
-### Action Space
+### 动作空间
 
-Actions are formalized through pyautogui-style primitives:
+动作通过 pyautogui 风格的原语形式化：
 
 ```python
-# Mouse actions
-click(x, y)              # Left-click at coordinates
-double_click(x, y)       # Double-click
-right_click(x, y)        # Right-click context menu
-drag(x1, y1, x2, y2)     # Drag from point to point
-scroll(x, y, clicks)     # Scroll at position
+# 鼠标动作
+click(x, y)              # 在坐标处左键点击
+double_click(x, y)       # 双击
+right_click(x, y)        # 右键点击上下文菜单
+drag(x1, y1, x2, y2)     # 从一点拖拽到另一点
+scroll(x, y, clicks)     # 在指定位置滚动
 
-# Keyboard actions
-type(text)               # Type text string
-hotkey(key1, key2, ...)   # Key combination (e.g., Ctrl+C)
-press(key)               # Single key press
+# 键盘动作
+type(text)               # 输入文本字符串
+hotkey(key1, key2, ...)   # 组合键（例如 Ctrl+C）
+press(key)               # 单个按键
 
-# Control actions
-WAIT                     # Wait for environment response
-FAIL                     # Agent declares task impossible
-DONE                     # Agent declares task complete
+# 控制动作
+WAIT                     # 等待环境响应
+FAIL                     # 智能体声明任务不可能
+DONE                     # 智能体声明任务完成
 ```
 
-### Task Design
+### 任务设计
 
-369 tasks across multiple categories and complexity levels:
+369 个任务跨多个类别和复杂度级别：
 
-| Category              | Description                                            | Examples                                        |
+| 类别              | 描述                                                   | 示例                                            |
 |-----------------------|--------------------------------------------------------|-------------------------------------------------|
-| Desktop Applications  | Office suites, image editors, text editors             | Edit spreadsheet formula, crop image             |
-| Web Browsing          | Browser-based tasks on real websites                   | Fill form, find information, download file        |
-| OS File Operations    | File management, system configuration                  | Organize files, change settings, install app      |
-| Multi-App Workflows   | Tasks spanning 2+ applications                         | Download data, process in calc, email results     |
-| Terminal/CLI          | Command-line operations                                | Run scripts, manage packages, configure services  |
+| 桌面应用          | 办公套件、图像编辑器、文本编辑器                         | 编辑电子表格公式、裁剪图片                        |
+| 网页浏览          | 在真实网站上进行的浏览器任务                             | 填写表单、查找信息、下载文件                      |
+| 操作系统文件操作  | 文件管理、系统配置                                      | 整理文件、更改设置、安装应用                      |
+| 多应用工作流      | 跨 2 个以上应用的任务                                   | 下载数据、在电子表格中处理、通过邮件发送结果      |
+| 终端/命令行       | 命令行操作                                              | 运行脚本、管理软件包、配置服务                    |
 
-Each task includes:
-- **Natural language instruction**: Clear description of the desired outcome
-- **Initial state configuration**: VM snapshot + automated setup scripts for reproducible starting state
-- **Evaluation script**: Custom Python script that programmatically verifies task completion
+每个任务包含：
+- **自然语言指令**：对期望结果的清晰描述
+- **初始状态配置**：虚拟机快照 + 自动化设置脚本，确保可复现的起始状态
+- **评估脚本**：自定义 Python 脚本，以编程方式验证任务完成
 
-### Evaluation Methodology
+### 评估方法
 
 ```
-Algorithm: OSWorld Task Evaluation
+算法：OSWorld 任务评估
 ------------------------------------
-Input:  Task T with instruction I, initial state S_0, evaluation script E
-Output: Binary success/failure
+输入：任务 T，包含指令 I、初始状态 S_0、评估脚本 E
+输出：二元成功/失败
 
-1:  VM = RestoreSnapshot(S_0)        // Restore to known initial state
-2:  RunSetupScripts(VM, T)           // Configure task-specific environment
-3:  agent_state = Initialize(VM, I)  // Provide instruction to agent
+1:  VM = RestoreSnapshot(S_0)        // 恢复到已知初始状态
+2:  RunSetupScripts(VM, T)           // 配置任务特定环境
+3:  agent_state = Initialize(VM, I)  // 向智能体提供指令
 4:
 5:  for step = 1 to MAX_STEPS:
-6:      observation = Observe(VM)     // Screenshot + a11y tree
+6:      observation = Observe(VM)     // 截图 + 可访问性树
 7:      action = Agent(observation, I, history)
 8:      if action == DONE or action == FAIL:
 9:          break
-10:     Execute(VM, action)           // Apply action to real VM
+10:     Execute(VM, action)           // 在真实虚拟机上执行动作
 11: end for
 12:
-13: result = RunEvaluationScript(VM, E)  // Check final VM state
-14: return result  // 1 = success, 0 = failure
+13: result = RunEvaluationScript(VM, E)  // 检查最终虚拟机状态
+14: return result  // 1 = 成功, 0 = 失败
 ```
 
-Key properties:
-- **Execution-based**: Evaluation checks the actual VM state, not the action sequence
-- **Reproducible**: Snapshot restoration ensures identical starting conditions
-- **Flexible**: Agents can use any valid action sequence to achieve the goal
+关键属性：
+- **基于执行**：评估检查实际虚拟机状态，而非动作序列
+- **可复现**：快照恢复确保相同的起始条件
+- **灵活**：智能体可以使用任何有效的动作序列来实现目标
 
-## Key Innovations
+## 关键创新
 
-1. **Real computer environments**: First benchmark using actual VMs (Ubuntu, Windows, macOS) rather
-   than simulations, capturing full OS complexity including window management, system dialogs,
-   file systems, and multi-application coordination.
-2. **Execution-based evaluation**: Custom evaluation scripts check the final state of the VM rather
-   than comparing action sequences, allowing credit for any valid approach to completing a task.
-3. **Multi-application workflows**: Tasks that require coordinating across multiple applications
-   test a fundamentally harder capability than single-app benchmarks.
-4. **Scalable infrastructure**: VM snapshot-based approach enables reproducible evaluation at scale
-   with automated task setup and teardown.
-5. **Multi-modal observation support**: Supporting screenshots, accessibility trees, and Set-of-Marks
-   enables systematic comparison of vision-based vs. text-based vs. hybrid agent approaches.
+1. **真实计算机环境**：首个使用实际虚拟机（Ubuntu、Windows、macOS）而非模拟的基准测试，捕捉完整的操作系统复杂性，包括窗口管理、系统对话框、文件系统和多应用协调。
+2. **基于执行的评估**：自定义评估脚本检查虚拟机的最终状态，而非比较动作序列，允许对完成任务的任何有效方法给予评分。
+3. **多应用工作流**：需要跨多个应用协调的任务测试了比单应用基准测试更根本性困难的能力。
+4. **可扩展基础设施**：基于虚拟机快照的方法使大规模可复现评估成为可能，并支持自动化的任务设置和清理。
+5. **多模态观察支持**：支持截图、可访问性树和 Set-of-Marks，使基于视觉 vs. 基于文本 vs. 混合智能体方法的系统比较成为可能。
 
-## Experimental Setup
+## 实验设置
 
-- **Models evaluated** (original paper, early 2024):
-  - GPT-4V (screenshot-based and accessibility tree-based)
+- **评估模型**（原论文，2024 年初）：
+  - GPT-4V（基于截图和基于可访问性树）
   - Claude 3 Opus
   - Gemini Pro Vision
-  - Various open-source VLMs
-- **Input configurations**: Screenshot only, Accessibility tree only, Screenshot + A11y tree, SoM
-- **Human baseline**: Expert human evaluators performing the same tasks
-- **Max steps**: Configurable per task (typically 15-30 steps)
-- **Metrics**: Success Rate (SR) -- percentage of tasks completed correctly
+  - 各种开源视觉语言模型
+- **输入配置**：仅截图、仅可访问性树、截图 + 可访问性树、SoM
+- **人类基线**：专家人类评估者执行相同任务
+- **最大步数**：每个任务可配置（通常 15-30 步）
+- **指标**：成功率 (SR) -- 正确完成的任务百分比
 
-## Results
+## 结果
 
-### Overall Success Rates (Original Paper, 2024)
+### 总体成功率（原论文，2024 年）
 
-| Agent                              | Success Rate (%) |
+| 智能体                             | 成功率 (%)    |
 |------------------------------------|:----------------:|
-| Human experts                      | **72.36**        |
-| GPT-4V (Screenshot + A11y tree)    | **12.24**        |
-| GPT-4V (Screenshot only)           | ~10%             |
-| GPT-4V (Accessibility tree only)   | ~8%              |
+| 人类专家                           | **72.36**        |
+| GPT-4V（截图 + 可访问性树）        | **12.24**        |
+| GPT-4V（仅截图）                   | ~10%             |
+| GPT-4V（仅可访问性树）             | ~8%              |
 | Claude 3 Opus                      | ~6-8%            |
 | Gemini Pro Vision                  | ~4-6%            |
-| Open-source VLMs                   | ~1-4%            |
+| 开源视觉语言模型                    | ~1-4%            |
 
-The **60-point gap** between human experts (72.36%) and the best agent (12.24%) highlighted the
-enormous challenge of building capable computer-use agents.
+人类专家 (72.36%) 与最佳智能体 (12.24%) 之间 **60 个百分点的差距**凸显了构建有能力的计算机使用智能体的巨大挑战。
 
-### Performance by Input Modality
+### 按输入模态的表现
 
-| Input Type               | GPT-4V Success Rate |
+| 输入类型               | GPT-4V 成功率     |
 |--------------------------|:-------------------:|
-| Screenshot + A11y tree   | **12.24%**          |
-| Screenshot only          | ~10%                |
-| Accessibility tree only  | ~8%                 |
+| 截图 + 可访问性树       | **12.24%**          |
+| 仅截图                  | ~10%                |
+| 仅可访问性树            | ~8%                 |
 | Set-of-Marks             | ~11%                |
 
-Multimodal input (screenshot + accessibility tree) provides the best performance, confirming
-that both visual and structural information contribute to agent capability.
+多模态输入（截图 + 可访问性树）提供了最佳性能，证实视觉和结构化信息都对智能体能力有所贡献。
 
-### Error Analysis: Why Agents Fail
+### 错误分析：智能体为何失败
 
-Primary failure modes identified:
-1. **GUI grounding errors (~40%)**: Agents fail to correctly identify and locate UI elements,
-   clicking wrong buttons, missing menus, or misinterpreting visual layouts.
-2. **Operational knowledge gaps (~30%)**: Agents lack knowledge of application-specific workflows
-   (e.g., how to access a specific feature in LibreOffice or GIMP).
-3. **Multi-step planning failures (~20%)**: Agents lose track of multi-step procedures, skip
-   steps, or fail to maintain coherent plans over extended interactions.
-4. **Action execution errors (~10%)**: Correct intent but wrong action execution (wrong coordinates,
-   typos, incorrect key combinations).
+识别出的主要失败模式：
+1. **GUI 定位错误 (~40%)**：智能体无法正确识别和定位 UI 元素，点击错误按钮、遗漏菜单或误解视觉布局。
+2. **操作知识缺口 (~30%)**：智能体缺乏应用特定工作流程的知识（例如，如何在 LibreOffice 或 GIMP 中访问特定功能）。
+3. **多步骤规划失败 (~20%)**：智能体在长时间交互中失去对多步骤流程的跟踪，跳过步骤或无法维持连贯的计划。
+4. **动作执行错误 (~10%)**：意图正确但动作执行错误（坐标错误、打字错误、不正确的组合键）。
 
-### Subsequent Leaderboard Progress (Post-Publication)
+### 后续排行榜进展（发表后）
 
-OSWorld became the standard benchmark for computer-use agents, driving rapid progress:
+OSWorld 成为计算机使用智能体的标准基准测试，推动了快速进步：
 
-| Period    | Best Agent                | Success Rate |
+| 时期      | 最佳智能体                | 成功率       |
 |-----------|---------------------------|:------------:|
-| Apr 2024  | GPT-4V                    | 12.24%       |
-| Late 2024 | Claude 3.5 Sonnet         | ~22%         |
-| Mid 2025  | Specialized desktop agents | ~40-50%      |
-| 2026      | Claude Opus 4.6           | ~72.7%       |
+| 2024 年 4 月 | GPT-4V                    | 12.24%       |
+| 2024 年底    | Claude 3.5 Sonnet         | ~22%         |
+| 2025 年中    | 专用桌面智能体             | ~40-50%      |
+| 2026 年      | Claude Opus 4.6           | ~72.7%       |
 
-## Limitations
+## 局限性
 
-1. **Ubuntu bias**: While the platform supports Windows and macOS, the majority of tasks are
-   Ubuntu-based, creating a potential distribution bias toward Linux-centric evaluation.
-2. **English-only instructions**: All task instructions are in English, limiting evaluation of
-   multilingual agent capabilities.
-3. **Static task set**: The fixed set of 369 tasks may not cover emerging application types or
-   evolving OS features; task diversity is bounded.
-4. **Binary evaluation**: Success is binary (pass/fail) with no partial credit for agents that
-   complete most steps correctly but fail at the final step.
-5. **VM overhead**: Real VM-based evaluation is computationally expensive (each task requires
-   snapshot restore, execution, evaluation), limiting scalability for rapid iteration.
-6. **8 Google Drive tasks**: Certain tasks involving Google Drive may encounter setup issues during
-   initialization, requiring evaluators to optionally exclude these 8 tasks (running 361 instead).
-7. **No efficiency metric**: The benchmark measures only success rate, not the number of steps or
-   time required -- an agent that takes 100 steps to succeed scores the same as one taking 5 steps.
-8. **Observation gap**: Screen resolution, rendering differences, and font aliasing across VMs
-   can introduce visual noise that affects screenshot-based agents inconsistently.
+1. **Ubuntu 偏差**：虽然平台支持 Windows 和 macOS，但大多数任务基于 Ubuntu，造成了潜在的分布偏差，偏向于以 Linux 为中心的评估。
+2. **仅限英语指令**：所有任务指令均为英语，限制了对多语言智能体能力的评估。
+3. **静态任务集**：固定的 369 个任务可能无法覆盖新兴的应用类型或不断发展的操作系统功能；任务多样性是有限的。
+4. **二元评估**：成功是二元的（通过/失败），对于完成了大部分步骤但在最后一步失败的智能体没有部分评分。
+5. **虚拟机开销**：基于真实虚拟机的评估计算成本高昂（每个任务需要快照恢复、执行、评估），限制了快速迭代的可扩展性。
+6. **8 个 Google Drive 任务**：某些涉及 Google Drive 的任务在初始化期间可能遇到设置问题，评估者可选择排除这 8 个任务（运行 361 个而非 369 个）。
+7. **无效率指标**：基准测试仅衡量成功率，不衡量所需步数或时间 -- 一个花费 100 步成功的智能体与花费 5 步的得分相同。
+8. **观察差距**：跨虚拟机的屏幕分辨率、渲染差异和字体抗锯齿可能引入视觉噪声，不一致地影响基于截图的智能体。
 
-## Key Takeaways
+## 核心要点
 
-1. **Massive capability gap revealed**: The 72.36% vs. 12.24% gap between humans and the best
-   agent (at time of publication) definitively quantified how far computer-use agents were from
-   human capability, setting a clear research target.
-2. **GUI grounding is the primary bottleneck**: ~40% of failures stem from inability to correctly
-   identify and interact with visual UI elements, making vision-grounding a high-priority
-   research direction for desktop agents.
-3. **Real environments are essential**: The complexity of real OS environments (system dialogs,
-   window management, application state) cannot be captured by simulated interfaces, validating
-   the need for VM-based evaluation.
-4. **Multimodal input helps**: Combining screenshots with accessibility tree information yields
-   the best performance, suggesting that both visual and structural understanding are needed.
-5. **Benchmark as catalyst**: OSWorld's clear metrics and leaderboard structure catalyzed rapid
-   progress in desktop agent development, with success rates improving from 12% to 70%+ within
-   two years as dedicated computer-use models (Claude Computer Use, etc.) emerged.
-6. **Multi-app workflows are hardest**: Tasks requiring coordination across multiple applications
-   have disproportionately low success rates, highlighting the challenge of long-horizon planning
-   in complex desktop environments.
-7. **Foundational benchmark for the field**: OSWorld established the standard evaluation protocol
-   for computer-use agents, analogous to what ImageNet did for vision and SWE-bench for coding.
+1. **揭示了巨大的能力差距**：发表时人类的 72.36% 与最佳智能体的 12.24% 之间的差距明确量化了计算机使用智能体距离人类能力有多远，设定了明确的研究目标。
+2. **GUI 定位是主要瓶颈**：约 40% 的失败源于无法正确识别和交互视觉 UI 元素，使视觉定位成为桌面智能体的高优先研究方向。
+3. **真实环境不可或缺**：真实操作系统环境的复杂性（系统对话框、窗口管理、应用状态）无法被模拟界面捕捉，验证了基于虚拟机评估的必要性。
+4. **多模态输入有帮助**：将截图与可访问性树信息结合产生最佳性能，表明需要同时具备视觉和结构化理解。
+5. **基准测试作为催化剂**：OSWorld 清晰的指标和排行榜结构催化了桌面智能体开发的快速进步，成功率在两年内从 12% 提高到 70% 以上，因为专用的计算机使用模型（Claude Computer Use 等）的出现。
+6. **多应用工作流最难**：需要跨多个应用协调的任务成功率不成比例地低，凸显了复杂桌面环境中长周期规划的挑战。
+7. **该领域的基础性基准测试**：OSWorld 确立了计算机使用智能体的标准评估协议，类似于 ImageNet 之于视觉和 SWE-bench 之于编程。

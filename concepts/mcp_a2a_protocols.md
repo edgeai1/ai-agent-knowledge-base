@@ -1,14 +1,14 @@
 ---
-title: "MCP & A2A: Agent Interoperability Protocols"
+title: "MCP 与 A2A：智能体互操作协议"
 tags: [mcp, a2a, protocol, interoperability, core-concept]
 related: [tool_use, multi_agent_systems]
 ---
 
-## Overview
+## 概述
 
-Two complementary protocols define the 2026 agent ecosystem:
-- **MCP** (Model Context Protocol): agent-to-tool communication
-- **A2A** (Agent-to-Agent): agent-to-agent communication
+两个互补的协议定义了 2026 年的智能体生态系统：
+- **MCP**（模型上下文协议）：智能体到工具的通信
+- **A2A**（Agent-to-Agent）：智能体到智能体的通信
 
 ```
 ┌─────────┐     A2A      ┌─────────┐
@@ -21,67 +21,67 @@ Two complementary protocols define the 2026 agent ecosystem:
 └─────────┘              └─────────┘
 ```
 
-## MCP (Model Context Protocol)
+## MCP（模型上下文协议）
 
-**Created by**: Anthropic (Nov 2024), donated to Linux Foundation AAIF (Dec 2025)
+**创建者**：Anthropic（2024 年 11 月），捐赠给 Linux Foundation AAIF（2025 年 12 月）
 
-**Purpose**: Standardize how an AI agent connects to external tools, data sources, and services. "USB-C for AI."
+**目的**：标准化 AI 智能体连接外部工具、数据源和服务的方式。"AI 的 USB-C。"
 
-**Adoption (Feb 2026)**: 97M+ monthly SDK downloads (Python + TypeScript combined). Adopted by Anthropic, OpenAI, Google, Microsoft, Amazon.
+**采用情况（2026 年 2 月）**：每月 SDK 下载量超过 9700 万（Python + TypeScript 合计）。被 Anthropic、OpenAI、Google、Microsoft、Amazon 采用。
 
-### How It Works
+### 工作原理
 
-MCP defines a client-server architecture:
-- **MCP Host**: the AI application (Claude, ChatGPT, custom agent)
-- **MCP Server**: exposes tools, resources, prompts via a standard protocol
-- **Transport**: stdio, HTTP/SSE
+MCP 定义了客户端-服务器架构：
+- **MCP 主机**：AI 应用程序（Claude、ChatGPT、自定义智能体）
+- **MCP 服务器**：通过标准协议暴露工具、资源和提示
+- **传输层**：stdio、HTTP/SSE
 
-### Key Concepts
+### 关键概念
 
-- **Tools**: functions the agent can call (e.g., `search_database`, `send_email`)
-- **Resources**: data the agent can read (e.g., files, database records)
-- **Prompts**: reusable prompt templates
+- **工具**：智能体可以调用的函数（例如 `search_database`、`send_email`）
+- **资源**：智能体可以读取的数据（例如文件、数据库记录）
+- **提示**：可复用的提示模板
 
-### Example
+### 示例
 
-An MCP server for Slack provides tools like `send_message`, `search_messages`, `list_channels` -- any MCP-compatible agent can use it without custom integration code.
+Slack 的 MCP 服务器提供 `send_message`、`search_messages`、`list_channels` 等工具——任何 MCP 兼容的智能体都可以使用它，无需自定义集成代码。
 
-## A2A (Agent-to-Agent Protocol)
+## A2A（Agent-to-Agent 协议）
 
-**Created by**: Google (Apr 2025), now under Linux Foundation
+**创建者**：Google（2025 年 4 月），现归 Linux Foundation
 
-**Purpose**: Standardize secure, structured communication between autonomous AI agents from different providers/frameworks.
+**目的**：标准化来自不同提供商/框架的自主 AI 智能体之间的安全、结构化通信。
 
-### How It Works
+### 工作原理
 
-- **Agent Cards**: JSON documents describing an agent's capabilities, skills, and endpoint
-- **Tasks**: units of work exchanged between agents
-- **Streaming**: real-time updates on task progress
-- **Push Notifications**: async completion alerts
+- **Agent Cards**：描述智能体能力、技能和端点的 JSON 文档
+- **任务**：智能体之间交换的工作单元
+- **流式传输**：任务进度的实时更新
+- **推送通知**：异步完成提醒
 
-### Key Features
+### 关键特性
 
-- Framework-agnostic (works across LangGraph, AutoGen, CrewAI, etc.)
-- Secure agent discovery and capability negotiation
-- Support for long-running tasks
+- 框架无关（适用于 LangGraph、AutoGen、CrewAI 等）
+- 安全的智能体发现和能力协商
+- 支持长时间运行的任务
 
-## How They Complement Each Other
+## 它们如何互补
 
-| Layer | Protocol | Function |
-|-------|----------|----------|
-| Agent ↔ Tool | **MCP** | Connect agent to external tools & data |
-| Agent ↔ Agent | **A2A** | Enable multi-agent collaboration |
+| 层级 | 协议 | 功能 |
+|------|------|------|
+| 智能体 <-> 工具 | **MCP** | 将智能体连接到外部工具和数据 |
+| 智能体 <-> 智能体 | **A2A** | 实现多智能体协作 |
 
-Most modern agentic AI systems leverage **both** protocols:
-- MCP for reliable tool and context integration
-- A2A for orchestrating teamwork across agents
+大多数现代智能体 AI 系统同时利用**两种**协议：
+- MCP 用于可靠的工具和上下文集成
+- A2A 用于编排智能体之间的协作
 
-## Other Protocols (2026)
+## 其他协议（2026）
 
-- **ACP** (Agent Communication Protocol): alternative by IBM
-- **UCP**: emerging universal protocol attempting to unify MCP + A2A
+- **ACP**（智能体通信协议）：IBM 的替代方案
+- **UCP**：试图统一 MCP + A2A 的新兴通用协议
 
-## References
+## 参考文献
 
 - MCP Spec: https://modelcontextprotocol.io
 - A2A Spec: https://github.com/google/A2A

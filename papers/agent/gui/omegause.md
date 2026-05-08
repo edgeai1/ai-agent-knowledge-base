@@ -8,13 +8,13 @@ tags: [gui, computer-use, general-purpose, 2026]
 status: to-read
 ---
 
-## TL;DR
+## 简要总结
 
-General-purpose GUI agent model for autonomous task execution on both mobile and desktop platforms.
+通用 GUI 智能体模型，用于在移动端和桌面平台上自主执行任务。
 
-## Related 2026 GUI Papers
+## 相关 2026 年 GUI 论文
 
-- "Training Computer Use Agents to Assess the Usability of GUIs" (Apr 2026, arXiv:2604.26020)
-- "Visual Confused Deputy: Exploiting and Defending Perception Failures in CUAs" (Mar 2026)
-- "Are GUI Agents Focused Enough? Automated Distraction via Semantic-level UI Element Injection" (Apr 2026)
+- "Training Computer Use Agents to Assess the Usability of GUIs"（2026 年 4 月，arXiv:2604.26020）
+- "Visual Confused Deputy: Exploiting and Defending Perception Failures in CUAs"（2026 年 3 月）
+- "Are GUI Agents Focused Enough? Automated Distraction via Semantic-level UI Element Injection"（2026 年 4 月）
 - Agent S: Open Agentic Framework for Computer Use (ICLR 2025/2026)

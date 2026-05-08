@@ -10,208 +10,208 @@ tags: [benchmark, agent-evaluation, multi-environment, LLM-as-agent, decision-ma
 status: done
 ---
 
-## TL;DR
+## 简要总结
 
-The first systematic benchmark evaluating LLMs as autonomous agents across 8 diverse interactive environments (OS, Database, Knowledge Graph, Digital Card Game, Lateral Thinking Puzzles, HouseHolding, Web Shopping, Web Browsing), testing 29 models and revealing a stark performance gap: GPT-4 achieves an overall score of 4.01 while the best open-source model (CodeLlama-34B) scores only 0.96. Poor long-term reasoning, decision-making, and instruction following are identified as key capability bottlenecks preventing LLMs from functioning as effective autonomous agents.
+首个系统性地评估 LLM 作为自主智能体在 8 个多样化交互环境（操作系统、数据库、知识图谱、数字卡牌游戏、横向思维谜题、家务管理、网络购物、网页浏览）中表现的基准测试，测试了 29 个模型并揭示了明显的性能差距：GPT-4 获得 4.01 的总分，而最佳开源模型（CodeLlama-34B）仅获得 0.96 分。研究发现，长期推理能力不足、决策能力薄弱和指令遵循能力差是阻碍 LLM 成为有效自主智能体的关键能力瓶颈。
 
-## Motivation & Problem
+## 动机与问题
 
-By mid-2023, LLMs were increasingly deployed as autonomous agents -- systems that take actions in environments to achieve goals, rather than simply generating text. Yet evaluation remained fragmented and inadequate:
+截至 2023 年中期，LLM 越来越多地被部署为自主智能体 -- 在环境中采取行动以实现目标的系统，而不仅仅是生成文本。然而评估仍然碎片化且不充分：
 
-1. **Domain-specific benchmarks only**: Existing evaluations tested narrow capabilities (coding only in HumanEval, web browsing only in Mind2Web) without a unified framework that could assess general agent competence across diverse task types.
-2. **Static evaluation paradigm**: Most LLM benchmarks used single-turn QA or text generation metrics (MMLU, HellaSwag), completely missing the multi-turn, interactive, stateful nature of agent tasks where each action changes the environment.
-3. **No cross-domain comparison**: Impossible to determine whether a model strong at coding was also capable at database management, game-playing, or web navigation. No unified scoring framework existed.
-4. **Open-source vs. commercial opacity**: Open-source models increasingly claimed GPT-4-level performance on static benchmarks, but whether this parity extended to complex agentic tasks was entirely unknown.
-5. **Missing capability diagnosis**: No systematic study had identified which specific capabilities (long-term reasoning, instruction following, decision-making, tool use) were the primary bottlenecks for LLM agents.
+1. **仅限特定领域的基准测试**：现有评估只测试狭窄的能力（HumanEval 仅测试编码，Mind2Web 仅测试网页浏览），缺乏能够评估跨多种任务类型的通用智能体能力的统一框架。
+2. **静态评估范式**：大多数 LLM 基准测试使用单轮问答或文本生成指标（MMLU、HellaSwag），完全忽略了智能体任务的多轮、交互式、有状态特性，其中每个动作都会改变环境。
+3. **缺乏跨领域比较**：无法确定一个在编码方面表现强的模型是否同样擅长数据库管理、游戏或网页导航。不存在统一的评分框架。
+4. **开源与商业模型的不透明性**：开源模型越来越多地宣称在静态基准测试上达到 GPT-4 级别的性能，但这种对等性是否延伸到复杂的智能体任务完全未知。
+5. **缺少能力诊断**：没有系统性研究识别出哪些具体能力（长期推理、指令遵循、决策、工具使用）是 LLM 智能体的主要瓶颈。
 
-AgentBench addresses all of these by providing a unified evaluation framework across 8 environments spanning code execution, strategic games, web interaction, and knowledge reasoning, with standardized scoring to enable direct cross-model and cross-domain comparison.
+AgentBench 通过提供跨 8 个环境（涵盖代码执行、策略游戏、网络交互和知识推理）的统一评估框架和标准化评分来解决所有这些问题，从而实现直接的跨模型和跨领域比较。
 
-## Method
+## 方法
 
-### The 8 Evaluation Environments in Detail
+### 8 个评估环境详解
 
-AgentBench comprises 8 distinct environments organized into three categories. Five environments (OS, DB, KG, DCG, LTP) are original contributions created by the research team; three (HH, WS, WB) adapt existing benchmarks into the unified framework.
+AgentBench 包含 8 个不同的环境，分为三大类。五个环境（OS、DB、KG、DCG、LTP）是研究团队的原创贡献；三个（HH、WS、WB）将现有基准测试适配到统一框架中。
 
-#### Category 1: Code-Grounded Environments
+#### 类别一：基于代码的环境
 
-**1. Operating System (OS) -- NEW**
-- **Setup**: Agent interacts with a real Ubuntu Docker container via an interactive bash shell
-- **Task type**: System administration and file manipulation tasks requiring multi-step command-line operations
-- **Example tasks**: Recursively set all files in a directory to read-only; find and kill processes matching a pattern; configure a cron job with specific timing; parse log files and extract statistics
-- **Interaction**: Multi-turn bash command execution. Agent sends commands, receives stdout/stderr feedback, and iterates
-- **Turns per task**: 5-15 on average
-- **Evaluation metric**: Success Rate (SR) -- binary pass/fail based on whether the final system state matches the expected state via automated validation scripts
-- **Difficulty factors**: Requires knowledge of Linux commands, file system operations, permissions model, process management, scripting, and multi-step reasoning about command outputs
-- **Why it matters**: Tests practical system-level reasoning that real-world coding agents and DevOps assistants need
+**1. 操作系统 (OS) -- 全新**
+- **设置**：智能体通过交互式 bash shell 与真实的 Ubuntu Docker 容器交互
+- **任务类型**：需要多步骤命令行操作的系统管理和文件操作任务
+- **示例任务**：递归地将目录中所有文件设置为只读；查找并终止匹配特定模式的进程；配置特定时间的定时任务；解析日志文件并提取统计信息
+- **交互方式**：多轮 bash 命令执行。智能体发送命令，接收 stdout/stderr 反馈，并迭代
+- **每个任务的轮次**：平均 5-15 轮
+- **评估指标**：成功率 (SR) -- 基于最终系统状态是否通过自动化验证脚本匹配预期状态的二元通过/失败
+- **难度因素**：需要了解 Linux 命令、文件系统操作、权限模型、进程管理、脚本编写和多步骤推理
+- **重要性**：测试真实世界编码智能体和 DevOps 助手所需的实用系统级推理
 
-**2. Database (DB) -- NEW**
-- **Setup**: Agent interacts with relational databases via SQL queries on real MySQL/PostgreSQL instances
-- **Task type**: Data retrieval, analysis, and manipulation tasks requiring increasingly complex query construction
-- **Example tasks**: "Find the top 5 customers by total order amount from the orders table and return their names and total amounts"; join multiple tables to answer business intelligence questions
-- **Interaction**: Agent issues SQL queries, receives query results as tables, can iteratively refine queries based on output
-- **Turns per task**: 3-10 on average
-- **Evaluation metric**: Success Rate -- correctness of final query results compared to ground truth answers
-- **Difficulty factors**: Requires SQL proficiency (joins, aggregations, subqueries, window functions), schema comprehension from description alone, and iterative debugging of query errors
-- **Why it matters**: Database interaction is a core competency for data analysis agents and business intelligence applications
+**2. 数据库 (DB) -- 全新**
+- **设置**：智能体通过 SQL 查询在真实的 MySQL/PostgreSQL 实例上与关系型数据库交互
+- **任务类型**：需要构建越来越复杂查询的数据检索、分析和操作任务
+- **示例任务**："从订单表中找出按总订单金额排名前 5 的客户，并返回他们的姓名和总金额"；连接多个表以回答商业智能问题
+- **交互方式**：智能体发出 SQL 查询，接收表格形式的查询结果，可以根据输出迭代优化查询
+- **每个任务的轮次**：平均 3-10 轮
+- **评估指标**：成功率 -- 最终查询结果与标准答案的正确性比较
+- **难度因素**：需要 SQL 熟练度（连接、聚合、子查询、窗口函数）、仅从描述理解模式、以及迭代调试查询错误
+- **重要性**：数据库交互是数据分析智能体和商业智能应用的核心能力
 
-**3. Knowledge Graph (KG) -- NEW**
-- **Setup**: Agent navigates large-scale knowledge graphs based on FREEBASE (45M+ entities, 3B+ facts) via structured queries
-- **Task type**: Complex question answering requiring multi-hop reasoning over entity relationships in the graph
-- **Example tasks**: "What films did the director of Inception also produce that won an Academy Award?" -- requires traversing director -> filmography -> awards paths
-- **Interaction**: Agent issues SPARQL-like queries to explore entity relationships, receives partial results, must navigate the massive graph structure to find answers
-- **Turns per task**: 5-15 on average
-- **Evaluation metric**: F1 score on extracted answers (partial credit for partially correct answer sets)
-- **Difficulty factors**: Operating with incomplete information over a graph with 45M+ entities; managing inherent uncertainties; constructing valid structured queries; multi-hop inference chains
-- **Why it matters**: Tests structured reasoning and information retrieval capabilities essential for knowledge-intensive agent applications
+**3. 知识图谱 (KG) -- 全新**
+- **设置**：智能体通过结构化查询导航基于 FREEBASE（4500 万+ 实体，30 亿+ 事实）的大规模知识图谱
+- **任务类型**：需要在图谱中进行多跳实体关系推理的复杂问答
+- **示例任务**："《盗梦空间》的导演还制作了哪些获得奥斯卡奖的电影？" -- 需要遍历导演 -> 作品列表 -> 奖项的路径
+- **交互方式**：智能体发出类 SPARQL 查询以探索实体关系，接收部分结果，必须在庞大的图谱结构中导航以找到答案
+- **每个任务的轮次**：平均 5-15 轮
+- **评估指标**：提取答案的 F1 分数（对部分正确的答案集给予部分评分）
+- **难度因素**：在拥有 4500 万+ 实体的图谱上处理不完整信息；管理固有的不确定性；构建有效的结构化查询；多跳推理链
+- **重要性**：测试知识密集型智能体应用所必需的结构化推理和信息检索能力
 
-#### Category 2: Game-Grounded Environments
+#### 类别二：基于游戏的环境
 
-**4. Digital Card Game (DCG) -- NEW**
-- **Setup**: Agent plays a simplified digital card game (Aquaducts, inspired by trading card games) against rule-based opponents of varying difficulty
-- **Task type**: Strategic game-playing requiring resource management, card selection, timing, and opponent modeling across extended multi-turn games
-- **Interaction**: Turn-based. Agent receives the current game state (hand, board, opponent visible state, resources), selects actions from legal moves (play card, attack, use ability, pass)
-- **Turns per task**: 20-50 per game
-- **Evaluation metric**: Win Rate against rule-based opponents
-- **Difficulty factors**: Long-horizon strategic planning (decisions 20+ turns ago affect endgame), imperfect information (opponent hand unknown), resource optimization, and need to anticipate opponent strategy
-- **Why it matters**: Tests genuine strategic reasoning under uncertainty -- a capability qualitatively different from text generation. The extended game length (20-50 turns) particularly stresses long-term planning.
+**4. 数字卡牌游戏 (DCG) -- 全新**
+- **设置**：智能体玩一款简化的数字卡牌游戏（Aquaducts，灵感来自集换式卡牌游戏），对手是不同难度的基于规则的对手
+- **任务类型**：需要在扩展的多轮游戏中进行资源管理、卡牌选择、时机把握和对手建模的策略博弈
+- **交互方式**：回合制。智能体接收当前游戏状态（手牌、场面、对手可见状态、资源），从合法动作中选择行动（出牌、攻击、使用技能、过牌）
+- **每个任务的轮次**：每局游戏 20-50 轮
+- **评估指标**：对基于规则的对手的胜率
+- **难度因素**：长期战略规划（20+ 轮前的决策影响终局）、不完全信息（对手手牌未知）、资源优化、以及需要预判对手策略
+- **重要性**：测试不确定性下的真正战略推理 -- 一种与文本生成质量截然不同的能力。特别是较长的游戏时长（20-50 轮）对长期规划造成了压力。
 
-**5. Lateral Thinking Puzzles (LTP) -- NEW**
-- **Setup**: Agent plays a situation puzzle game. A host presents a mysterious scenario (e.g., "A man walks into a bar and asks for water. The bartender pulls out a gun. The man says thank you and leaves."), and the agent must deduce the full explanation
-- **Task type**: Creative deductive reasoning through sequential yes/no questioning
-- **Interaction**: Agent asks yes/no questions ("Did the man have hiccups?"); host responds with "yes," "no," or "irrelevant"; agent must reconstruct the hidden scenario through efficient questioning
-- **Turns per task**: 10-30 per puzzle
-- **Evaluation metric**: Game Progress (0-1 scale based on key elements of the puzzle deduced) and Success Rate
-- **Difficulty factors**: Requires creative/lateral thinking (not just logical deduction), hypothesis generation, efficient information gathering through heavily constrained questioning, and the ability to synthesize disparate clues into a coherent narrative
-- **Why it matters**: Tests a fundamentally different reasoning mode -- creative/divergent thinking -- that is orthogonal to the logical/procedural reasoning tested by other environments
+**5. 横向思维谜题 (LTP) -- 全新**
+- **设置**：智能体玩情景推理游戏。主持人呈现一个神秘场景（例如，"一个人走进酒吧要了一杯水。酒保掏出一把枪。那人说了声谢谢就离开了。"），智能体必须推断出完整的解释
+- **任务类型**：通过连续的是/否提问进行创造性演绎推理
+- **交互方式**：智能体提出是/否问题（"那个人是不是打嗝了？"）；主持人回答"是"、"否"或"无关"；智能体必须通过高效的提问重建隐藏的场景
+- **每个任务的轮次**：每个谜题 10-30 轮
+- **评估指标**：游戏进度（0-1 分数，基于推断出的谜题关键要素）和成功率
+- **难度因素**：需要创造性/横向思维（不仅仅是逻辑推理）、假设生成、通过高度受限的提问进行高效信息收集、以及将不相关的线索综合成连贯叙事的能力
+- **重要性**：测试一种根本不同的推理模式 -- 创造性/发散性思维 -- 这与其他环境测试的逻辑/程序性推理是正交的
 
-#### Category 3: Web-Grounded Environments
+#### 类别三：基于网络的环境
 
-**6. HouseHolding (HH) -- adapted from ALFWorld**
-- **Setup**: Agent controls a virtual household robot in a simulated home environment (TextWorld-based)
-- **Task type**: Household tasks requiring navigation, object interaction, and multi-step physical reasoning
-- **Example tasks**: "Put a clean mug on the desk" requires: go to kitchen -> find mug -> pick up mug -> go to sink -> clean mug -> go to bedroom -> go to desk -> put mug on desk
-- **Interaction**: Text-based commands with environment state descriptions as feedback
-- **Turns per task**: 10-30 per task
-- **Evaluation metric**: Success Rate -- whether the task goal state is achieved
-- **Difficulty factors**: Spatial reasoning (which rooms connect), object affordance understanding (mugs can be cleaned at sinks), and executing multi-step plans in correct order
-- **Why it matters**: Tests embodied agent capabilities in a grounded physical world simulation; benefits heavily from common-sense reasoning
+**6. 家务管理 (HH) -- 改编自 ALFWorld**
+- **设置**：智能体在模拟家庭环境（基于 TextWorld）中控制一个虚拟家务机器人
+- **任务类型**：需要导航、物体交互和多步骤物理推理的家务任务
+- **示例任务**："把一个干净的杯子放在桌子上"需要：去厨房 -> 找到杯子 -> 拿起杯子 -> 去水槽 -> 清洗杯子 -> 去卧室 -> 去桌子 -> 把杯子放在桌子上
+- **交互方式**：基于文本的命令和环境状态描述反馈
+- **每个任务的轮次**：每个任务 10-30 轮
+- **评估指标**：成功率 -- 是否达成任务目标状态
+- **难度因素**：空间推理（房间之间的连接）、物体功能理解（杯子可以在水槽处清洗）、以及按正确顺序执行多步骤计划
+- **重要性**：在模拟物理世界中测试具身智能体能力；很大程度上受益于常识推理
 
-**7. Web Shopping (WS) -- adapted from WebShop**
-- **Setup**: Agent shops on a simulated e-commerce website to find products matching natural language specifications
-- **Task type**: Product search, comparison, and selection tasks
-- **Example tasks**: "Find a red cotton t-shirt under $30 with good reviews and size L"
-- **Interaction**: Web navigation actions (search, click product, scroll, select options like color/size, add to cart)
-- **Turns per task**: 5-15 per task
-- **Evaluation metric**: Reward score (0-1) based on attribute matching between the purchased item and the target specification
-- **Difficulty factors**: Understanding product attributes, comparing across multiple options, applying multiple simultaneous criteria (color + material + price + rating + size)
-- **Why it matters**: Tests practical consumer-facing web interaction with real-world relevance
+**7. 网络购物 (WS) -- 改编自 WebShop**
+- **设置**：智能体在模拟电商网站上购物，寻找匹配自然语言规格的产品
+- **任务类型**：产品搜索、比较和选择任务
+- **示例任务**："找一件红色棉质 T 恤，30 美元以下，好评，L 码"
+- **交互方式**：网页导航动作（搜索、点击产品、滚动、选择颜色/尺寸等选项、加入购物车）
+- **每个任务的轮次**：每个任务 5-15 轮
+- **评估指标**：奖励分数（0-1），基于购买商品与目标规格的属性匹配
+- **难度因素**：理解产品属性、跨多个选项比较、同时应用多个标准（颜色 + 材质 + 价格 + 评分 + 尺码）
+- **重要性**：测试具有现实意义的实用消费端网络交互
 
-**8. Web Browsing (WB) -- adapted from Mind2Web**
-- **Setup**: Agent performs tasks on diverse real websites by predicting correct action sequences on actual website HTML/screenshots
-- **Task type**: General web browsing tasks spanning many websites and domains (booking flights, managing accounts, finding information, filing forms)
-- **Interaction**: At each step, predict the correct web element to interact with and the action to take (click, type, select)
-- **Turns per task**: 5-20 per task
-- **Evaluation metric**: Step Success Rate (per-step element and action accuracy) and task completion rate
-- **Difficulty factors**: Must generalize across extremely diverse website layouts with no prior exposure; requires understanding forms, navigation menus, dynamic content, and multi-step web workflows
-- **Why it matters**: Tests open-web generalization -- the ability to navigate arbitrary websites, not just specific pre-trained applications
+**8. 网页浏览 (WB) -- 改编自 Mind2Web**
+- **设置**：智能体通过在真实网站的 HTML/截图上预测正确的动作序列来执行任务
+- **任务类型**：跨多个网站和领域的通用网页浏览任务（订机票、管理账户、查找信息、填写表单）
+- **交互方式**：每一步预测要交互的正确网页元素和要采取的动作（点击、输入、选择）
+- **每个任务的轮次**：每个任务 5-20 轮
+- **评估指标**：步骤成功率（每步的元素和动作准确率）和任务完成率
+- **难度因素**：必须在没有先验接触的情况下泛化到极其多样化的网站布局；需要理解表单、导航菜单、动态内容和多步骤网络工作流程
+- **重要性**：测试开放网络泛化能力 -- 导航任意网站的能力，而不仅仅是特定的预训练应用
 
-### Unified Evaluation Protocol
+### 统一评估协议
 
-- All environments use multi-turn interaction where each action changes the environment state
-- Environment-specific metrics are normalized to produce the **Overall AgentBench Score (OA)** as a weighted average
-- Standardized prompts ensure fair comparison: each model receives identical system prompts per environment
-- Budget limits (maximum turns, maximum tokens) prevent runaway costs
-- Environments run in isolated Docker containers for reproducibility
+- 所有环境使用多轮交互，每个动作都改变环境状态
+- 环境特定指标被标准化以产生**总体 AgentBench 分数 (OA)**，作为加权平均值
+- 标准化提示确保公平比较：每个模型在每个环境中收到相同的系统提示
+- 预算限制（最大轮次、最大 token 数）防止成本失控
+- 环境在隔离的 Docker 容器中运行以确保可复现性
 
-## Key Innovations
+## 关键创新
 
-1. **Multi-dimensional agent evaluation**: First benchmark to span 8 environment types (code, games, web, knowledge) in a unified framework with standardized scoring
-2. **Five new environments**: OS, DB, KG, DCG, and LTP are original contributions testing previously unevaluated agent capabilities
-3. **Scale of comparison**: 29 models evaluated, covering the full spectrum from GPT-4 to small open-source models, enabling definitive capability stratification
-4. **Capability diagnosis**: Goes beyond aggregate scores to identify three specific failure modes (long-term reasoning, decision-making, instruction following)
-5. **Commercial vs. open-source analysis**: First systematic, quantitative comparison revealing the true agent capability gap between model tiers
+1. **多维度智能体评估**：首个在统一框架中涵盖 8 种环境类型（代码、游戏、网络、知识）并具有标准化评分的基准测试
+2. **五个全新环境**：OS、DB、KG、DCG 和 LTP 是原创贡献，测试此前未被评估的智能体能力
+3. **比较规模**：评估了 29 个模型，覆盖从 GPT-4 到小型开源模型的全谱系，实现了确定性的能力分层
+4. **能力诊断**：超越总体分数，识别出三种具体的失败模式（长期推理、决策、指令遵循）
+5. **商业与开源分析**：首次系统性、定量地比较揭示了不同模型层级之间真正的智能体能力差距
 
-## Experimental Setup
+## 实验设置
 
-### Models Tested (29 total)
+### 测试模型（共 29 个）
 
-**Commercial API models**: GPT-4 (0613), GPT-3.5-turbo (0613), text-davinci-003, Claude (v1.3), Claude-2, Claude-instant, chat-bison (Google PaLM)
+**商业 API 模型**：GPT-4 (0613)、GPT-3.5-turbo (0613)、text-davinci-003、Claude (v1.3)、Claude-2、Claude-instant、chat-bison (Google PaLM)
 
-**Open-source models**: LLaMA-2-70B/13B/7B (chat), CodeLlama-34B/13B/7B, Vicuna-33B/13B/7B, LLaMA-33B/13B, and additional variants -- all tested at their largest available sizes
+**开源模型**：LLaMA-2-70B/13B/7B (chat)、CodeLlama-34B/13B/7B、Vicuna-33B/13B/7B、LLaMA-33B/13B 以及其他变体 -- 均以最大可用尺寸测试
 
-All models tested zero-shot with identical per-environment prompts. No fine-tuning or agent-specific training.
+所有模型均在零样本条件下使用相同的环境提示进行测试。无微调或智能体专用训练。
 
-## Results
+## 结果
 
-### Overall AgentBench Scores
+### AgentBench 总体分数
 
-| Model                | Overall Score (OA) | Tier       |
+| 模型                 | 总体分数 (OA)      | 层级       |
 |----------------------|-------------------|------------|
-| GPT-4 (0613)         | **4.01**          | Top tier   |
-| Claude-2             | 2.49              | Strong     |
-| GPT-3.5-turbo        | 2.32              | Strong     |
-| Claude (v1.3)        | 1.64              | Moderate   |
-| text-davinci-003     | 1.52              | Moderate   |
-| chat-bison (PaLM)    | 1.32              | Moderate   |
-| CodeLlama-34B        | 0.96              | Weak       |
-| LLaMA-2-70B-chat     | ~0.6              | Weak       |
-| Vicuna-33B           | ~0.5              | Weak       |
-| Most OSS models      | 0.2-0.8           | Very weak  |
+| GPT-4 (0613)         | **4.01**          | 顶级       |
+| Claude-2             | 2.49              | 强         |
+| GPT-3.5-turbo        | 2.32              | 强         |
+| Claude (v1.3)        | 1.64              | 中等       |
+| text-davinci-003     | 1.52              | 中等       |
+| chat-bison (PaLM)    | 1.32              | 中等       |
+| CodeLlama-34B        | 0.96              | 弱         |
+| LLaMA-2-70B-chat     | ~0.6              | 弱         |
+| Vicuna-33B           | ~0.5              | 弱         |
+| 大多数开源模型        | 0.2-0.8           | 非常弱     |
 
-### GPT-4 Environment-Specific Highlights
+### GPT-4 各环境亮点
 
-| Environment          | GPT-4 Score | Best OSS      | Notes                                     |
+| 环境                 | GPT-4 分数  | 最佳开源      | 备注                                      |
 |----------------------|-------------|----------------|-------------------------------------------|
-| HouseHolding         | **78% SR**  | ~20-30% SR     | Easiest; benefits from common-sense        |
-| Digital Card Game    | **74.5% WR**| Near zero      | Strong strategic reasoning; OSS fails      |
-| Web Shopping         | 62.6%       | Low            | Moderate; structured criteria matching     |
-| Knowledge Graph      | 57.2% F1    | Near zero      | Multi-hop graph reasoning                  |
-| Operating System     | 42.4% SR    | Near zero      | System knowledge + multi-step scripting    |
-| Database             | 32.5% SR    | Low            | Complex SQL remains challenging            |
-| Web Browsing         | 5.3%        | Near zero      | Near-zero for all models                   |
-| Lateral Thinking     | 5.0%        | Near zero      | Creative reasoning is fundamentally hard   |
+| 家务管理              | **78% SR**  | ~20-30% SR     | 最容易；受益于常识推理                       |
+| 数字卡牌游戏          | **74.5% WR**| 接近零          | 强战略推理；开源模型失败                     |
+| 网络购物              | 62.6%       | 低              | 中等；结构化标准匹配                         |
+| 知识图谱              | 57.2% F1    | 接近零          | 多跳图谱推理                                |
+| 操作系统              | 42.4% SR    | 接近零          | 系统知识 + 多步骤脚本编写                    |
+| 数据库                | 32.5% SR    | 低              | 复杂 SQL 仍具挑战性                          |
+| 网页浏览              | 5.3%        | 接近零          | 所有模型接近零                               |
+| 横向思维              | 5.0%        | 接近零          | 创造性推理从根本上很困难                      |
 
-GPT-4 achieves the best performance in **6 out of 8** environments.
+GPT-4 在 **8 个环境中的 6 个**取得了最佳表现。
 
-### Environment Difficulty Analysis (Why Some Are Hardest)
+### 环境难度分析（为何某些环境最难）
 
-**Hardest environments (near-zero for all models):**
-1. **Web Browsing (5.3%)**: Requires generalizing across arbitrary website layouts with no prior exposure. The diversity of real websites makes this an open-domain generalization problem that current models cannot solve.
-2. **Lateral Thinking (5.0%)**: Creative reasoning requires generating novel hypotheses, not just applying learned patterns. This is orthogonal to the pattern-matching strength of LLMs.
+**最难的环境（所有模型接近零）：**
+1. **网页浏览 (5.3%)**：需要在没有先验接触的情况下泛化到任意网站布局。真实网站的多样性使其成为当前模型无法解决的开放领域泛化问题。
+2. **横向思维 (5.0%)**：创造性推理需要生成新颖假设，而不仅仅是应用已学到的模式。这与 LLM 的模式匹配优势是正交的。
 
-**Challenging environments:**
-3. **Database (32.5%)**: Multi-table joins, aggregations, and subqueries push beyond simple SQL generation into genuine data reasoning.
-4. **Operating System (42.4%)**: Complex shell operations (piping, scripting, process management) require system-level knowledge that goes beyond text manipulation.
+**有挑战性的环境：**
+3. **数据库 (32.5%)**：多表连接、聚合和子查询超出了简单 SQL 生成的范围，进入了真正的数据推理领域。
+4. **操作系统 (42.4%)**：复杂的 shell 操作（管道、脚本编写、进程管理）需要超越文本处理的系统级知识。
 
-**Relatively accessible environments:**
-5. **HouseHolding (78%)**: Constrained action space, strong common-sense priors from pre-training, and relatively short episodes make this the most tractable environment.
-6. **Digital Card Game (74.5%)**: GPT-4 shows genuine strategic ability, but open-source models essentially play randomly, creating the largest per-environment gap.
+**相对容易的环境：**
+5. **家务管理 (78%)**：受限的动作空间、来自预训练的强常识先验、以及相对较短的回合使其成为最容易处理的环境。
+6. **数字卡牌游戏 (74.5%)**：GPT-4 展示了真正的战略能力，但开源模型基本上是随机出牌，创造了各环境中最大的性能差距。
 
-### Commercial vs. Open-Source Gap
+### 商业与开源差距
 
-The performance gap is dramatic and consistent:
-- GPT-4 (4.01) outperforms the best open-source model by **4.2x** (CodeLlama-34B at 0.96)
-- This gap is far larger than what static benchmarks suggest -- on MMLU and HumanEval, open-source models appear competitive, but on agentic tasks the gap is qualitative, not just quantitative
-- Open-source models score near zero on the most demanding environments (DCG, WB, KG), indicating complete incapability rather than just reduced accuracy
-- Even GPT-3.5-turbo (2.32) outperforms every open-source model tested by more than 2x
+性能差距巨大且一致：
+- GPT-4 (4.01) 以 **4.2 倍**的优势超过最佳开源模型（CodeLlama-34B 的 0.96）
+- 这个差距远大于静态基准测试所显示的 -- 在 MMLU 和 HumanEval 上，开源模型看起来具有竞争力，但在智能体任务上差距是质的而不仅仅是量的
+- 开源模型在最具挑战性的环境（DCG、WB、KG）中得分接近零，表明是完全的无能力而不仅仅是准确率降低
+- 即使 GPT-3.5-turbo (2.32) 也以超过 2 倍的优势超过了所有测试的开源模型
 
-## Limitations
+## 局限性
 
-- **Temporal snapshot**: Results reflect model capabilities as of mid-2023. The open-source gap has substantially narrowed since publication (Qwen-2.5, DeepSeek-V3, LLaMA-3 have improved significantly).
-- **Aggregate score simplification**: A single overall score hides dramatic per-environment variation. A model strong in coding but weak in games gets a similar aggregate to one with opposite strengths.
-- **Prompt sensitivity**: Agent performance is highly sensitive to system prompt design. Different prompting strategies (few-shot, chain-of-thought) could substantially change rankings.
-- **No fine-tuned agent baselines**: All models tested zero-shot. Agent-specific fine-tuning (as later demonstrated by CodeAct and others) can dramatically improve performance.
-- **No tool-use augmentation**: Models tested in their base form without tool augmentation (code interpreters, retrieval systems), which may underestimate practical capabilities.
-- **English-only**: All environments and tasks use English exclusively.
-- **Limited task diversity per environment**: Each environment has a fixed set of tasks that may not capture the full diversity of real-world agentic scenarios.
-- **Binary task evaluation in most environments**: No partial credit for agents that complete some steps correctly but fail at the final step.
+- **时间快照**：结果反映的是 2023 年中期的模型能力。自发表以来，开源差距已大幅缩小（Qwen-2.5、DeepSeek-V3、LLaMA-3 已有显著改善）。
+- **总体分数简化**：单一总分掩盖了各环境之间的巨大差异。一个在编码方面强但在游戏方面弱的模型与优劣势相反的模型获得相似的总分。
+- **提示敏感性**：智能体性能对系统提示设计高度敏感。不同的提示策略（少样本、思维链）可能会大幅改变排名。
+- **无微调智能体基线**：所有模型均在零样本条件下测试。智能体专用微调（如后来 CodeAct 等所展示的）可以大幅提高性能。
+- **无工具增强**：模型以基础形式测试，没有工具增强（代码解释器、检索系统），这可能低估了实际能力。
+- **仅限英语**：所有环境和任务仅使用英语。
+- **每个环境的任务多样性有限**：每个环境有固定的任务集，可能无法捕捉真实世界智能体场景的全部多样性。
+- **大多数环境采用二元任务评估**：对于完成了部分步骤但在最后一步失败的智能体没有部分评分。
 
-## Key Takeaways
+## 核心要点
 
-1. **LLMs as agents expose a hidden capability gap**: Models that appear competitive on static benchmarks (MMLU, HumanEval) show dramatic performance differences when used as interactive agents. AgentBench reveals capabilities that standard evaluation entirely misses.
-2. **The commercial-open-source gap is severe for agentic tasks**: GPT-4's 4.01 vs. CodeLlama's 0.96 is a 4x gap that represents a qualitative capability difference -- open-source models are not just worse, they completely fail on the hardest environments.
-3. **Long-term reasoning is the primary bottleneck**: Poor performance correlates strongly with environments requiring many sequential decisions (DCG at 20-50 turns, LTP at 10-30 questions), more than with knowledge or basic instruction following.
-4. **Three specific failure modes identified**: (a) poor long-term reasoning over extended interactions, (b) weak decision-making even when correct actions are available, and (c) instruction following deficits (wrong output format, ignored constraints) -- particularly acute in open-source models.
-5. **Environment diversity matters**: Performance varies dramatically across environments (78% on HouseHolding vs. 5% on Web Browsing for GPT-4), making single-environment benchmarks fundamentally misleading for assessing general agent capabilities.
-6. **Improving instruction following and training on high-quality multi-round alignment data are the most promising paths** to improving agent performance -- a finding validated by subsequent work on agent-specific fine-tuning (CodeAct, Qwen-Agent).
-7. **The benchmark established a model capability hierarchy** -- GPT-4 >> Claude-2 ~ GPT-3.5 >> open-source -- that held remarkably consistent across all environments and has guided subsequent model development priorities.
+1. **LLM 作为智能体暴露了隐藏的能力差距**：在静态基准测试（MMLU、HumanEval）上看起来具有竞争力的模型，在作为交互式智能体使用时显示出巨大的性能差异。AgentBench 揭示了标准评估完全遗漏的能力。
+2. **商业-开源差距在智能体任务上是严重的**：GPT-4 的 4.01 对比 CodeLlama 的 0.96 是 4 倍的差距，代表着质的能力差异 -- 开源模型不仅仅是表现更差，它们在最难的环境中完全失败。
+3. **长期推理是主要瓶颈**：性能差与需要多次连续决策的环境（DCG 20-50 轮，LTP 10-30 个问题）强相关，超过了知识或基本指令遵循的影响。
+4. **识别出三种具体的失败模式**：(a) 长时间交互中的长期推理能力差，(b) 即使正确的动作可用也存在决策薄弱的问题，(c) 指令遵循缺陷（输出格式错误、忽略约束）-- 在开源模型中尤为严重。
+5. **环境多样性很重要**：性能在不同环境间差异巨大（GPT-4 在家务管理上 78% 对比网页浏览上 5%），使得单环境基准测试在评估通用智能体能力方面具有根本性的误导性。
+6. **改善指令遵循和高质量多轮对齐数据训练是最有前景的路径**，以提高智能体性能 -- 这一发现已被后续的智能体专用微调工作（CodeAct、Qwen-Agent）所验证。
+7. **该基准测试建立了模型能力层级** -- GPT-4 >> Claude-2 ~ GPT-3.5 >> 开源 -- 该层级在所有环境中保持了显著的一致性，并引导了后续的模型开发优先级。

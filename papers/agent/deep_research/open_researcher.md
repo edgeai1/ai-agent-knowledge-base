@@ -15,33 +15,24 @@ tags:
 status: done
 ---
 
-# OpenResearcher: A Fully Open Pipeline for Long-Horizon Deep Research Trajectory Synthesis
+# OpenResearcher：用于长程深度研究轨迹合成的完全开放流水线
 
-## TL;DR
+## 摘要
 
-OpenResearcher is a fully open, reproducible pipeline for synthesizing long-horizon deep research
-trajectories at scale. It decouples one-time corpus bootstrapping from multi-turn trajectory
-generation, using three browser primitives (search, open, find) over a 15M-document offline corpus.
-GPT-OSS-120B serves as the teacher model to generate 97K trajectories (with 100+ tool calls in the
-long tail). SFT on a 30B-A3B backbone achieves 54.8% on BrowseComp-Plus (+34.0 over base),
-surpassing GPT-4.1, Claude-Opus-4, Gemini-2.5-Pro, and DeepSeek-R1.
+OpenResearcher 是一个完全开放、可复现的流水线，用于大规模合成长程深度研究轨迹。它将一次性的语料库构建与多轮轨迹生成解耦，使用三个浏览器原语（搜索、打开、查找）操作一个包含 1500 万文档的离线语料库。GPT-OSS-120B 作为教师模型生成了 9.7 万条轨迹（长尾部分包含 100 次以上的工具调用）。在 30B-A3B 骨干网络上进行 SFT 后，在 BrowseComp-Plus 上达到 54.8%（比基础模型高 +34.0），超越了 GPT-4.1、Claude-Opus-4、Gemini-2.5-Pro 和 DeepSeek-R1。
 
-## Motivation & Problem
+## 动机与问题
 
-Training deep research agents via online RL (as in DeepResearcher) is expensive and
-non-reproducible due to:
-1. **Search API dependency**: Live web results change over time; training is not deterministic.
-2. **Cost and rate limits**: Massive parallel API calls during RL rollouts are prohibitively
-   expensive.
-3. **Lack of open data**: No large-scale, high-quality deep research trajectory datasets exist
-   for supervised training.
+通过在线强化学习（如 DeepResearcher）训练深度研究智能体成本高昂且不可复现，原因如下：
+1. **搜索 API 依赖**：实时网络结果随时间变化；训练不具有确定性。
+2. **成本和速率限制**：强化学习推演期间大规模并行 API 调用的成本过高。
+3. **缺乏开放数据**：不存在大规模、高质量的深度研究轨迹数据集用于监督训练。
 
-OpenResearcher asks: can we generate high-quality research trajectories entirely offline and use
-supervised fine-tuning to achieve competitive or superior performance?
+OpenResearcher 提出的问题是：我们能否完全离线生成高质量的研究轨迹，并通过监督微调实现有竞争力或更优的性能？
 
-## Method
+## 方法
 
-### Pipeline Overview
+### 流水线概览
 
 ```
 +-------------------+     +--------------------+     +-------------------+
@@ -55,16 +46,15 @@ supervised fine-tuning to achieve competitive or superior performance?
   Self-built retriever      GPT-OSS-120B teacher       
 ```
 
-### Stage 1: Corpus Bootstrapping
+### 阶段一：语料库构建
 
-- Build a **15M-document corpus** (~11 billion tokens) from diverse web sources.
-- Construct a **self-built retriever** over this corpus, eliminating dependency on external
-  search APIs.
-- One-time process: the corpus is indexed and reused across all trajectory synthesis runs.
+- 从多元化网络来源构建 **1500 万文档语料库**（约 110 亿词元）。
+- 在该语料库上构建 **自建检索器**，消除对外部搜索 API 的依赖。
+- 一次性处理：语料库完成索引后可在所有轨迹合成运行中重复使用。
 
-### Stage 2: Trajectory Synthesis with Browser Primitives
+### 阶段二：基于浏览器原语的轨迹合成
 
-Three explicit browser primitives define the action space:
+三个显式浏览器原语定义了动作空间：
 
 ```
 PRIMITIVE: search(query) -> list[document_snippets]
@@ -80,7 +70,7 @@ PRIMITIVE: find(pattern, document) -> matched_sections
   - Enables targeted extraction from long documents
 ```
 
-### Trajectory Generation Process
+### 轨迹生成过程
 
 ```
 Algorithm: Long-Horizon Trajectory Synthesis
@@ -97,58 +87,51 @@ Output: Trajectory T = [(action_1, obs_1), ..., (action_n, obs_n), answer]
 7. Return complete trajectory T with all intermediate steps
 ```
 
-Key properties of generated trajectories:
-- **Long-horizon**: Substantial tail with 100+ sequential tool calls per trajectory.
-- **Multi-turn**: Agent iteratively refines its research strategy across many steps.
-- **Grounded**: All observations come from the fixed corpus, ensuring reproducibility.
+生成轨迹的关键特性：
+- **长程**：相当部分的尾部轨迹包含 100 次以上的序列工具调用。
+- **多轮**：智能体在多个步骤中迭代优化其研究策略。
+- **有据可依**：所有观察均来自固定语料库，确保可复现性。
 
-### Stage 3: Supervised Fine-Tuning
+### 阶段三：监督微调
 
-- **Backbone**: 30B-A3B (30 billion total parameters, 3 billion active via mixture-of-experts).
-- **Training data**: 96K high-quality trajectories from Stage 2.
-- **Distillation**: The student model learns the teacher's research strategies through standard
-  next-token prediction on the trajectory sequences.
+- **骨干网络**：30B-A3B（总参数 300 亿，通过混合专家激活 30 亿）。
+- **训练数据**：来自阶段二的 9.6 万条高质量轨迹。
+- **蒸馏**：学生模型通过标准下一词预测学习教师的研究策略。
 
-## Key Innovations
+## 关键创新
 
-1. **Fully offline pipeline**: Eliminates search API dependency by building a self-contained
-   corpus with a custom retriever. Trajectories are fully reproducible.
+1. **完全离线流水线**：通过构建自包含的语料库和自定义检索器消除搜索 API 依赖。轨迹完全可复现。
 
-2. **Three-primitive action space**: The search/open/find abstraction is minimal yet sufficient to
-   capture the full range of web research behaviors (broad search, deep reading, targeted
-   extraction).
+2. **三原语动作空间**：搜索/打开/查找的抽象既简洁又足以捕获全部网络研究行为（广泛搜索、深度阅读、定向提取）。
 
-3. **Long-horizon trajectories at scale**: 97K trajectories with a substantial fraction containing
-   100+ tool calls, far exceeding prior datasets in trajectory length and complexity.
+3. **大规模长程轨迹**：9.7 万条轨迹，其中相当比例包含 100 次以上的工具调用，在轨迹长度和复杂度上远超先前数据集。
 
-4. **GPT-OSS-120B as teacher**: Uses a strong open-source teacher model with native browser tool
-   support, enabling high-quality trajectory generation without proprietary API dependency.
+4. **GPT-OSS-120B 作为教师**：使用具有原生浏览器工具支持的强大开源教师模型，实现高质量轨迹生成而无需依赖专有 API。
 
-5. **Compact student model**: The 30B-A3B architecture (only 3B active parameters via MoE)
-   achieves state-of-the-art results despite its small active parameter count.
+5. **紧凑的学生模型**：30B-A3B 架构（通过 MoE 仅 30 亿活跃参数）尽管活跃参数数量较少，但取得了最先进的结果。
 
-## Experimental Setup
+## 实验设置
 
-### Benchmarks
+### 基准测试
 
-| Benchmark         | Task Type                        | Difficulty    |
+| 基准测试         | 任务类型                        | 难度    |
 |-------------------|----------------------------------|---------------|
-| BrowseComp-Plus   | Complex browsing comprehension   | Very hard     |
-| BrowseComp        | Web browsing comprehension       | Hard          |
-| GAIA              | General AI assistant tasks       | Medium-Hard   |
-| xbench-DeepSearch | Deep search evaluation           | Hard          |
+| BrowseComp-Plus   | 复杂浏览理解   | 非常难     |
+| BrowseComp        | 网络浏览理解       | 难          |
+| GAIA              | 通用 AI 助手任务       | 中等-难   |
+| xbench-DeepSearch | 深度搜索评估           | 难          |
 
-### Baselines
+### 基线
 
-- **Proprietary models**: GPT-4.1, Claude-Opus-4, Gemini-2.5-Pro
-- **Open models**: DeepSeek-R1, Tongyi-DeepResearch
-- **Base model**: 30B-A3B without SFT (for ablation)
+- **专有模型**：GPT-4.1、Claude-Opus-4、Gemini-2.5-Pro
+- **开源模型**：DeepSeek-R1、Tongyi-DeepResearch
+- **基础模型**：未经 SFT 的 30B-A3B（用于消融实验）
 
-## Results
+## 结果
 
-### BrowseComp-Plus (Primary Benchmark)
+### BrowseComp-Plus（主要基准测试）
 
-| Model                        | Accuracy |
+| 模型                        | 准确率 |
 |------------------------------|----------|
 | OpenResearcher-30B-A3B       | **54.8%**|
 | GPT-4.1                      | < 54.8%  |
@@ -156,43 +139,35 @@ Key properties of generated trajectories:
 | Gemini-2.5-Pro               | < 54.8%  |
 | DeepSeek-R1                  | < 54.8%  |
 | Tongyi-DeepResearch          | < 54.8%  |
-| 30B-A3B base (no SFT)       | 20.8%    |
+| 30B-A3B 基础模型（无 SFT）       | 20.8%    |
 
-- **+34.0 absolute improvement** over the base model (20.8% -> 54.8%).
-- Surpasses all listed proprietary and open-source baselines.
+- 比基础模型 **绝对提升 +34.0**（20.8% -> 54.8%）。
+- 超越所有列出的专有和开源基线。
 
-### Cross-Benchmark Generalization
+### 跨基准泛化
 
-- Competitive performance on BrowseComp, GAIA, and xbench-DeepSearch.
-- Demonstrates that offline trajectory synthesis transfers to diverse evaluation settings.
+- 在 BrowseComp、GAIA 和 xbench-DeepSearch 上具有竞争力的性能。
+- 证明了离线轨迹合成可以迁移到多样化的评估场景。
 
-## Limitations
+## 局限性
 
-1. **Corpus freshness**: The offline 15M-document corpus becomes stale over time; cannot handle
-   queries about recent events.
-2. **Teacher model dependency**: Quality of trajectories is bounded by GPT-OSS-120B's capability.
-3. **SFT ceiling**: Supervised fine-tuning may not discover novel strategies beyond those
-   demonstrated by the teacher (no exploration as in RL).
-4. **Evaluation scope**: Primarily evaluated on browsing comprehension; less tested on open-ended
-   report generation tasks.
-5. **MoE complexity**: The 30B-A3B architecture adds engineering complexity for deployment despite
-   having only 3B active parameters.
+1. **语料库时效性**：离线的 1500 万文档语料库会随时间陈旧；无法处理关于近期事件的查询。
+2. **教师模型依赖**：轨迹质量受限于 GPT-OSS-120B 的能力。
+3. **SFT 上限**：监督微调可能无法发现教师所展示之外的新策略（不像强化学习那样有探索）。
+4. **评估范围**：主要在浏览理解上评估；在开放式报告生成任务上测试较少。
+5. **MoE 复杂性**：30B-A3B 架构尽管仅有 30 亿活跃参数，但为部署增加了工程复杂性。
 
-## Follow-up Work
+## 后续工作
 
-- Potential integration with RL fine-tuning (SFT + RL hybrid as in DeepResearcher).
-- Extension to multimodal research trajectories (images, tables, charts).
-- Dynamic corpus updating for handling time-sensitive queries.
-- Scaling the trajectory synthesis to even longer horizons (1000+ tool calls).
+- 可能与强化学习微调集成（如 DeepResearcher 中的 SFT + RL 混合方法）。
+- 扩展到多模态研究轨迹（图像、表格、图表）。
+- 动态语料库更新以处理时效性查询。
+- 将轨迹合成扩展到更长的范围（1000 次以上的工具调用）。
 
-## Key Takeaways
+## 核心要点
 
-1. Offline trajectory synthesis is a viable alternative to expensive online RL for training deep
-   research agents, achieving state-of-the-art results through SFT alone.
-2. The search/open/find primitive set is a powerful minimal abstraction for web research behavior.
-3. Long-horizon trajectories (100+ tool calls) are critical for teaching agents to handle complex,
-   multi-step research tasks.
-4. A compact MoE architecture (3B active parameters) can match or exceed much larger dense models
-   when trained on high-quality research trajectories.
-5. Full open-sourcing of dataset, model, and training recipe enables reproducible research on
-   deep research agents.
+1. 离线轨迹合成是训练深度研究智能体的可行替代方案，可替代昂贵的在线强化学习，仅通过 SFT 即可实现最先进的结果。
+2. 搜索/打开/查找原语集是网络研究行为的一组强大的最小抽象。
+3. 长程轨迹（100 次以上的工具调用）对于教授智能体处理复杂的多步研究任务至关重要。
+4. 紧凑的 MoE 架构（30 亿活跃参数）在使用高质量研究轨迹训练时，可以匹配或超越更大的稠密模型。
+5. 完全开源数据集、模型和训练方案，使深度研究智能体的可复现研究成为可能。

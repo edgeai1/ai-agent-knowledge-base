@@ -30,46 +30,29 @@ tags:
 status: done
 ---
 
-## TL;DR
+## 摘要
 
-O-Researcher proposes a framework to close the performance gap between closed-source and
-open-source LLMs for deep research tasks. The approach uses multi-agent distillation to
-synthesize high-fidelity research-grade training data, followed by a two-stage training
-strategy combining supervised fine-tuning (SFT) with a novel agentic reinforcement learning
-method. The framework captures the full iterative research process -- from query planning
-to final report synthesis -- and enables open-source models to achieve new state-of-the-art
-performance on major deep research benchmarks.
+O-Researcher 提出了一个框架，旨在缩小闭源和开源 LLM 在深度研究任务上的性能差距。该方法使用多智能体蒸馏来合成高保真的研究级训练数据，随后采用两阶段训练策略，将监督微调（SFT）与新型智能体强化学习方法相结合。该框架捕获了完整的迭代研究过程——从查询规划到最终报告合成——使开源模型在主要深度研究基准测试上达到新的最先进水平。
 
-## Motivation & Problem
+## 动机与问题
 
-The deep research capability gap between closed-source models (GPT-4o, Claude, Gemini) and
-open-source models is primarily attributed to:
+闭源模型（GPT-4o、Claude、Gemini）和开源模型之间的深度研究能力差距主要归因于：
 
-1. **Data disparity**: Closed-source providers have access to vast amounts of proprietary,
-   high-quality training data including human feedback, tool-use traces, and research
-   workflows. Open-source models lack comparable data.
+1. **数据差异**：闭源提供商拥有大量专有的高质量训练数据，包括人类反馈、工具使用轨迹和研究工作流。开源模型缺乏可比的数据。
 
-2. **Pipeline complexity**: Deep research involves iterative cycles of query planning,
-   information retrieval, evidence evaluation, synthesis, and report generation. Capturing
-   this full pipeline in training data is difficult.
+2. **流水线复杂性**：深度研究涉及查询规划、信息检索、证据评估、综合和报告生成的迭代循环。在训练数据中捕获完整的流水线是困难的。
 
-3. **Tool integration**: Real deep research requires seamless integration with search
-   engines, databases, and document analysis tools. Most training data lacks rich
-   tool-integrated reasoning traces.
+3. **工具集成**：真实的深度研究需要与搜索引擎、数据库和文档分析工具的无缝集成。大多数训练数据缺乏丰富的工具集成推理轨迹。
 
-4. **Proprietary API dependency**: Existing approaches rely on distilling from proprietary
-   APIs (e.g., GPT-4), creating an unsustainable dependency and potential legal/ethical
-   concerns.
+4. **专有 API 依赖**：现有方法依赖从专有 API（如 GPT-4）进行蒸馏，创造了不可持续的依赖关系和潜在的法律/伦理问题。
 
-Prior work like TaskCraft and basic multi-agent distillation approaches capture only
-fragments of the research process. O-Researcher aims to capture the complete, iterative,
-exploratory essence of deep research end-to-end.
+先前的工作如 TaskCraft 和基础多智能体蒸馏方法仅捕获了研究过程的片段。O-Researcher 旨在端到端地捕获深度研究的完整、迭代、探索性本质。
 
-## Method
+## 方法
 
-### Multi-Agent Distillation Framework
+### 多智能体蒸馏框架
 
-O-Researcher uses a collaborative multi-agent system to generate synthetic research data:
+O-Researcher 使用协作多智能体系统生成合成研究数据：
 
 ```
 +================================================================+
@@ -118,7 +101,7 @@ O-Researcher uses a collaborative multi-agent system to generate synthetic resea
 +================================================================+
 ```
 
-### Two-Stage Training Strategy
+### 两阶段训练策略
 
 ```
 STAGE 1: Supervised Fine-Tuning (SFT)
@@ -152,10 +135,9 @@ STAGE 2: Agentic Reinforcement Learning
 +------------------------------------------------------------------+
 ```
 
-### Research Process Captured
+### 捕获的研究过程
 
-Unlike prior distillation that captures single-turn or shallow multi-turn interactions,
-O-Researcher captures the full research lifecycle:
+与先前仅捕获单轮或浅层多轮交互的蒸馏不同，O-Researcher 捕获了完整的研究生命周期：
 
 ```
 Full Research Lifecycle:
@@ -192,107 +174,67 @@ Full Research Lifecycle:
    - Revise if quality threshold not met
 ```
 
-## Key Innovations
+## 关键创新
 
-1. **End-to-end research trajectory synthesis**: First framework to capture the complete
-   deep research process (planning through report synthesis) in synthetic training data,
-   rather than fragmentary task completions.
+1. **端到端研究轨迹合成**：首个在合成训练数据中捕获完整深度研究过程（从规划到报告合成）的框架，而非零散的子任务完成。
 
-2. **Multi-agent collaborative distillation**: Multiple specialized agents (planner,
-   retriever, evaluator, synthesizer, critic) collaborate to produce training data that
-   a single model can then learn from, combining expertise without requiring a single
-   model to have all capabilities from the start.
+2. **多智能体协作蒸馏**：多个专门化智能体（规划者、检索者、评估者、综合者、评审者）协作产生训练数据，单一模型随后可以从中学习，在不要求单一模型从一开始就具备所有能力的情况下整合专业知识。
 
-3. **Agentic RL for research behavior**: RL stage specifically targets research-quality
-   behaviors (exploration, self-correction, evidence evaluation) rather than generic
-   instruction following, using a composite reward that captures both process and outcome.
+3. **针对研究行为的智能体强化学习**：强化学习阶段专门针对研究质量行为（探索、自纠正、证据评估），而非通用指令遵循，使用结合过程和结果的复合奖励。
 
-4. **Democratization of deep research**: Enables open-source models to achieve competitive
-   performance with closed-source systems, reducing dependency on proprietary APIs.
+4. **深度研究的民主化**：使开源模型达到与闭源系统竞争的性能，减少对专有 API 的依赖。
 
-## Experimental Setup
+## 实验设置
 
-- **Base models**: Open-source models at multiple scales (specific model names not
-  confirmed in search results; likely Qwen or Llama family)
-- **Benchmarks**: Major deep research benchmarks including GAIA (general AI assistant
-  tasks requiring web browsing and multi-step reasoning)
-- **Baselines**: Closed-source models (GPT-4o, Claude), prior open-source deep research
-  agents, basic distillation approaches
-- **Evaluation**: Report quality (accuracy, completeness, coherence), tool-use
-  effectiveness, research depth, factual correctness
+- **基础模型**：多个规模的开源模型（具体模型名称在搜索结果中未确认；可能是 Qwen 或 Llama 系列）
+- **基准测试**：主要深度研究基准测试，包括 GAIA（需要网络浏览和多步推理的通用 AI 助手任务）
+- **基线**：闭源模型（GPT-4o、Claude）、先前的开源深度研究智能体、基础蒸馏方法
+- **评估**：报告质量（准确性、完整性、连贯性）、工具使用有效性、研究深度、事实正确性
 
-## Results
+## 结果
 
-### Key Performance Claims
+### 关键性能声明
 
-- Open-source models trained with O-Researcher achieve **new state-of-the-art for
-  open-source models** on major deep research benchmarks.
-- Models **significantly close the gap** to closed-source systems (GPT-4o, Claude).
-- The framework is effective across **multiple model scales**, demonstrating the
-  approach is not limited to large models only.
-- Both SFT and RL stages contribute meaningfully: SFT establishes baseline capability,
-  RL refines self-correction and iterative research behaviors.
+- 使用 O-Researcher 训练的开源模型在主要深度研究基准测试上达到了**开源模型的新最先进水平**。
+- 模型**显著缩小了**与闭源系统（GPT-4o、Claude）的差距。
+- 该框架在**多个模型规模**上有效，证明了该方法不局限于大型模型。
+- SFT 和 RL 两个阶段都有意义地贡献：SFT 建立基础能力，RL 优化自纠正和迭代研究行为。
 
-### Contextual Reference Points (Other Deep Research Systems)
+### 上下文参考点（其他深度研究系统）
 
-| System               | GAIA Score (approx) | Type         |
+| 系统               | GAIA 分数（近似） | 类型         |
 |---------------------|---------------------|--------------|
-| OpenAI Deep Research | ~67% (avg)          | Closed-source|
-| Tongyi DeepResearch  | 70.9                | Closed-source|
-| Open-source baseline | ~55%                | Open-source  |
-| O-Researcher         | SOTA for open-source| Open-source  |
+| OpenAI Deep Research | 约 67%（平均）          | 闭源|
+| 通义深度研究  | 70.9                | 闭源|
+| 开源基线 | 约 55%                | 开源  |
+| O-Researcher         | 开源最先进| 开源  |
 
-### Ablation Findings
+### 消融实验发现
 
-- Multi-agent distillation produces higher quality training data than single-agent
-  generation, as each agent contributes specialized expertise.
-- The RL stage is essential: SFT alone produces models that follow research patterns but
-  lack iterative refinement and self-correction capabilities.
-- Research trajectory completeness matters: models trained on full end-to-end traces
-  outperform those trained on fragmented sub-task data.
+- 多智能体蒸馏比单智能体生成产生更高质量的训练数据，因为每个智能体贡献了专门的专业知识。
+- 强化学习阶段至关重要：仅 SFT 产生的模型遵循研究模式但缺乏迭代优化和自纠正能力。
+- 研究轨迹的完整性很重要：在完整端到端轨迹上训练的模型优于在零散子任务数据上训练的模型。
 
-## Limitations
+## 局限性
 
-1. **Benchmark specificity**: Deep research benchmarks (GAIA, etc.) may not fully capture
-   the diversity and difficulty of real-world research tasks, which span technical depth,
-   creative synthesis, and domain expertise.
+1. **基准特定性**：深度研究基准测试（GAIA 等）可能无法完全捕获真实世界研究任务的多样性和难度，这些任务涵盖技术深度、创造性综合和领域专业知识。
 
-2. **Data quality ceiling**: The quality of synthetic trajectories is bounded by the
-   capabilities of the agent system generating them. If the multi-agent pipeline makes
-   systematic errors, these propagate into training.
+2. **数据质量上限**：合成轨迹的质量受限于生成它们的智能体系统的能力。如果多智能体流水线产生系统性错误，这些错误会传播到训练中。
 
-3. **Evaluation difficulty**: Assessing "research quality" is inherently subjective and
-   multi-dimensional. Automated metrics may not capture aspects like insight depth,
-   argument quality, or practical utility.
+3. **评估困难**：评估"研究质量"本质上是主观的和多维的。自动指标可能无法捕获洞察深度、论证质量或实际效用等方面。
 
-4. **Tool environment dependency**: The RL stage requires a research environment with
-   live tool access (search engines, databases), which may not be stable or reproducible
-   across training runs.
+4. **工具环境依赖**：强化学习阶段需要具有实时工具访问（搜索引擎、数据库）的研究环境，这在训练运行之间可能不稳定或不可复现。
 
-5. **Scale and generalization**: Competitive performance likely requires 32B+ models
-   and significant RL compute. Fine-tuning for deep research may reduce general
-   instruction-following capability; this trade-off is not thoroughly analyzed.
+5. **规模与泛化**：竞争性能可能需要 32B 以上的模型和大量的强化学习计算。针对深度研究的微调可能会降低通用指令遵循能力；这种权衡未得到充分分析。
 
-## Key Takeaways
+## 核心要点
 
-1. Multi-agent distillation is a powerful paradigm for generating high-quality training
-   data: specialized agents can collaboratively produce traces that exceed what any
-   single agent could generate, providing a richer learning signal for student models.
+1. 多智能体蒸馏是生成高质量训练数据的强大范式：专门化智能体可以协作产生超越任何单一智能体所能生成的轨迹，为学生模型提供更丰富的学习信号。
 
-2. The two-stage training approach (SFT then RL) is well-motivated for deep research:
-   SFT provides the structural foundation (how to plan, search, synthesize), while RL
-   refines the adaptive behaviors (when to re-search, how to self-correct) that
-   distinguish good research from formulaic pattern-matching.
+2. 两阶段训练方法（SFT 然后 RL）对深度研究具有充分的动机：SFT 提供结构性基础（如何规划、搜索、综合），而 RL 优化自适应行为（何时重新搜索、如何自纠正），这些行为将优质研究与公式化模式匹配区分开来。
 
-3. Capturing the full research lifecycle in training data is critical. Models trained on
-   fragmentary sub-tasks fail to develop the iterative, exploratory behavior that
-   characterizes genuine deep research.
+3. 在训练数据中捕获完整的研究生命周期至关重要。在零散子任务上训练的模型无法发展出表征真正深度研究的迭代、探索性行为。
 
-4. The performance gap between open-source and closed-source research agents is
-   significantly narrower than commonly assumed, and can be further closed with
-   better training data and RL approaches rather than raw model scale.
+4. 开源和闭源研究智能体之间的性能差距比通常认为的要窄得多，通过更好的训练数据和强化学习方法而非原始模型规模可以进一步缩小。
 
-5. The combination of synthetic data generation and agentic RL can substitute for
-   proprietary data advantages, providing a scalable path to democratizing deep
-   research. The framework is complementary to model scaling and can be re-applied
-   as base models improve.
+5. 合成数据生成和智能体强化学习的结合可以替代专有数据优势，为深度研究的民主化提供了可扩展的路径。该框架与模型规模互补，可以在基础模型改进时重新应用。

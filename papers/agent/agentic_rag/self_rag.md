@@ -20,102 +20,89 @@ tags:
 status: done
 ---
 
-## TL;DR
+## 简要总结
 
-Self-RAG trains a single LM to adaptively retrieve passages on-demand and self-evaluate
-both retrieval quality and generation faithfulness using special reflection tokens. Unlike
-standard RAG that always retrieves a fixed number of passages, Self-RAG decides *when* to
-retrieve (or skip retrieval entirely) and *how* to critique retrieved content through four
-types of reflection tokens: Retrieve, ISREL, ISSUP, and ISUSE. Trained on Llama2-7B/13B,
-Self-RAG outperforms ChatGPT and retrieval-augmented Llama2-chat on open-domain QA,
-reasoning, and fact verification while achieving the lowest hallucination rates among
-evaluated RAG approaches (~5.8%).
+Self-RAG 训练一个单一的语言模型按需自适应地检索文章，并使用特殊的反思 token 自我评估检索质量和生成忠实度。与总是检索固定数量文章的标准 RAG 不同，Self-RAG 通过四种反思 token 决定*何时*检索（或完全跳过检索）以及*如何*批评检索到的内容：Retrieve、ISREL、ISSUP 和 ISUSE。基于 Llama2-7B/13B 训练的 Self-RAG 在开放域问答、推理和事实验证方面超越了 ChatGPT 和检索增强的 Llama2-chat，同时达到了被评估 RAG 方法中最低的幻觉率（约 5.8%）。
 
-## Motivation & Problem
+## 动机与问题
 
-Standard RAG approaches suffer from three key limitations:
+标准 RAG 方法存在三个关键局限性：
 
-1. **Indiscriminate retrieval**: Always retrieving K passages regardless of query type
-   wastes compute on easy queries and may inject noise for queries the model already knows.
-2. **No retrieval quality assessment**: Retrieved passages are blindly fed to the generator
-   without checking relevance, potentially misleading the model.
-3. **No generation faithfulness check**: The model has no mechanism to verify whether its
-   generation is actually supported by the retrieved evidence.
+1. **无差别检索**：无论查询类型如何，始终检索 K 篇文章，在简单查询上浪费计算资源，并可能为模型已知的查询注入噪声。
+2. **无检索质量评估**：检索到的文章被盲目地输入生成器，没有检查相关性，可能误导模型。
+3. **无生成忠实度检查**：模型没有机制来验证其生成是否确实由检索到的证据支持。
 
-Prior approaches to address these issues either require separate models (e.g., a retrieval
-classifier + a NLI model) or use reinforcement learning (RLHF), which is unstable and
-memory-intensive. Self-RAG unifies all these capabilities into a single model through
-special tokens, trained with standard next-token prediction.
+此前解决这些问题的方法要么需要独立的模型（例如检索分类器 + NLI 模型），要么使用强化学习（RLHF），后者不稳定且内存密集。Self-RAG 通过特殊 token 将所有这些能力统一到单一模型中，使用标准的下一个 token 预测进行训练。
 
-## Method
+## 方法
 
-### Reflection Token Types
+### 反思 token 类型
 
-Self-RAG introduces four special token types appended to the model's vocabulary:
+Self-RAG 引入了四种附加到模型词表中的特殊 token 类型：
 
 ```
 +------------------------------------------------------------------+
-|  Token       | When Emitted        | Possible Values              |
+|  Token       | 何时发出              | 可能的值                     |
 +------------------------------------------------------------------+
-|  Retrieve    | Before generation   | {yes, no, continue}          |
-|              | segment             | Decides whether to retrieve   |
+|  Retrieve    | 在生成段落            | {yes, no, continue}          |
+|              | 之前                  | 决定是否检索                  |
 +------------------------------------------------------------------+
-|  ISREL       | After retrieval     | {relevant, irrelevant}       |
-|              |                     | Is passage relevant to query? |
+|  ISREL       | 检索之后              | {relevant, irrelevant}       |
+|              |                       | 文章与查询相关吗？            |
 +------------------------------------------------------------------+
-|  ISSUP       | After generation    | {fully_supported,            |
-|              | segment             |  partially_supported,         |
-|              |                     |  no_support}                  |
-|              |                     | Is output supported by passage|
+|  ISSUP       | 生成段落              | {fully_supported,            |
+|              | 之后                  |  partially_supported,         |
+|              |                       |  no_support}                  |
+|              |                       | 输出是否由文章支持？          |
 +------------------------------------------------------------------+
-|  ISUSE       | After complete      | {1, 2, 3, 4, 5}              |
-|              | response            | Overall utility rating        |
+|  ISUSE       | 完成完整              | {1, 2, 3, 4, 5}              |
+|              | 回复之后              | 总体效用评分                  |
 +------------------------------------------------------------------+
 ```
 
-### Training Pipeline (4 Steps)
+### 训练流程（4 个步骤）
 
 ```
-Step 1: CRITIC DATA CREATION
+步骤 1：评判数据创建
 +------------------+     +------------------+
-| Input-output     | --> | GPT-4 annotates  | --> Reflection token
-| pairs from       |     | with reflection  |     training data
-| diverse sources  |     | token labels     |     (4K-20K per type)
-+------------------+     +------------------+
-
-Step 2: CRITIC MODEL TRAINING
-+------------------+     +------------------+
-| Reflection token | --> | Train Critic     | --> Critic_LM
-| training data    |     | (expand vocab    |     (can label any
-|                  |     |  with special    |     input with
-|                  |     |  tokens, train   |     reflection tokens)
-|                  |     |  next-token pred)|
+| 来自多种来源     | --> | GPT-4 标注       | --> 反思 token
+| 的输入-输出      |     | 反思 token       |     训练数据
+| 对               |     | 标签             |     （每种类型 4K-20K）
 +------------------+     +------------------+
 
-Step 3: GENERATOR DATA CREATION
+步骤 2：评判模型训练
++------------------+     +------------------+
+| 反思 token       | --> | 训练评判模型     | --> Critic_LM
+| 训练数据         |     |（扩展词表        |     （可以为任何
+|                  |     | 添加特殊 token， |     输入标注
+|                  |     | 训练下一个       |     反思 token）
+|                  |     | token 预测）     |
++------------------+     +------------------+
+
+步骤 3：生成器数据创建
 +------------------+     +------------------+     +------------------+
-| 150K instruction | --> | Retriever adds   | --> | Critic_LM adds   |
-| -output pairs    |     | relevant passages|     | reflection tokens |
-|                  |     | where needed     |     | inline            |
+| 15 万条指令      | --> | 检索器添加       | --> | Critic_LM 添加   |
+| -输出对          |     | 相关文章         |     | 内联反思 token    |
+|                  |     | （需要时）       |     |                   |
 +------------------+     +------------------+     +------------------+
                                                          |
                                                          v
-                                                  Training data with
-                                                  interleaved passages
-                                                  + reflection tokens
+                                                  带有交错文章
+                                                  + 反思 token 的
+                                                  训练数据
 
-Step 4: GENERATOR TRAINING
+步骤 4：生成器训练
 +------------------+     +------------------+
-| Augmented data   | --> | Train Generator  | --> Self-RAG_LM
-| with passages +  |     | (standard next-  |     (single model that
-| reflection tokens|     |  token prediction|      retrieves, generates,
-|                  |     |  loss over all   |      and critiques)
-|                  |     |  tokens incl.    |
-|                  |     |  reflection)     |
+| 增强数据         | --> | 训练生成器       | --> Self-RAG_LM
+| 含文章 +         |     |（标准下一个      |     （单一模型实现
+| 反思 token       |     | token 预测       |      检索、生成
+|                  |     | 损失，包含       |      和批评）
+|                  |     | 所有 token       |
+|                  |     | 含反思）         |
 +------------------+     +------------------+
 ```
 
-### Inference Algorithm
+### 推理算法
 
 ```
 SELF_RAG_INFERENCE(query):
@@ -123,14 +110,14 @@ SELF_RAG_INFERENCE(query):
     context = query
 
     while not DONE:
-        # Step 1: Decide whether to retrieve
+        # 步骤 1：决定是否检索
         retrieve_token = model.generate_next_token(context)
 
         if retrieve_token == "yes":
-            # Step 2: Retrieve passages
+            # 步骤 2：检索文章
             passages = retriever.retrieve(query, top_k=5)
 
-            # Step 3: Generate candidate segments for each passage
+            # 步骤 3：为每篇文章生成候选段落
             candidates = []
             for p in passages:
                 segment = model.generate(context + p)
@@ -139,13 +126,13 @@ SELF_RAG_INFERENCE(query):
                 isuse  = model.predict_token(ISUSE, segment, query)
                 candidates.append((segment, isrel, issup, isuse))
 
-            # Step 4: Rank and select best segment
+            # 步骤 4：排序并选择最佳段落
             best = rank_by_weighted_score(candidates,
-                       w_rel, w_sup, w_use)  # weights are tunable
+                       w_rel, w_sup, w_use)  # 权重可调
             segments.append(best.segment)
 
         elif retrieve_token == "no" or "continue":
-            # Generate without retrieval
+            # 不检索直接生成
             segment = model.generate(context)
             segments.append(segment)
 
@@ -154,121 +141,88 @@ SELF_RAG_INFERENCE(query):
     return join(segments)
 ```
 
-### Key Design Choices
+### 关键设计选择
 
-1. **Offline token insertion**: Reflection tokens are inserted by the Critic during
-   training data creation, not predicted during training. This makes training as simple
-   as standard next-token prediction (no RL needed).
+1. **离线 token 插入**：反思 token 在训练数据创建期间由评判模型插入，而非在训练过程中预测。这使训练与标准的下一个 token 预测一样简单（无需强化学习）。
 
-2. **Segment-level granularity**: The model generates output in segments, deciding
-   retrieval and critique at each segment boundary rather than per-token.
+2. **段落级粒度**：模型以段落为单位生成输出，在每个段落边界处决定检索和批评，而非逐 token。
 
-3. **Parallel candidate evaluation**: At inference, multiple passages are evaluated in
-   parallel, and the best-supported generation is selected.
+3. **并行候选评估**：推理时，多篇文章被并行评估，选择最佳支持的生成。
 
-4. **Tunable critique weights**: The weights on ISREL, ISSUP, and ISUSE can be adjusted
-   at inference time to trade off factuality vs. fluency without retraining.
+4. **可调批评权重**：ISREL、ISSUP 和 ISUSE 的权重可在推理时调整，无需重新训练即可权衡事实性与流畅性。
 
-## Key Innovations
+## 关键创新
 
-1. **Unified retrieve-generate-critique model**: Single model handles all three functions
-   through special tokens, eliminating the need for separate retrieval classifiers, NLI
-   models, or reward models.
+1. **统一的检索-生成-批评模型**：单一模型通过特殊 token 处理所有三个功能，消除了对独立检索分类器、NLI 模型或奖励模型的需求。
 
-2. **On-demand retrieval**: The model learns to retrieve only when beneficial, skipping
-   retrieval for queries it can answer from parametric knowledge. This reduces latency
-   and avoids noise injection.
+2. **按需检索**：模型学会仅在有益时检索，对可以从参数化知识回答的查询跳过检索。这减少了延迟并避免了噪声注入。
 
-3. **Training efficiency**: By using offline token insertion instead of RL, Self-RAG
-   training is as stable and memory-efficient as standard supervised fine-tuning.
+3. **训练效率**：通过使用离线 token 插入而非强化学习，Self-RAG 训练与标准监督微调一样稳定且内存高效。
 
-4. **Inference-time controllability**: Critique weights can be tuned at inference time
-   to shift the model's behavior along the factuality-creativity spectrum.
+4. **推理时可控性**：批评权重可在推理时调整，沿事实性-创造性光谱移动模型行为。
 
-## Experimental Setup
+## 实验设置
 
-- **Model sizes**: Llama2-7B and Llama2-13B
-- **Training data**: 150K instruction-output instances augmented with reflection tokens
-- **Critic training data**: 4K-20K instances per reflection token type, annotated by GPT-4
-- **Retriever**: Contriever-MS MARCO
-- **Benchmarks**:
-  - Open-domain QA: PopQA, TriviaQA (accuracy)
-  - Reasoning/Fact verification: PubHealth, ARC-Challenge (accuracy)
-  - Long-form generation: ASQA (citation precision/recall, correctness), Biography
-    generation (FactScore)
-- **Baselines**: Llama2, Alpaca, ChatGPT, retrieval-augmented Llama2-chat, Ret-ChatGPT,
-  standard RAG approaches
+- **模型尺寸**：Llama2-7B 和 Llama2-13B
+- **训练数据**：15 万条指令-输出实例，增强了反思 token
+- **评判训练数据**：每种反思 token 类型 4K-20K 个实例，由 GPT-4 标注
+- **检索器**：Contriever-MS MARCO
+- **基准测试**：
+  - 开放域问答：PopQA、TriviaQA（准确率）
+  - 推理/事实验证：PubHealth、ARC-Challenge（准确率）
+  - 长文本生成：ASQA（引用精确率/召回率、正确性）、传记生成（FactScore）
+- **基线**：Llama2、Alpaca、ChatGPT、检索增强的 Llama2-chat、Ret-ChatGPT、标准 RAG 方法
 
-## Results
+## 结果
 
-### Short-Form Tasks (Accuracy %)
+### 短文本任务（准确率 %）
 
-| Model                    | PopQA | TriviaQA | PubHealth | ARC-C |
+| 模型                     | PopQA | TriviaQA | PubHealth | ARC-C |
 |-------------------------|-------|----------|-----------|-------|
-| Llama2-7B (no retrieval)| ~21   | ~57      | ~60       | ~68   |
-| Llama2-13B (no retrieval)| ~24  | ~63      | ~63       | ~72   |
+| Llama2-7B（无检索）      | ~21   | ~57      | ~60       | ~68   |
+| Llama2-13B（无检索）     | ~24   | ~63      | ~63       | ~72   |
 | Alpaca-13B              | ~31   | ~55      | ~54       | ~55   |
 | ChatGPT                 | ~29   | ~65      | ~70       | ~75   |
 | Ret-ChatGPT             | ~51.8 | ~63      | ~54       | --    |
 | Self-RAG-7B             | 54.9  | 68.0     | 72.4      | --    |
 | Self-RAG-13B            | 55.8  | 69.3     | 74.5      | --    |
 
-### Long-Form Generation
+### 长文本生成
 
-| Model            | ASQA (str-em) | ASQA (cite prec) | ASQA (cite recall) | FactScore |
+| 模型             | ASQA (str-em) | ASQA (引用精确率) | ASQA (引用召回率) | FactScore |
 |-----------------|---------------|-------------------|--------------------|-----------|
 | Llama2-chat-13B | --            | --                | --                 | ~40       |
 | ChatGPT         | --            | --                | --                 | ~58       |
 | Self-RAG-13B    | --            | 70.3              | 71.3               | ~81       |
 
-### Hallucination Rate
+### 幻觉率
 
-Self-RAG achieves approximately **5.8% hallucination rate**, the lowest among 12 RAG
-variants evaluated -- significantly lower than standard agentic pipelines (12-14%).
+Self-RAG 达到了约 **5.8% 的幻觉率**，是 12 种评估的 RAG 变体中最低的 -- 显著低于标准智能体流水线（12-14%）。
 
-## Limitations
+## 局限性
 
-1. **Training data dependency on GPT-4**: Critic training data is generated by GPT-4,
-   creating a dependency on a proprietary model and potentially inheriting its biases.
+1. **训练数据对 GPT-4 的依赖**：评判训练数据由 GPT-4 生成，对专有模型产生依赖并可能继承其偏差。
 
-2. **Segment-level granularity**: Fixed segment boundaries may not align with natural
-   retrieval decision points; some queries need finer or coarser granularity.
+2. **段落级粒度**：固定的段落边界可能不与自然的检索决策点对齐；某些查询需要更细或更粗的粒度。
 
-3. **Retriever coupling**: The trained model is coupled to the specific retriever used
-   during training (Contriever). Swapping retrievers may degrade performance.
+3. **检索器耦合**：训练后的模型与训练期间使用的特定检索器（Contriever）耦合。更换检索器可能降低性能。
 
-4. **Inference cost**: Evaluating multiple candidate passages in parallel increases
-   inference compute and latency, particularly when top_k is large.
+4. **推理成本**：并行评估多个候选文章增加了推理计算和延迟，特别是当 top_k 较大时。
 
-5. **Limited multi-hop**: While Self-RAG supports multiple retrieval steps, it does not
-   explicitly decompose complex queries into sub-questions, limiting multi-hop reasoning
-   compared to chain-of-thought or interleaved approaches.
+5. **有限的多跳能力**：虽然 Self-RAG 支持多次检索步骤，但它不会显式地将复杂查询分解为子问题，与思维链或交错方法相比限制了多跳推理能力。
 
-6. **Model scale**: Evaluated only on Llama2-7B/13B; effectiveness at larger scales
-   and with newer model architectures is not established.
+6. **模型规模**：仅在 Llama2-7B/13B 上评估；在更大规模和更新模型架构上的有效性尚未确立。
 
-## Key Takeaways
+## 核心要点
 
-1. Special reflection tokens are a remarkably simple yet effective mechanism for teaching
-   a model to self-regulate retrieval and generation. The approach avoids the complexity
-   and instability of RLHF while achieving strong self-critique capabilities.
+1. 特殊反思 token 是教导模型自我调节检索和生成的一种极其简单而有效的机制。该方法避免了 RLHF 的复杂性和不稳定性，同时实现了强大的自我批评能力。
 
-2. On-demand retrieval is strictly superior to always-retrieve or never-retrieve
-   strategies. The model learns meaningful retrieval patterns -- skipping retrieval for
-   well-known facts and triggering it for long-tail or ambiguous queries.
+2. 按需检索严格优于始终检索或从不检索的策略。模型学会了有意义的检索模式 -- 对广为人知的事实跳过检索，对长尾或模糊查询触发检索。
 
-3. The separation of training (offline token insertion) and inference (parallel candidate
-   evaluation) is an elegant design that keeps training simple while enabling rich
-   inference-time behavior.
+3. 训练（离线 token 插入）和推理（并行候选评估）的分离是一种优雅的设计，使训练保持简单的同时实现了丰富的推理时行为。
 
-4. Self-RAG's FactScore improvements on biography generation demonstrate that
-   self-reflection tokens are particularly valuable for reducing hallucination in
-   knowledge-intensive generation tasks.
+4. Self-RAG 在传记生成上的 FactScore 改进表明，自我反思 token 对于减少知识密集型生成任务中的幻觉特别有价值。
 
-5. The tunable inference-time weights (w_rel, w_sup, w_use) provide a practical
-   mechanism for deploying a single model across applications with different
-   factuality-creativity requirements, without retraining.
+5. 可调的推理时权重（w_rel、w_sup、w_use）提供了一种实用机制，无需重新训练即可将单一模型部署到具有不同事实性-创造性要求的应用中。
 
-6. Self-RAG represents a foundational step toward the broader Agentic RAG paradigm,
-   where the model is not just a consumer of retrieved passages but an active decision-
-   maker about when and how to use external knowledge.
+6. Self-RAG 代表了向更广泛的 Agentic RAG 范式的基础性一步，其中模型不仅仅是检索文章的消费者，而是关于何时以及如何使用外部知识的主动决策者。

@@ -1,77 +1,77 @@
 ---
-title: Agent Memory Systems
+title: 智能体记忆系统
 tags: [agent, memory, rag, vector-database, short-term, long-term, episodic, semantic]
 related: [llm_agent_fundamentals, agent_techniques, agent_architecture_patterns]
 ---
 
-## Definition
+## 定义
 
-Memory systems in LLM agents provide mechanisms for storing, organizing, and retrieving information across interactions and beyond the limits of the LLM's context window. They are fundamental to enabling agents that can learn from experience, maintain context, and access large knowledge bases.
+LLM 智能体中的记忆系统提供了跨交互存储、组织和检索信息的机制，突破 LLM 上下文窗口的限制。它们是构建能够从经验中学习、维护上下文和访问大型知识库的智能体的基础。
 
-## Intuition
+## 直觉理解
 
-An LLM without external memory is like a person with perfect reasoning but no long-term memory -- they can solve problems presented to them but forget everything between conversations. Agent memory systems give the LLM persistence, allowing it to accumulate knowledge, learn from past mistakes, and maintain coherent behavior over long interactions.
+没有外部记忆的 LLM 就像一个拥有完美推理能力但没有长期记忆的人——他们可以解决呈现给他们的问题，但在对话之间会忘记一切。智能体记忆系统赋予 LLM 持久性，使其能够积累知识、从过去的错误中学习，并在长时间交互中保持一致的行为。
 
-## Memory Taxonomy
+## 记忆分类体系
 
-### 1. Short-Term / Working Memory
+### 1. 短期 / 工作记忆
 
-**Implementation**: The LLM's context window itself.
+**实现方式**：LLM 的上下文窗口本身。
 
-**Characteristics:**
-- Stores current conversation, recent observations, active plan
-- Volatile: lost when the conversation/session ends
-- Size-limited: context window (4K - 1M+ tokens)
-- Zero latency: already in the prompt
+**特征：**
+- 存储当前对话、近期观察、活跃计划
+- 易失性：对话/会话结束时丢失
+- 大小受限：上下文窗口（4K - 1M+ tokens）
+- 零延迟：已经在提示中
 
-**Management Strategies:**
-- **Sliding window**: Keep only the most recent N messages
-- **Summarization**: Periodically summarize older messages, replace full text with summary
-- **Compaction**: Remove redundant or low-value content from context
-- **Priority-based**: Keep high-priority items (user goal, current plan, recent observations)
+**管理策略：**
+- **滑动窗口**：仅保留最近 N 条消息
+- **摘要化**：定期总结旧消息，用摘要替换全文
+- **压缩**：从上下文中移除冗余或低价值内容
+- **基于优先级**：保留高优先级项目（用户目标、当前计划、近期观察）
 
 ```
 Context Window Layout (typical):
 +-----------------------------------------+
-| System Prompt (instructions, tools)      | <- Fixed
-| Long-term memory retrieval (if any)      | <- Retrieved per turn
-| Conversation history (summarized older)  | <- Managed
-| Recent messages (full detail)            | <- Most recent
-| Current user message                     | <- New
+| 系统提示（指令、工具）                    | <- 固定
+| 长期记忆检索（如有）                      | <- 每轮检索
+| 对话历史（旧消息已摘要化）                | <- 管理的
+| 近期消息（完整细节）                      | <- 最新的
+| 当前用户消息                              | <- 新的
 +-----------------------------------------+
 ```
 
-### 2. Long-Term Memory
+### 2. 长期记忆
 
-**Implementation**: External storage (vector DB, key-value store, graph DB).
+**实现方式**：外部存储（向量数据库、键值存储、图数据库）。
 
-**Characteristics:**
-- Persists across sessions
-- Effectively unlimited storage
-- Requires retrieval mechanism (adds latency)
-- Must be explicitly written to and read from
+**特征：**
+- 跨会话持久化
+- 存储容量几乎无限
+- 需要检索机制（增加延迟）
+- 必须显式写入和读取
 
-**Storage Backends:**
-| Backend | Best For | Examples |
-|---------|----------|---------|
-| Vector DB | Semantic search over unstructured text | Pinecone, Weaviate, ChromaDB, Qdrant, FAISS |
-| Key-value store | Exact lookup, user preferences | Redis, DynamoDB |
-| Graph DB | Relationships, entity networks | Neo4j, Amazon Neptune |
-| SQL DB | Structured data, analytics | PostgreSQL, SQLite |
-| File system | Documents, code, artifacts | Local/cloud storage |
+**存储后端：**
+| 后端 | 最适用于 | 示例 |
+|------|----------|------|
+| 向量数据库 | 非结构化文本的语义搜索 | Pinecone、Weaviate、ChromaDB、Qdrant、FAISS |
+| 键值存储 | 精确查找、用户偏好 | Redis、DynamoDB |
+| 图数据库 | 关系、实体网络 | Neo4j、Amazon Neptune |
+| SQL 数据库 | 结构化数据、分析 | PostgreSQL、SQLite |
+| 文件系统 | 文档、代码、工件 | 本地/云存储 |
 
-### 3. Episodic Memory
+### 3. 情景记忆
 
-**What it stores**: Specific past experiences and interaction sequences.
+**存储内容**：特定的过去经验和交互序列。
 
-**Analogous to**: Human episodic memory ("I remember that time when...")
+**类似于**：人类的情景记忆（"我记得那次……"）
 
-**Use Cases:**
-- Recalling how a similar problem was solved before
-- Avoiding previously encountered errors
-- Building on past successful strategies
+**应用场景：**
+- 回忆之前如何解决类似问题
+- 避免先前遇到的错误
+- 基于过去成功的策略进行构建
 
-**Implementation Approaches:**
+**实现方法：**
 ```python
 # Each episode is a structured record
 episode = {
@@ -85,40 +85,40 @@ episode = {
 # Stored in vector DB, retrieved by semantic similarity to current task
 ```
 
-### 4. Semantic Memory
+### 4. 语义记忆
 
-**What it stores**: General knowledge, facts, and concepts (not tied to specific experiences).
+**存储内容**：通用知识、事实和概念（不与特定经验绑定）。
 
-**Analogous to**: Human semantic memory ("I know that Python is a programming language")
+**类似于**：人类的语义记忆（"我知道 Python 是一种编程语言"）
 
-**Use Cases:**
-- Domain knowledge base
-- Company documentation and policies
-- Technical reference material
-- User preferences and profile information
+**应用场景：**
+- 领域知识库
+- 公司文档和政策
+- 技术参考资料
+- 用户偏好和个人资料信息
 
-**Implementation Approaches:**
-- RAG over a document knowledge base
-- Knowledge graph with entity-relationship triples
-- Structured databases for factual lookups
+**实现方法：**
+- 基于文档知识库的 RAG
+- 包含实体-关系三元组的知识图谱
+- 用于事实查找的结构化数据库
 
-### 5. Procedural Memory
+### 5. 程序性记忆
 
-**What it stores**: "How to" knowledge -- learned skills, action sequences, workflows.
+**存储内容**："如何做"的知识——已学习的技能、行动序列、工作流。
 
-**Analogous to**: Human procedural memory ("I know how to ride a bike")
+**类似于**：人类的程序性记忆（"我知道如何骑自行车"）
 
-**Implementation Approaches:**
-- Saved prompt templates for specific tasks
-- Code libraries and scripts the agent has learned to use
-- Fine-tuned model weights (embeds procedures into the model)
-- Documented SOPs that the agent retrieves when needed
+**实现方法：**
+- 为特定任务保存的提示模板
+- 智能体已学会使用的代码库和脚本
+- 微调的模型权重（将程序嵌入模型中）
+- 智能体在需要时检索的文档化 SOP
 
-### 6. RAG-Based Memory
+### 6. 基于 RAG 的记忆
 
-**What it is**: Using Retrieval-Augmented Generation as the primary memory mechanism.
+**定义**：将检索增强生成作为主要记忆机制。
 
-**Architecture:**
+**架构：**
 ```
 Agent Interaction --> Store important info --> Vector DB
                                                   |
@@ -129,22 +129,22 @@ New query ------> Embed query -----> Retrieve relevant memories
                                           LLM generates response
 ```
 
-**What Gets Stored:**
-- Conversation summaries
-- Key decisions and their rationale
-- User preferences and facts learned during interaction
-- Task results and outcomes
-- Error messages and resolutions
+**存储内容：**
+- 对话摘要
+- 关键决策及其理由
+- 在交互中了解到的用户偏好和事实
+- 任务结果和结论
+- 错误消息和解决方案
 
-**Retrieval Strategies:**
-- **Recency-weighted**: Recent memories score higher
-- **Importance-weighted**: Important memories (flagged by LLM) score higher
-- **Relevance-only**: Pure semantic similarity
-- **Combined score**: alpha * recency + beta * importance + gamma * relevance (used in Generative Agents, Park et al., 2023)
+**检索策略：**
+- **近期性加权**：近期记忆得分更高
+- **重要性加权**：重要记忆（由 LLM 标记）得分更高
+- **仅相关性**：纯语义相似度
+- **综合评分**：alpha * 近期性 + beta * 重要性 + gamma * 相关性（用于 Generative Agents，Park et al., 2023）
 
-## Formulation
+## 公式化
 
-**Memory-Augmented Agent Loop:**
+**记忆增强智能体循环：**
 
 ```python
 def memory_augmented_agent(query, memory_store, llm):
@@ -189,40 +189,40 @@ def memory_augmented_agent(query, memory_store, llm):
     return response
 ```
 
-## Variants
+## 变体
 
-### Memory Reflection (from Generative Agents)
-Periodically synthesize higher-level observations from raw memories:
+### 记忆反思（来自 Generative Agents）
+定期从原始记忆中综合出更高层次的观察：
 ```
-Raw memories: 
-  - "User asked about Python decorators"
-  - "User struggled with closure scope"  
-  - "User successfully wrote a class decorator"
+原始记忆：
+  - "用户询问了 Python 装饰器"
+  - "用户在闭包作用域方面遇到困难"
+  - "用户成功编写了一个类装饰器"
 
-Reflection:
-  - "User is learning advanced Python concepts, specifically decorators. 
-     They understand basic syntax but need help with scope/closure concepts."
+反思：
+  - "用户正在学习高级 Python 概念，特别是装饰器。
+     他们理解基本语法，但在作用域/闭包概念方面需要帮助。"
 ```
 
-### Forgetting / Memory Decay
-Not all memories should be kept forever:
-- Apply time-based decay to reduce the influence of old memories
-- Consolidate similar memories to prevent redundancy
-- Delete or archive irrelevant memories periodically
+### 遗忘 / 记忆衰减
+并非所有记忆都应该永久保留：
+- 应用基于时间的衰减来降低旧记忆的影响
+- 合并相似记忆以防止冗余
+- 定期删除或归档无关记忆
 
-### Hierarchical Memory
+### 分层记忆
 ```
-Level 3: Abstract knowledge ("User prefers functional programming")
+第 3 层：抽象知识（"用户偏好函数式编程"）
    ^
-Level 2: Summarized episodes ("In our last 5 sessions about Python...")
+第 2 层：摘要化的情景（"在我们最近 5 次关于 Python 的会话中……"）
    ^
-Level 1: Raw interaction logs ("User: How do I use map()? ...")
+第 1 层：原始交互日志（"用户：如何使用 map()？……"）
 ```
 
-## References
+## 参考文献
 
-- Park et al., "Generative Agents: Interactive Simulacra of Human Behavior" (2023) -- Influential memory architecture with reflection
+- Park et al., "Generative Agents: Interactive Simulacra of Human Behavior" (2023) -- 具有影响力的带反思的记忆架构
 - Zhang et al., "A Survey on the Memory Mechanism of Large Language Model based Agents" (2024)
-- Packer et al., "MemGPT: Towards LLMs as Operating Systems" (2023) -- Virtual memory management for LLMs
+- Packer et al., "MemGPT: Towards LLMs as Operating Systems" (2023) -- LLM 的虚拟内存管理
 - Zhong et al., "MemoryBank: Enhancing Large Language Models with Long-Term Memory" (2023)
 - Modarressi et al., "RET-LLM: Towards a General Read-Write Memory for Large Language Models" (2023)

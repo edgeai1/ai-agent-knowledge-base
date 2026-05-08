@@ -29,164 +29,164 @@ tags:
 status: done
 ---
 
-# A Survey on Large Language Model based Autonomous Agents
+# 基于大语言模型的自主智能体综述
 
-## TL;DR
+## 简要总结
 
-This landmark survey from Fudan/Renmin NLP groups proposes a unified four-module framework for constructing LLM-based autonomous agents: **profiling**, **memory**, **planning**, and **action**. It provides the first comprehensive taxonomy of agent architectures, catalogs application domains (social simulation, natural science, engineering), and evaluates existing approaches across subjective and objective dimensions. Accepted by Frontiers of Computer Science, it is widely regarded as the foundational survey in the LLM-agent field.
-
----
-
-## Motivation & Problem
-
-Prior to this survey, the landscape of LLM-based agents was fragmented. Researchers were building agent systems (AutoGPT, BabyAGI, HuggingGPT, Voyager, Generative Agents, etc.) without a shared vocabulary or architectural reference. The paper identifies three core gaps:
-
-1. **No unified framework** -- diverse agent designs lacked a common structural decomposition, making comparison difficult.
-2. **Scattered application domains** -- agents were deployed in social simulation, scientific discovery, and software engineering, but no work had mapped these systematically.
-3. **Evaluation vacuum** -- no consensus on how to assess agent capability, safety, or robustness.
-
-The authors aim to provide a "comprehensive and systematic" survey that can serve as both a reference and a roadmap for the field.
+这篇具有里程碑意义的综述来自复旦/人民大学 NLP 团队，提出了构建基于 LLM 的自主智能体的统一四模块框架：**角色设定**、**记忆**、**规划**和**行动**。它提供了首个全面的智能体架构分类体系，编目了应用领域（社会模拟、自然科学、工程），并从主观和客观维度评估了现有方法。发表于 Frontiers of Computer Science，被广泛视为 LLM 智能体领域的奠基性综述。
 
 ---
 
-## Method / Framework: The Four-Module Agent Architecture
+## 动机与问题
 
-### 1. Profiling Module
+在这篇综述之前，基于 LLM 的智能体领域是碎片化的。研究人员在构建智能体系统（AutoGPT、BabyAGI、HuggingGPT、Voyager、Generative Agents 等）时缺乏共享的词汇或架构参考。论文识别出三个核心差距：
 
-The profiling module determines the agent's role, persona, and behavioral characteristics. Three strategies are identified:
+1. **缺乏统一框架** -- 多样化的智能体设计缺乏共同的结构分解，使比较变得困难。
+2. **分散的应用领域** -- 智能体被部署在社会模拟、科学发现和软件工程中，但没有工作系统性地映射这些领域。
+3. **评估真空** -- 缺乏关于如何评估智能体能力、安全性或鲁棒性的共识。
 
-- **Handcrafting**: Manually specifying agent profiles with demographic details, personality traits, and domain expertise. Example: Generative Agents manually assign occupations, relationships, and daily routines to 25 agents in a sandbox town.
-- **LLM-Generation**: Using the LLM itself to generate diverse profiles. Example: RecAgent creates seed profiles by hand and then prompts ChatGPT to synthesize additional profiles with varied backgrounds, expanding the agent population efficiently.
-- **Dataset-Alignment**: Deriving profiles from real-world datasets. Example: using census data or social network profiles to ground agent personas in empirically observed distributions.
-
-The profiling module answers "who is this agent?" and conditions all downstream behavior -- memory encoding, planning style, and action preferences.
-
-### 2. Memory Module
-
-The memory module provides agents with the ability to store, retrieve, and reason over past experiences. The survey decomposes memory along two axes:
-
-**By temporal scope:**
-- **Short-term memory**: Implemented via the LLM's finite context window. Captures the immediate interaction history and recent observations. Inherently limited by context length, creating a recency bias.
-- **Long-term memory**: Implemented via external storage (vector databases, structured knowledge bases, or text files). Allows retention of experiences across sessions and beyond context-window limits.
-
-**By representational format:**
-- **Natural language**: Storing raw or summarized text observations (e.g., Generative Agents' memory stream of timestamped natural-language records).
-- **Embeddings**: Dense vector representations stored in vector databases for similarity-based retrieval (e.g., using FAISS or Pinecone).
-- **Databases**: Structured storage in relational or graph databases for precise querying.
-- **Structured lists**: Maintaining organized inventories, skill libraries, or action histories (e.g., Voyager's skill library stored as executable code snippets).
-
-**Memory operations:**
-- **Reading (Retrieval)**: Accessing relevant memories, typically via recency, relevance (embedding similarity), and importance scoring. Generative Agents combine all three factors in a weighted retrieval function.
-- **Writing (Storage)**: Encoding new observations. Key challenge: deciding what to store versus discard.
-- **Reflection**: Higher-order synthesis where agents generate abstract insights from accumulated memories (e.g., "I tend to enjoy conversations about art" derived from multiple specific memory entries).
-
-### 3. Planning Module
-
-The planning module enables agents to decompose complex tasks and formulate action sequences. The survey distinguishes two paradigms:
-
-**Planning without feedback:**
-- **Single-path reasoning**: Chain-of-Thought (CoT) prompting, Zero-shot CoT ("Let's think step by step"), producing a linear sequence of reasoning steps.
-- **Multi-path reasoning**: Tree-of-Thoughts (ToT), which explores multiple reasoning branches and uses search algorithms (BFS/DFS) to select the best path. Self-Consistent CoT samples multiple reasoning chains and takes a majority vote.
-- **External planner integration**: Offloading planning to classical AI planners (e.g., PDDL-based planners) that guarantee optimality in well-defined domains, then translating plans back to natural-language actions.
-
-**Planning with feedback:**
-- **Environmental feedback**: The agent observes outcomes of its actions in the environment and adjusts plans accordingly. Example: ReAct interleaves reasoning and acting, using environment observations to guide next steps.
-- **Human feedback**: Humans provide corrections, preferences, or guidance during execution. Example: Inner Monologue integrates human verbal feedback into the agent's planning loop.
-- **Model feedback**: The LLM critiques its own plans or another LLM provides evaluation. Example: Reflexion stores linguistic feedback from failed attempts in an episodic memory buffer, enabling the agent to avoid repeating mistakes.
-
-### 4. Action Module
-
-The action module translates plans into concrete operations. Three dimensions characterize actions:
-
-**Action targets:**
-- **Task completion**: Direct actions to accomplish assigned goals (answering questions, generating code, producing artifacts).
-- **Communication**: Engaging with other agents or humans via natural language dialogue.
-- **Environment interaction**: Manipulating external environments (APIs, browsers, operating systems, physical robotics).
-
-**Action production strategies:**
-- **Memory-based**: Retrieving previously successful action sequences from long-term memory.
-- **Plan-following**: Executing steps from a pre-generated plan.
-- **Interactive generation**: Producing actions in real-time based on current observations, using ReAct-style interleaving.
-
-**Action space:**
-- **External tools**: Search engines (Google, Bing), calculators, code interpreters, APIs (Wolfram Alpha, weather services). HuggingGPT connects to Hugging Face model zoo; ToolFormer learns when and how to call APIs.
-- **Internal knowledge**: Relying on the LLM's parametric knowledge to generate responses without external tools.
-- **Embodied actions**: Physical or simulated-world actions (navigation, object manipulation). Voyager in Minecraft uses a code-based action space.
+作者旨在提供一份"全面且系统性"的综述，既可作为参考又可作为该领域的路线图。
 
 ---
 
-## Key Contributions
+## 方法 / 框架：四模块智能体架构
 
-1. **First unified architectural framework** decomposing LLM agents into four orthogonal modules (profiling, memory, planning, action), enabling systematic comparison across diverse systems.
-2. **Comprehensive taxonomy** of sub-approaches within each module, with concrete examples from published systems.
-3. **Application domain mapping** covering three major areas:
-   - **Social simulation**: Generative Agents (Stanford smallville), Social Simulacra, AgentSims -- studying emergent social phenomena, opinion dynamics, and collective behavior.
-   - **Natural science**: ChemCrow (chemistry), Boiko et al. (autonomous lab experiments), protein design agents -- accelerating scientific discovery.
-   - **Engineering**: MetaGPT, ChatDev (software development), AutoGPT (general-purpose task automation), data analysis agents.
-4. **Evaluation framework** analyzing both **subjective** (human evaluation of agent behavior quality, coherence, believability) and **objective** (task success rate, efficiency metrics, benchmark performance) assessment approaches.
-5. **Community resource**: the companion GitHub repository (Paitesanshi/LLM-Agent-Survey) maintaining an updated paper list that has become a standard reference.
+### 1. 角色设定模块
 
----
+角色设定模块决定智能体的角色、人设和行为特征。识别出三种策略：
 
-## Coverage / Scope
+- **手工设定**：手动指定智能体角色，包含人口统计细节、性格特征和领域专长。示例：Generative Agents 手动为沙盒小镇中的 25 个智能体分配职业、关系和日常作息。
+- **LLM 生成**：使用 LLM 本身生成多样化的角色。示例：RecAgent 手动创建种子角色，然后提示 ChatGPT 合成具有不同背景的额外角色，高效地扩展智能体群体。
+- **数据集对齐**：从真实世界数据集中衍生角色。示例：使用人口普查数据或社交网络档案来使智能体人设基于经验观察的分布。
 
-### Application Domains in Detail
+角色设定模块回答"这个智能体是谁？"并条件化所有下游行为 -- 记忆编码、规划风格和行动偏好。
 
-**Social Simulation:**
-- Simulating human-like behavior in sandbox environments to study emergent social dynamics.
-- Generative Agents: 25 agents in a virtual town exhibiting information diffusion, relationship formation, and coordination for events (e.g., spontaneously organizing a Valentine's Day party).
-- S^3 (Social network Simulation System): studying information/opinion propagation at scale.
-- Uses: policy testing, social science hypothesis generation, understanding collective behavior.
+### 2. 记忆模块
 
-**Natural Science Discovery:**
-- ChemCrow: 18 expert-designed chemistry tools integrated with an LLM for tasks like drug discovery, materials design, and reaction planning.
-- Boiko et al.: fully autonomous agents performing wet-lab experiments including internet search, documentation reading, code execution, and robotic lab equipment control.
-- Coscientist: multi-agent system for autonomous scientific research.
+记忆模块使智能体能够存储、检索和推理过去的经验。综述沿两个轴分解记忆：
 
-**Engineering Applications:**
-- ChatDev and MetaGPT: multi-agent software development where agents assume roles (CEO, CTO, programmer, tester) and collaborate through structured communication protocols.
-- Voyager: lifelong learning agent in Minecraft that autonomously explores, acquires skills, and builds a reusable skill library.
-- AutoGPT/BabyAGI: general-purpose agents that recursively create and execute task lists.
+**按时间范围：**
+- **短期记忆**：通过 LLM 的有限上下文窗口实现。捕捉即时的交互历史和近期观察。固有地受限于上下文长度，产生近因偏差。
+- **长期记忆**：通过外部存储实现（向量数据库、结构化知识库或文本文件）。允许跨会话和超越上下文窗口限制的经验保持。
 
-### Evaluation Approaches
+**按表示格式：**
+- **自然语言**：存储原始或摘要文本观察（例如，Generative Agents 的带时间戳的自然语言记忆流）。
+- **嵌入**：存储在向量数据库中的稠密向量表示，用于基于相似度的检索（例如使用 FAISS 或 Pinecone）。
+- **数据库**：关系型或图数据库中的结构化存储，用于精确查询。
+- **结构化列表**：维护有组织的清单、技能库或行动历史（例如，Voyager 的技能库以可执行代码片段存储）。
 
-**Subjective evaluation:**
-- Human ratings of believability, consistency, naturalness of agent behavior.
-- Turing-test-style assessments where evaluators distinguish agent-generated from human-generated behavior.
-- Expert evaluation in domain-specific tasks (chemical synthesis feasibility, code correctness).
+**记忆操作：**
+- **读取（检索）**：访问相关记忆，通常通过近因性、相关性（嵌入相似度）和重要性评分。Generative Agents 在加权检索函数中结合了这三个因素。
+- **写入（存储）**：编码新的观察。关键挑战：决定存储什么与丢弃什么。
+- **反思**：高阶综合，智能体从积累的记忆中生成抽象洞察（例如，从多个具体记忆条目中得出"我倾向于享受关于艺术的对话"）。
 
-**Objective evaluation:**
-- Task success rates on standardized benchmarks (ALFWorld, WebShop, HotPotQA).
-- Efficiency metrics (number of steps, API calls, tokens consumed).
-- Multi-dimensional metrics including safety (harmful action avoidance), robustness (performance under perturbation), and calibration (confidence vs. accuracy).
+### 3. 规划模块
 
----
+规划模块使智能体能够分解复杂任务并制定行动序列。综述区分了两种范式：
 
-## Limitations
+**无反馈规划：**
+- **单路径推理**：思维链 (CoT) 提示、零样本 CoT（"让我们一步步思考"），产生线性推理步骤序列。
+- **多路径推理**：思维树 (ToT)，探索多个推理分支并使用搜索算法（BFS/DFS）选择最佳路径。自一致 CoT 采样多个推理链并取多数投票。
+- **外部规划器集成**：将规划外包给经典 AI 规划器（例如基于 PDDL 的规划器），在定义良好的领域中保证最优性，然后将计划翻译回自然语言动作。
 
-1. **Static taxonomy**: The four-module decomposition, while useful, may not capture emergent architectural patterns (e.g., agents that blur the line between planning and action, or systems with no explicit profiling).
-2. **LLM-centric bias**: The survey focuses exclusively on LLM-based agents, potentially missing insights from classical agent architectures (BDI, reactive agents) that could inform hybrid designs.
-3. **Limited quantitative comparison**: The survey is primarily descriptive rather than empirical -- it catalogs approaches but does not run controlled experiments comparing them.
-4. **Rapid obsolescence risk**: Given the pace of the field (the paper covers work through mid-2023, with updates through early 2025), specific system comparisons may become outdated quickly.
-5. **Underexplored safety/alignment**: While evaluation is discussed, the survey gives relatively light treatment to adversarial robustness, prompt injection risks, and value alignment -- topics that have become critical since publication.
-6. **Scalability questions**: The survey does not deeply address how these architectures scale to long-horizon tasks with hundreds of steps or multi-day execution timelines.
+**有反馈规划：**
+- **环境反馈**：智能体观察其在环境中动作的结果并相应调整计划。示例：ReAct 交错推理和行动，使用环境观察来指导下一步。
+- **人类反馈**：人类在执行过程中提供纠正、偏好或指导。示例：Inner Monologue 将人类口头反馈整合到智能体的规划循环中。
+- **模型反馈**：LLM 批评自己的计划或另一个 LLM 提供评估。示例：Reflexion 将来自失败尝试的语言反馈存储在情景记忆缓冲区中，使智能体能够避免重复错误。
 
----
+### 4. 行动模块
 
-## Key Takeaways
+行动模块将计划转化为具体操作。三个维度表征行动：
 
-1. **The four-module framework (profiling, memory, planning, action) has become the de facto reference architecture** for discussing and designing LLM-based agents. Most subsequent surveys (including Xi et al. 2023) build on or respond to this decomposition.
-2. **Memory is the critical differentiator**: Agents with well-designed memory systems (combining short-term context, long-term storage, and reflection) consistently outperform those without, especially on multi-step and multi-session tasks.
-3. **Planning with feedback dominates planning without feedback** for complex real-world tasks. The ReAct and Reflexion paradigms (environment and model feedback respectively) have become standard patterns.
-4. **The tool-use action space is the primary extensibility mechanism**: An agent's capability is largely determined by the tools it can access and invoke correctly.
-5. **Social simulation emerged as a surprisingly rich application domain**, demonstrating that LLM agents can exhibit emergent collective behaviors not explicitly programmed -- a finding with implications for both social science and AI safety.
-6. **Evaluation remains the weakest link**: The field lacks standardized, comprehensive benchmarks that jointly assess capability, safety, efficiency, and robustness.
-7. **This survey's influence**: With 2000+ citations, it established the shared vocabulary (profiling/memory/planning/action modules) that the field continues to use, making it essential reading for anyone entering the LLM agent space.
+**行动目标：**
+- **任务完成**：完成分配目标的直接行动（回答问题、生成代码、产生工件）。
+- **通信**：通过自然语言对话与其他智能体或人类交互。
+- **环境交互**：操作外部环境（API、浏览器、操作系统、物理机器人）。
+
+**行动产生策略：**
+- **基于记忆**：从长期记忆中检索先前成功的行动序列。
+- **计划遵循**：执行预生成计划中的步骤。
+- **交互式生成**：基于当前观察实时产生行动，使用 ReAct 风格的交错。
+
+**行动空间：**
+- **外部工具**：搜索引擎（Google、Bing）、计算器、代码解释器、API（Wolfram Alpha、天气服务）。HuggingGPT 连接到 Hugging Face 模型库；ToolFormer 学习何时以及如何调用 API。
+- **内部知识**：依赖 LLM 的参数化知识生成回应，不使用外部工具。
+- **具身行动**：物理或模拟世界中的行动（导航、物体操纵）。Voyager 在 Minecraft 中使用基于代码的行动空间。
 
 ---
 
-## Relationship to Other Surveys
+## 关键贡献
 
-- **Complements Xi et al. (2309.07864)**: The Fudan survey focuses on *construction* (how to build agents), while Xi et al. emphasizes *application* (what agents can do) and *society* (how agents interact). Together they provide comprehensive coverage of the 2023 landscape.
-- **Extended by Ferrag et al. (2504.19678)**: The 2025 review builds on this taxonomy while adding benchmark comparison and inter-agent protocols (MCP, A2A).
-- **Memory depth provided by Du (2603.07670)**: The memory module discussed here is expanded into a full treatment in the 2026 memory survey.
+1. **首个统一架构框架**，将 LLM 智能体分解为四个正交模块（角色设定、记忆、规划、行动），实现了跨多样化系统的系统比较。
+2. **全面的子方法分类体系**，每个模块内有来自已发表系统的具体示例。
+3. **应用领域映射**，涵盖三大主要领域：
+   - **社会模拟**：Generative Agents（Stanford 小镇）、Social Simulacra、AgentSims -- 研究涌现的社会现象、舆论动态和集体行为。
+   - **自然科学**：ChemCrow（化学）、Boiko et al.（自主实验室实验）、蛋白质设计智能体 -- 加速科学发现。
+   - **工程**：MetaGPT、ChatDev（软件开发）、AutoGPT（通用任务自动化）、数据分析智能体。
+4. **评估框架**，分析了**主观**（人类评估智能体行为质量、连贯性、可信度）和**客观**（任务成功率、效率指标、基准测试表现）两种评估方法。
+5. **社区资源**：配套的 GitHub 仓库（Paitesanshi/LLM-Agent-Survey）维护了一个更新的论文列表，已成为标准参考。
+
+---
+
+## 覆盖范围 / 范畴
+
+### 详细应用领域
+
+**社会模拟：**
+- 在沙盒环境中模拟类人行为以研究涌现的社会动态。
+- Generative Agents：虚拟小镇中的 25 个智能体展现出信息扩散、关系形成和活动协调（例如，自发组织情人节派对）。
+- S^3（社交网络模拟系统）：大规模研究信息/舆论传播。
+- 用途：政策测试、社会科学假设生成、理解集体行为。
+
+**自然科学发现：**
+- ChemCrow：18 个专家设计的化学工具与 LLM 集成，用于药物发现、材料设计和反应规划等任务。
+- Boiko et al.：完全自主的智能体执行湿实验室实验，包括互联网搜索、文档阅读、代码执行和机器人实验设备控制。
+- Coscientist：用于自主科学研究的多智能体系统。
+
+**工程应用：**
+- ChatDev 和 MetaGPT：多智能体软件开发，智能体承担角色（CEO、CTO、程序员、测试员）并通过结构化通信协议协作。
+- Voyager：Minecraft 中的终身学习智能体，自主探索、获取技能并构建可复用的技能库。
+- AutoGPT/BabyAGI：递归创建和执行任务列表的通用智能体。
+
+### 评估方法
+
+**主观评估：**
+- 人类对智能体行为可信度、一致性、自然度的评分。
+- 图灵测试风格的评估，评估者区分智能体生成和人类生成的行为。
+- 领域特定任务中的专家评估（化学合成可行性、代码正确性）。
+
+**客观评估：**
+- 在标准化基准测试上的任务成功率（ALFWorld、WebShop、HotPotQA）。
+- 效率指标（步骤数、API 调用次数、消耗的 token 数）。
+- 多维指标，包括安全性（有害行动避免）、鲁棒性（扰动下的性能）和校准性（信心 vs. 准确度）。
+
+---
+
+## 局限性
+
+1. **静态分类体系**：四模块分解虽然有用，但可能无法捕捉新兴的架构模式（例如，模糊了规划和行动边界的智能体，或没有显式角色设定的系统）。
+2. **以 LLM 为中心的偏差**：综述专注于基于 LLM 的智能体，可能遗漏了来自经典智能体架构（BDI、反应式智能体）的见解，这些见解可以为混合设计提供参考。
+3. **有限的定量比较**：综述主要是描述性的而非实验性的 -- 它编目了方法但没有进行控制实验来比较它们。
+4. **快速过时风险**：鉴于该领域的发展速度（论文覆盖到 2023 年中期的工作，更新至 2025 年初），具体的系统比较可能很快过时。
+5. **安全/对齐探索不足**：虽然讨论了评估，但综述对对抗鲁棒性、提示注入风险和价值对齐的处理相对轻描淡写 -- 这些主题自发表以来已变得至关重要。
+6. **可扩展性问题**：综述未深入探讨这些架构如何扩展到具有数百个步骤或多天执行时间线的长期任务。
+
+---
+
+## 核心要点
+
+1. **四模块框架（角色设定、记忆、规划、行动）已成为**讨论和设计基于 LLM 的智能体的事实标准参考架构。大多数后续综述（包括 Xi et al. 2023）都建立在此分解之上或对其作出回应。
+2. **记忆是关键区分因素**：具有精心设计的记忆系统（结合短期上下文、长期存储和反思）的智能体始终优于没有的智能体，尤其在多步骤和多会话任务上。
+3. **有反馈的规划主导无反馈的规划**，用于复杂的真实世界任务。ReAct 和 Reflexion 范式（分别使用环境反馈和模型反馈）已成为标准模式。
+4. **工具使用行动空间是主要的可扩展机制**：智能体的能力在很大程度上取决于它能访问和正确调用的工具。
+5. **社会模拟作为一个出人意料的丰富应用领域出现**，展示了 LLM 智能体可以表现出未被显式编程的涌现集体行为 -- 这一发现对社会科学和 AI 安全都有影响。
+6. **评估仍然是最薄弱的环节**：该领域缺乏联合评估能力、安全性、效率和鲁棒性的标准化、全面的基准测试。
+7. **本综述的影响**：超过 2000 次引用，它建立了该领域持续使用的共享词汇（角色设定/记忆/规划/行动模块），使其成为任何进入 LLM 智能体领域的人的必读之作。
+
+---
+
+## 与其他综述的关系
+
+- **与 Xi et al. (2309.07864) 互补**：复旦综述侧重于*构建*（如何建造智能体），而 Xi et al. 强调*应用*（智能体能做什么）和*社会*（智能体如何交互）。两者结合提供了 2023 年全景的全面覆盖。
+- **被 Ferrag et al. (2504.19678) 扩展**：2025 年的综述在此分类体系基础上增加了基准测试比较和智能体间协议（MCP、A2A）。
+- **记忆深度由 Du (2603.07670) 提供**：此处讨论的记忆模块在 2026 年的记忆综述中被扩展为完整的专题论述。

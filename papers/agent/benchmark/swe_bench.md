@@ -9,202 +9,202 @@ tags: [benchmark, software-engineering, github, code-generation, evaluation]
 status: done
 ---
 
-## TL;DR
+## 简要总结
 
-Introduces SWE-bench, a benchmark of 2,294 real-world software engineering tasks drawn from GitHub issues and pull requests across 12 popular Python repositories, establishing the first large-scale evaluation of LLMs on realistic, repository-level code modification tasks.
+提出了 SWE-bench，一个包含 2,294 个真实世界软件工程任务的基准测试，这些任务来源于 12 个流行 Python 仓库的 GitHub Issues 和 Pull Requests，建立了首个针对现实仓库级代码修改任务的大规模 LLM 评估体系。
 
-## Motivation & Problem
+## 动机与问题
 
-Prior code generation benchmarks had fundamental limitations:
-- **HumanEval / MBPP**: self-contained function-level problems solvable in a few lines; no repository context
-- **CodeContests**: competitive programming; algorithmic but not representative of real software engineering
-- **DS-1000**: data science snippets; narrow domain
+此前的代码生成基准测试存在根本性局限：
+- **HumanEval / MBPP**：自包含的函数级问题，几行代码即可解决；缺乏仓库上下文
+- **CodeContests**：竞赛编程；虽涉及算法但不能代表真实软件工程
+- **DS-1000**：数据科学代码片段；领域过于狭窄
 
-Real-world software engineering requires:
-1. Understanding large codebases (thousands of files, complex dependencies)
-2. Navigating across modules, classes, and files to locate relevant code
-3. Reasoning about bug reports written in natural language with varying quality
-4. Generating patches that modify existing code correctly without breaking other functionality
-5. Handling diverse tasks: bug fixes, feature requests, refactoring, documentation
+真实世界的软件工程需要：
+1. 理解大型代码库（数千个文件、复杂依赖关系）
+2. 跨模块、类和文件导航以定位相关代码
+3. 对质量参差不齐的自然语言 Bug 报告进行推理
+4. 生成能正确修改现有代码且不破坏其他功能的补丁
+5. 处理多样化任务：Bug 修复、功能请求、重构、文档编写
 
-No existing benchmark captured this complexity. SWE-bench fills this gap by sourcing tasks from actual GitHub development activity.
+现有基准测试无法捕捉这种复杂性。SWE-bench 通过从真实 GitHub 开发活动中获取任务来填补这一空白。
 
-## Method
+## 方法
 
-### Dataset Construction Pipeline
+### 数据集构建流程
 
 ```
-GitHub Repository (e.g., django/django)
+GitHub 仓库（例如 django/django）
         |
         v
-Collect merged PRs with associated issues
+收集已合并的 PR 及其关联的 Issues
         |
         v
-Filter: PR must modify source code AND test files
+过滤：PR 必须修改源代码和测试文件
         |
         v
-Extract: issue description, base commit, gold patch, test patch
+提取：Issue 描述、基准提交、标准补丁、测试补丁
         |
         v
-Validate: gold patch must make failing tests pass
+验证：标准补丁必须使失败的测试通过
         |
         v
-SWE-bench Task Instance
+SWE-bench 任务实例
 ```
 
-Step-by-step:
+详细步骤：
 
-1. **Repository selection**: 12 popular, actively-maintained Python repositories chosen for diversity (web frameworks, scientific computing, ML libraries, utilities)
-2. **PR collection**: all merged pull requests with linked issues are collected
-3. **Filtering criteria**:
-   - PR must modify at least one source file
-   - PR must add or modify at least one test file
-   - The test changes must include tests that FAIL on the pre-PR codebase and PASS after applying the PR
-4. **Task instance creation**: for each qualifying PR, extract the issue description as the natural language specification and the code diff as the gold solution
-5. **Validation**: verify that (a) tests fail before the patch, (b) tests pass after the patch, (c) existing tests still pass after the patch
+1. **仓库选择**：选取 12 个流行且活跃维护的 Python 仓库，涵盖多种领域（Web 框架、科学计算、机器学习库、工具库）
+2. **PR 收集**：收集所有包含关联 Issue 的已合并 Pull Request
+3. **过滤标准**：
+   - PR 必须修改至少一个源文件
+   - PR 必须添加或修改至少一个测试文件
+   - 测试变更必须包含在 PR 之前的代码库上失败、在应用 PR 后通过的测试
+4. **任务实例创建**：对于每个合格的 PR，提取 Issue 描述作为自然语言规范，代码差异作为标准解决方案
+5. **验证**：确认 (a) 补丁前测试失败，(b) 补丁后测试通过，(c) 现有测试在补丁后仍然通过
 
-### Task Instance Format
+### 任务实例格式
 
 ```
 +--------------------------------------------------+
-| SWE-bench Task Instance                          |
+| SWE-bench 任务实例                                |
 +--------------------------------------------------+
 | repo:        django/django                       |
 | instance_id: django__django-16379                |
 | base_commit: a1b2c3d4...                         |
 | issue_text:  "FileBasedCache has_key is          |
 |              broken when cache key..."            |
-| hints_text:  (optional additional context)        |
-| patch:       (gold solution diff -- hidden)       |
-| test_patch:  (tests that validate the fix)        |
+| hints_text:  （可选的额外上下文）                   |
+| patch:       （标准解决方案差异 -- 隐藏）            |
+| test_patch:  （验证修复的测试）                     |
 | FAIL_TO_PASS: [test_cache.CacheTest.test_has_key]|
 | PASS_TO_PASS: [test_cache.CacheTest.test_get...] |
 | environment: Python 3.9, Django deps...           |
 +--------------------------------------------------+
 ```
 
-Key fields:
-- **FAIL_TO_PASS**: tests that should fail before the fix and pass after -- the primary evaluation signal
-- **PASS_TO_PASS**: existing tests that must continue passing -- ensures the fix does not introduce regressions
-- **patch**: the gold-standard code change (hidden from the model at test time)
-- **test_patch**: test code added/modified in the PR (used for evaluation only)
+关键字段：
+- **FAIL_TO_PASS**：修复前应该失败、修复后应该通过的测试 -- 主要评估信号
+- **PASS_TO_PASS**：必须继续通过的现有测试 -- 确保修复不会引入回归问题
+- **patch**：标准代码变更（测试时对模型隐藏）
+- **test_patch**：PR 中添加/修改的测试代码（仅用于评估）
 
-### Evaluation Methodology
+### 评估方法
 
 ```
-Given: issue_text, repository at base_commit
-Model generates: predicted_patch
+给定：issue_text、位于 base_commit 的仓库
+模型生成：predicted_patch
 
-Evaluation:
-1. Apply predicted_patch to repository at base_commit
-2. Apply test_patch (gold test changes)
-3. Run FAIL_TO_PASS tests:
-   - All must PASS  -->  candidate solution
-4. Run PASS_TO_PASS tests:
-   - All must PASS  -->  no regressions
-5. If both pass: instance RESOLVED
+评估流程：
+1. 将 predicted_patch 应用于位于 base_commit 的仓库
+2. 应用 test_patch（标准测试变更）
+3. 运行 FAIL_TO_PASS 测试：
+   - 全部必须通过  -->  候选解决方案
+4. 运行 PASS_TO_PASS 测试：
+   - 全部必须通过  -->  无回归问题
+5. 如果两者都通过：实例已解决
 ```
 
-The metric is **resolve rate**: percentage of instances where the model's patch causes all FAIL_TO_PASS tests to pass while maintaining all PASS_TO_PASS tests.
+评估指标为**解决率**：模型补丁使所有 FAIL_TO_PASS 测试通过同时保持所有 PASS_TO_PASS 测试通过的实例百分比。
 
-### Repository Distribution
+### 仓库分布
 
-| Repository        | Domain                | # Instances | % of Total |
+| 仓库              | 领域                | 实例数      | 占比       |
 |-------------------|-----------------------|-------------|------------|
-| django            | Web framework         | 440         | 19.2%      |
-| scikit-learn      | Machine learning      | 305         | 13.3%      |
-| sympy             | Symbolic math         | 298         | 13.0%      |
-| matplotlib        | Visualization         | 268         | 11.7%      |
-| requests          | HTTP library          | 67          | 2.9%       |
-| flask             | Web microframework    | 14          | 0.6%       |
-| sphinx            | Documentation         | 187         | 8.2%       |
-| astropy           | Astronomy             | 140         | 6.1%       |
-| pytest            | Testing framework     | 118         | 5.1%       |
-| pylint            | Linting               | 74          | 3.2%       |
-| xarray            | Array computing       | 95          | 4.1%       |
-| seaborn           | Statistical viz       | 48          | 2.1%       |
-| **Total**         |                       | **2,294**   | **100%**   |
+| django            | Web 框架              | 440         | 19.2%      |
+| scikit-learn      | 机器学习              | 305         | 13.3%      |
+| sympy             | 符号数学              | 298         | 13.0%      |
+| matplotlib        | 可视化                | 268         | 11.7%      |
+| requests          | HTTP 库               | 67          | 2.9%       |
+| flask             | Web 微框架            | 14          | 0.6%       |
+| sphinx            | 文档工具              | 187         | 8.2%       |
+| astropy           | 天文学                | 140         | 6.1%       |
+| pytest            | 测试框架              | 118         | 5.1%       |
+| pylint            | 代码检查              | 74          | 3.2%       |
+| xarray            | 数组计算              | 95          | 4.1%       |
+| seaborn           | 统计可视化            | 48          | 2.1%       |
+| **总计**          |                       | **2,294**   | **100%**   |
 
-Note: Django and scikit-learn dominate the dataset, which creates a distributional bias.
+注意：Django 和 scikit-learn 在数据集中占主导地位，这造成了分布偏差。
 
-## SWE-bench Variants
+## SWE-bench 变体
 
 ### SWE-bench Full
-- 2,294 task instances
-- Includes noise: some issues are ambiguously described, some test patches may be overly specific
-- The original, unfiltered benchmark
+- 2,294 个任务实例
+- 包含噪声：部分 Issue 描述模糊，部分测试补丁可能过于具体
+- 原始的、未经过滤的基准测试
 
 ### SWE-bench Lite
-- **300 instances** selected for more tractable evaluation
-- Criteria: excludes overly large patches, ambiguous descriptions, and instances requiring external knowledge
-- Positioned as "easy-to-medium" difficulty
-- Became the primary evaluation target for initial agent systems
-- Activity has slowed since late 2024 as attention shifted to Verified
+- **300 个实例**，经过筛选以获得更可操作的评估
+- 筛选标准：排除过大的补丁、模糊的描述以及需要外部知识的实例
+- 定位为"简单到中等"难度
+- 成为早期智能体系统的主要评估目标
+- 自 2024 年底以来活跃度下降，注意力转向 Verified 版本
 
 ### SWE-bench Verified
-- **500 instances** curated with human annotators (in collaboration with OpenAI)
-- Each instance verified for: (1) clear problem description, (2) correct test patch, (3) solvability given available information
-- Higher-quality subset designed to reduce noise and false negatives
-- Released mid-2024; became the primary leaderboard by late 2024
-- As of early 2025, ~99 entries on the Verified leaderboard vs ~79 on Lite
+- **500 个实例**，由人工标注员策划（与 OpenAI 合作）
+- 每个实例均经过验证：(1) 问题描述清晰，(2) 测试补丁正确，(3) 在可用信息范围内可解决
+- 更高质量的子集，旨在减少噪声和假阴性
+- 2024 年中期发布；2024 年底成为主要排行榜
+- 截至 2025 年初，Verified 排行榜约有 99 个条目，Lite 约有 79 个
 
-## Historical Performance Progression
+## 历史性能进展
 
-| Date       | System                      | SWE-bench Full | Verified |
+| 日期       | 系统                        | SWE-bench Full | Verified |
 |------------|-----------------------------|--------------:|--------:|
-| Oct 2023   | Claude 2 (RAG baseline)     | 1.96%          | --      |
-| Oct 2023   | GPT-4 (RAG baseline)        | 3.80%          | --      |
-| May 2024   | SWE-agent (GPT-4 Turbo)     | 12.47%         | --      |
-| Jun 2024   | Devin                       | 13.86%         | --      |
-| Aug 2024   | OpenHands + CodeAct          | --             | ~33%    |
-| Oct 2024   | Various agentic systems      | --             | ~45-50% |
-| Dec 2024   | Frontier models + agents     | --             | ~60%    |
-| Mar 2025   | Claude Opus 4 systems        | --             | ~72%    |
-| Early 2026 | Claude Opus 4.5 + scaffolds  | --             | ~80.9%  |
-| 2026       | Claude Mythos Preview        | --             | ~93.9%  |
+| 2023 年 10 月 | Claude 2（RAG 基线）        | 1.96%          | --      |
+| 2023 年 10 月 | GPT-4（RAG 基线）           | 3.80%          | --      |
+| 2024 年 5 月  | SWE-agent（GPT-4 Turbo）    | 12.47%         | --      |
+| 2024 年 6 月  | Devin                       | 13.86%         | --      |
+| 2024 年 8 月  | OpenHands + CodeAct          | --             | ~33%    |
+| 2024 年 10 月 | 各类智能体系统               | --             | ~45-50% |
+| 2024 年 12 月 | 前沿模型 + 智能体            | --             | ~60%    |
+| 2025 年 3 月  | Claude Opus 4 系统           | --             | ~72%    |
+| 2026 年初    | Claude Opus 4.5 + 脚手架     | --             | ~80.9%  |
+| 2026 年     | Claude Mythos Preview        | --             | ~93.9%  |
 
-The benchmark has seen extraordinary performance growth from ~4% to 90%+ in under three years.
+该基准测试在不到三年内实现了从约 4% 到 90% 以上的惊人性能增长。
 
-## Key Innovations
+## 关键创新
 
-1. **Repository-level evaluation**: first benchmark requiring understanding of full codebases, not isolated functions
-2. **Automated pipeline**: scalable construction from GitHub PRs enables continuous dataset expansion
-3. **Execution-based evaluation**: unit tests provide unambiguous pass/fail signals, avoiding subjective quality judgments
-4. **Real-world distribution**: tasks reflect actual developer work, not synthetic problems
-5. **Version-controlled environments**: each instance specifies an exact commit, ensuring reproducible evaluation
+1. **仓库级评估**：首个要求理解完整代码库而非孤立函数的基准测试
+2. **自动化流程**：从 GitHub PR 可扩展地构建数据集，支持持续扩展
+3. **基于执行的评估**：单元测试提供明确的通过/失败信号，避免主观的质量判断
+4. **真实世界分布**：任务反映真实开发者工作，而非合成问题
+5. **版本控制环境**：每个实例指定确切的提交记录，确保可复现的评估
 
-## Analysis & Insights
+## 分析与洞察
 
-- **Difficulty variance**: instances range from one-line typo fixes to complex multi-file refactoring; the distribution is heavily right-skewed (many hard instances)
-- **Localization is half the battle**: many agent failures stem from inability to find the relevant code, not from inability to write the fix
-- **Test quality matters**: some test patches are overly specific (testing implementation details rather than behavior), creating false negatives
-- **Repository bias**: heavy representation of Django and scikit-learn may skew results toward agents that perform well on web/ML code patterns
-- **Temporal leakage risk**: since data comes from public GitHub, there is a risk that models trained on post-PR code have seen solutions
+- **难度差异**：实例范围从单行错别字修复到复杂的多文件重构；分布严重右偏（大量高难度实例）
+- **定位是一半的战斗**：许多智能体失败源于无法找到相关代码，而非无法编写修复方案
+- **测试质量很重要**：部分测试补丁过于具体（测试实现细节而非行为），导致假阴性
+- **仓库偏差**：Django 和 scikit-learn 的大量代表可能使结果偏向于在 Web/ML 代码模式上表现良好的智能体
+- **时间泄漏风险**：由于数据来自公开的 GitHub，在 PR 后代码上训练的模型可能已经见过解决方案
 
-## Limitations & Critiques
+## 局限性与批评
 
-- **Python-only**: limited to Python repositories; real software engineering spans many languages
-- **Test-dependent evaluation**: if the gold test patch is flawed (tests wrong behavior), correct solutions may be marked as failures
-- **SWE-bench+**: follow-up work (arXiv:2410.06992) identified that some test patches in the original dataset are insufficient -- models can pass by making unrelated changes that happen to satisfy the tests
-- **Benchmark saturation**: with top systems exceeding 90% on Verified, the benchmark's discriminative power is decreasing
-- **Distribution shift**: curating Lite and Verified subsets may remove the hardest, most realistic instances
-- **No partial credit**: a patch that fixes the bug but has a minor style issue fails; no gradient in evaluation
-- **Single-attempt evaluation**: pass@1 does not capture models that can self-correct with feedback
+- **仅限 Python**：局限于 Python 仓库；真实软件工程涵盖多种语言
+- **依赖测试的评估**：如果标准测试补丁有缺陷（测试了错误的行为），正确的解决方案可能被标记为失败
+- **SWE-bench+**：后续工作（arXiv:2410.06992）发现原始数据集中部分测试补丁不够充分 -- 模型可以通过进行无关更改来碰巧满足测试
+- **基准测试饱和**：顶级系统在 Verified 上超过 90%，基准测试的区分能力正在下降
+- **分布偏移**：策划 Lite 和 Verified 子集可能移除了最困难、最真实的实例
+- **无部分评分**：修复了 Bug 但存在轻微风格问题的补丁也会失败；评估中没有梯度
+- **单次评估**：pass@1 无法捕捉能够通过反馈自我纠正的模型
 
-## Follow-up Work
+## 后续工作
 
-- **SWE-bench Lite**: 300-instance subset for faster iteration
-- **SWE-bench Verified**: 500 human-validated instances for higher-quality evaluation
-- **SWE-bench+**: identified and fixed flawed test patches in the original dataset
-- **SWE-bench Pro**: extended to longer-horizon tasks
-- **Multi-SWE-bench**: multilingual extension beyond Python
-- **SWE-MERA**: dynamic benchmark that continuously generates new tasks to prevent contamination
-- **LiveCodeBench**: complementary benchmark with temporal filtering to avoid data contamination
+- **SWE-bench Lite**：300 个实例的子集，用于更快的迭代
+- **SWE-bench Verified**：500 个经人工验证的实例，用于更高质量的评估
+- **SWE-bench+**：识别并修复了原始数据集中有缺陷的测试补丁
+- **SWE-bench Pro**：扩展到更长周期的任务
+- **Multi-SWE-bench**：超越 Python 的多语言扩展
+- **SWE-MERA**：动态基准测试，持续生成新任务以防止数据污染
+- **LiveCodeBench**：互补的基准测试，具有时间过滤功能以避免数据污染
 
-## Key Takeaways
+## 核心要点
 
-1. Real-world software engineering remains fundamentally harder than function-level code generation
-2. The benchmark's construction pipeline (GitHub PR to task instance) is a template for building scalable, realistic benchmarks
-3. Execution-based evaluation via unit tests provides reliable, automated assessment
-4. The rapid performance progression (4% to 90%+ in 3 years) may reflect benchmark-specific optimization as much as genuine capability gains
-5. Repository-level understanding -- navigation, localization, cross-file reasoning -- is the key bottleneck that distinguishes SWE-bench from simpler coding benchmarks
+1. 真实世界软件工程在根本上比函数级代码生成更加困难
+2. 基准测试的构建流程（从 GitHub PR 到任务实例）是构建可扩展、现实基准测试的模板
+3. 通过单元测试进行的基于执行的评估提供了可靠的自动化评估
+4. 快速的性能提升（3 年内从 4% 到 90% 以上）可能反映的是基准测试特定优化，而非真正的能力提升
+5. 仓库级理解 -- 导航、定位、跨文件推理 -- 是 SWE-bench 与更简单编程基准测试的关键区别瓶颈

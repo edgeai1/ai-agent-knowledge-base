@@ -1,78 +1,78 @@
 ---
-title: Agent Memory Systems
+title: 智能体记忆系统
 tags: [memory, rag, context, core-concept]
 related: [agent_architecture, react_pattern]
 ---
 
-## Definition
+## 定义
 
-Agent memory enables LLM agents to store, manage, and retrieve information beyond the immediate context window, supporting long-term learning and personalization.
+智能体记忆使 LLM 智能体能够在即时上下文窗口之外存储、管理和检索信息，支持长期学习和个性化。
 
-## Memory Taxonomy (2026 Survey)
+## 记忆分类体系（2026 综述）
 
-### By Temporal Scope
-- **Short-term / Working Memory**: current context window contents, recent observations
-- **Long-term Memory**: persisted knowledge across sessions
+### 按时间范围分类
+- **短期 / 工作记忆**：当前上下文窗口内容、近期观察
+- **长期记忆**：跨会话持久化的知识
 
-### By Representation
-- **Token-level**: raw text stored and retrieved as tokens
-- **Parametric**: knowledge encoded in model weights (via fine-tuning)
-- **Latent**: compressed representations (embeddings, summaries)
+### 按表示方式分类
+- **token 级**：以 token 形式存储和检索的原始文本
+- **参数化**：编码在模型权重中的知识（通过微调）
+- **潜在表示**：压缩表示（嵌入、摘要）
 
-### By Function
-- **Factual Memory**: facts, knowledge, definitions
-- **Experiential Memory**: past interactions, outcomes, reflections
-- **Working Memory**: active task state, in-progress reasoning
+### 按功能分类
+- **事实记忆**：事实、知识、定义
+- **经验记忆**：过去的交互、结果、反思
+- **工作记忆**：活跃的任务状态、进行中的推理
 
-## Memory Lifecycle: Write-Manage-Read
+## 记忆生命周期：写入-管理-读取
 
 ```
-Write (Formation)    Manage (Evolution)    Read (Retrieval)
+Write (形成)         Manage (演化)         Read (检索)
 ─────────────────    ──────────────────    ────────────────
-Store experience  -> Update/consolidate -> Query relevant
-                     Forget/compress       memories
-                     Reflect/abstract      Score by relevance
+存储经验          -> 更新/整合          -> 查询相关
+                     遗忘/压缩               记忆
+                     反思/抽象               按相关性评分
 ```
 
-## Five Mechanism Families
+## 五大机制族
 
-### 1. Context-Resident Compression
-Compress information to fit more into context window.
-- Summarization of past interactions
-- Sliding window with compression
+### 1. 上下文驻留压缩
+压缩信息以便在上下文窗口中容纳更多内容。
+- 过去交互的摘要化
+- 带压缩的滑动窗口
 
-### 2. Retrieval-Augmented Stores (RAG)
-External vector database for storing and retrieving memories.
-- Embed experiences, retrieve by similarity
-- Foundation of most production agent memory systems
+### 2. 检索增强存储（RAG）
+用于存储和检索记忆的外部向量数据库。
+- 嵌入经验，按相似性检索
+- 大多数生产级智能体记忆系统的基础
 
-### 3. Reflective Self-Improvement
-Agent generates higher-level insights from raw experiences.
-- Generative Agents: periodic reflection on memory stream
-- Reflexion: verbal self-critique from failures
+### 3. 反思式自我改进
+智能体从原始经验中生成更高层次的洞察。
+- Generative Agents：对记忆流进行定期反思
+- Reflexion：从失败中进行语言自我批评
 
-### 4. Hierarchical Virtual Context
-OS-inspired memory management (MemGPT/Letta).
-- Main context = RAM, external storage = disk
-- Agent manages its own paging
+### 4. 分层虚拟上下文
+受操作系统启发的记忆管理（MemGPT/Letta）。
+- 主上下文 = RAM，外部存储 = 磁盘
+- 智能体管理自己的页面置换
 
-### 5. Policy-Learned Management
-Learned policies for when to read/write/forget.
-- FadeMem: biologically-inspired forgetting
-- A-Mem: autonomous memory management
+### 5. 策略学习管理
+学习何时读取/写入/遗忘的策略。
+- FadeMem：受生物学启发的遗忘机制
+- A-Mem：自主记忆管理
 
-## Key Architectures
+## 关键架构
 
-| System | Approach | Key Innovation |
-|--------|----------|----------------|
-| Generative Agents | Memory stream + reflection | Recency-importance-relevance retrieval |
-| MemGPT / Letta | Virtual memory management | Agent controls its own paging |
-| Reflexion | Episodic failure memory | Verbal reinforcement learning |
-| Voyager | Skill library (code) | Procedural memory as executable code |
-| CoALA | Cognitive architecture | Unified framework from cognitive science |
+| 系统 | 方法 | 核心创新 |
+|------|------|----------|
+| Generative Agents | 记忆流 + 反思 | 近期性-重要性-相关性检索 |
+| MemGPT / Letta | 虚拟内存管理 | 智能体控制自己的页面置换 |
+| Reflexion | 情景失败记忆 | 语言强化学习 |
+| Voyager | 技能库（代码） | 程序性记忆作为可执行代码 |
+| CoALA | 认知架构 | 来自认知科学的统一框架 |
 
-## Evaluation Benchmarks (2026)
+## 评估基准（2026）
 
-- **MemBench**: factual vs. reflective memory
-- **MemoryAgentBench**: retrieval, learning, forgetting
-- **LOCOMO**: long-term conversational memory
+- **MemBench**：事实性 vs. 反思性记忆
+- **MemoryAgentBench**：检索、学习、遗忘
+- **LOCOMO**：长期对话记忆

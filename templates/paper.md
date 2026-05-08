@@ -8,30 +8,30 @@ tags: []
 status: to-read
 ---
 
-## TL;DR
+## 摘要概述
 
-One-sentence summary.
+一句话总结。
 
-## Problem
+## 问题
 
-What problem does this paper address? Why is it important?
+这篇论文解决了什么问题？为什么重要？
 
-## Method
+## 方法
 
-Key technical approach and innovations.
+关键技术方法和创新点。
 
-## Results
+## 结果
 
-Main experimental results and comparisons.
+主要实验结果和对比。
 
-## Strengths
+## 优势
 
-## Limitations
+## 局限性
 
-## Related Work
+## 相关工作
 
-Links to related papers or concepts in this knowledge base.
+与本知识库中相关论文或概念的链接。
 
-## Notes
+## 笔记
 
-Personal thoughts, questions, potential follow-ups.
+个人想法、问题、潜在后续研究。

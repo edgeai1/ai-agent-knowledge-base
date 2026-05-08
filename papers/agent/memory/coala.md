@@ -10,97 +10,89 @@ category: agent/memory
 date_read: 2026-05-08
 ---
 
-# CoALA: Cognitive Architectures for Language Agents
+# CoALA：语言智能体的认知架构
 
-## TL;DR
+## 摘要
 
-CoALA proposes a systematic framework for language agents grounded in cognitive science and symbolic
-AI. It decomposes any language agent into three dimensions -- memory (working + long-term with
-episodic/semantic/procedural subtypes), action space (internal reasoning/retrieval vs. external
-grounding/learning), and a decision procedure (planning-then-execution loop). The framework unifies
-prominent agents (ReAct, Reflexion, Voyager, Generative Agents, MemGPT) and connects LLM-based
-agent design to classical cognitive architectures (Soar, ACT-R), revealing underexplored dimensions.
+CoALA 提出了一个基于认知科学和符号 AI 的语言智能体系统化框架。它将任何语言智能体分解为三个维度——记忆（工作记忆 + 长期记忆，含情景/语义/程序性子类型）、动作空间（内部推理/检索 vs. 外部锚定/学习）以及决策过程（规划-然后-执行循环）。该框架统一了知名智能体（ReAct、Reflexion、Voyager、Generative Agents、MemGPT），并将基于 LLM 的智能体设计与经典认知架构（Soar、ACT-R）联系起来，揭示了尚未充分探索的维度。
 
-## Motivation & Problem
+## 研究动机与问题
 
-By mid-2023, the LLM agent landscape was fragmented with no shared vocabulary or design taxonomy:
-1. **No common vocabulary**: Inconsistent terminology across papers for similar constructs.
-2. **Ad hoc design**: Architectures designed case-by-case without principled component analysis.
-3. **Disconnection from cognitive science**: Decades of Soar/ACT-R research largely ignored.
-4. **No design guidance**: Practitioners lack a systematic framework for choosing memory types,
-   action modules, and decision processes for their specific agent needs.
+到 2023 年中期，LLM 智能体领域支离破碎，缺乏共享词汇或设计分类法：
+1. **缺乏通用词汇**：不同论文对相似构件使用不一致的术语。
+2. **临时设计**：架构逐案设计，缺乏有原则的组件分析。
+3. **与认知科学脱节**：数十年的 Soar/ACT-R 研究在很大程度上被忽视。
+4. **缺乏设计指导**：从业者缺少系统化框架来为特定智能体需求选择记忆类型、动作模块和决策过程。
 
-## Method
+## 方法
 
-### The Full Cognitive Architecture
+### 完整认知架构
 
 ```
 +=====================================================================+
-|                        LANGUAGE AGENT (CoALA)                       |
+|                        语言智能体 (CoALA)                            |
 +=====================================================================+
 |  +---------------------------+  +--------------------------------+  |
-|  |     WORKING MEMORY        |  |       LONG-TERM MEMORY         |  |
-|  | - Perceptual inputs       |  |  Episodic  : past experiences  |  |
-|  | - Active goals            |  |  Semantic  : factual knowledge |  |
-|  | - Reasoning intermediates |  |  Procedural: skills/code/LLM   |  |
-|  | - Retrieved context       |  |  (each: parametric + external) |  |
+|  |     工作记忆               |  |       长期记忆                  |  |
+|  | - 感知输入                 |  |  情景记忆: 过去经验              |  |
+|  | - 活跃目标                 |  |  语义记忆: 事实知识              |  |
+|  | - 推理中间结果             |  |  程序性记忆: 技能/代码/LLM       |  |
+|  | - 检索到的上下文           |  |  (每种: 参数化 + 外部)           |  |
 |  +---------------------------+  +--------------------------------+  |
 |  +---------------------------------------------------------------+  |
-|  |                       ACTION SPACE                            |  |
-|  | Internal Actions              | External Actions              |  |
-|  | - Reasoning (LLM inference)   | - Grounding (tool use, env)   |  |
-|  | - Retrieval (memory reads)    | - Learning (memory writes)    |  |
+|  |                       动作空间                                 |  |
+|  | 内部动作                    | 外部动作                        |  |
+|  | - 推理 (LLM 推理)          | - 锚定 (工具使用, 环境)          |  |
+|  | - 检索 (记忆读取)          | - 学习 (记忆写入)                |  |
 |  +---------------------------------------------------------------+  |
 |  +---------------------------------------------------------------+  |
-|  |  DECISION PROCEDURE: loop { plan(internal) -> execute(ext.) } |  |
+|  |  决策过程: loop { plan(内部) -> execute(外部) }                  |  |
 |  +---------------------------------------------------------------+  |
 +=====================================================================+
 ```
 
-### Memory Types (adapted from Tulving/Anderson cognitive psychology)
+### 记忆类型（改编自 Tulving/Anderson 认知心理学）
 
-| Type       | Content               | Read              | Write             | Agent Example             |
-|-----------|------------------------|-------------------|-------------------|---------------------------|
-| Working   | Current state, goals   | Direct access     | Overwrite/cycle   | ReAct thought-obs chain   |
-| Episodic  | Past experiences       | Similarity search | Append per episode| Reflexion reflections     |
-| Semantic  | World knowledge        | Query lookup      | Summarize & store | Generative Agents reflects|
-| Procedural| Skills, code, weights  | Pattern matching  | Code synthesis    | Voyager skill library     |
+| 类型     | 内容                | 读取            | 写入            | 智能体示例                |
+|---------|---------------------|-----------------|-----------------|---------------------------|
+| 工作     | 当前状态、目标       | 直接访问         | 覆盖/循环       | ReAct 思考-观察链          |
+| 情景     | 过去经验             | 相似度搜索       | 按集追加         | Reflexion 反思             |
+| 语义     | 世界知识             | 查询查找         | 摘要并存储       | Generative Agents 反思     |
+| 程序性   | 技能、代码、权重     | 模式匹配         | 代码合成         | Voyager 技能库             |
 
-**Parametric vs. non-parametric distinction** (unique to LLM agents): LLM weights constitute
-read-only parametric memory (semantic + procedural knowledge from pretraining). All runtime
-learning must use non-parametric external storage (vector stores, code libraries, logs).
+**参数化与非参数化的区别**（LLM 智能体独有）：LLM 权重构成只读的参数化记忆（来自预训练的语义 + 程序性知识）。所有运行时学习必须使用非参数化的外部存储（向量库、代码库、日志）。
 
-### Production System Formalization
+### 产生式系统形式化
 
 ```
-Production System (Classical)        Language Agent (CoALA)
--------------------------------      ---------------------------
-Working memory (symbols)       -->   Working memory (text variables)
-Production rules (if-then)     -->   LLM reasoning (flexible inference)
-Conflict resolution            -->   Decision procedure (plan + select)
-External actions               -->   Grounding actions (tools, APIs)
-Learning (rule compilation)    -->   Learning actions (memory writes)
+产生式系统（经典）              语言智能体 (CoALA)
+-------------------------------  ---------------------------
+工作记忆（符号）           -->   工作记忆（文本变量）
+产生式规则（if-then）      -->   LLM 推理（灵活推理）
+冲突解决                   -->   决策过程（规划 + 选择）
+外部动作                   -->   锚定动作（工具、API）
+学习（规则编译）           -->   学习动作（记忆写入）
 
-Formal: Agent = (Memory, ActionSpace, DecisionProcedure)
+形式化: Agent = (Memory, ActionSpace, DecisionProcedure)
   Memory = WorkingMem + {EpisodicLTM, SemanticLTM, ProceduralLTM}
   ActionSpace = Internal(reasoning, retrieval) + External(grounding, learning)
   DecisionProcedure = loop { plan(Internal) -> select -> execute(External) }
 ```
 
-### Decision Procedure Pseudocode
+### 决策过程伪代码
 
 ```
 procedure AGENT_LOOP(environment):
     working_memory.init(goals, percepts)
     while not terminated:
-        // PLANNING PHASE (internal actions only)
+        // 规划阶段（仅内部动作）
         for i in 1..max_plan_steps:
             retrieved = RETRIEVE(long_term_memory, working_memory)
             thought = LLM_REASON(working_memory + retrieved)
             candidate = PROPOSE_ACTION(thought)
             score = EVALUATE(candidate, working_memory)
         selected = SELECT_BEST(candidates)
-        // EXECUTION PHASE (external actions)
+        // 执行阶段（外部动作）
         if selected.type == GROUNDING:
             obs = environment.execute(selected)
             working_memory.update(obs)
@@ -108,81 +100,76 @@ procedure AGENT_LOOP(environment):
             long_term_memory.write(selected.content, selected.memory_type)
 ```
 
-Instantiation levels: Simple (ReAct: single proposal, immediate execution), Planning
-(Tree-of-Thought: multiple proposals, LLM scoring, best-first search), Learning (Reflexion:
-standard cycle + episodic memory writes).
+实例化层次：简单（ReAct：单次提案，立即执行），规划（Tree-of-Thought：多次提案，LLM 评分，最佳优先搜索），学习（Reflexion：标准循环 + 情景记忆写入）。
 
-## Key Innovations
+## 关键创新
 
-1. **Unified taxonomy** grounded in cognitive science for all language agent components.
-2. **Memory typology** with parametric/non-parametric split unique to LLM-based agents.
-3. **Internal/external action distinction** cleanly separating reasoning from grounding.
-4. **Production system bridge** connecting to 50+ years of cognitive architecture research.
-5. **Design space mapping** revealing unexplored regions via systematic agent comparison.
+1. **统一分类法**：基于认知科学，覆盖所有语言智能体组件。
+2. **记忆类型学**：参数化/非参数化的划分对 LLM 智能体独有。
+3. **内部/外部动作区分**：清晰分离推理与锚定。
+4. **产生式系统桥梁**：连接到 50 多年的认知架构研究。
+5. **设计空间映射**：通过系统化智能体比较揭示未探索区域。
 
-## Mapping Existing Agents onto CoALA
+## 将现有智能体映射到 CoALA
 
-| Agent             | Episodic | Semantic | Procedural | Learning   | Decision Process       |
-|-------------------|:--------:|:--------:|:----------:|:----------:|------------------------|
-| ReAct             | No       | Param.   | Param.     | None       | Single proposal, exec  |
-| Reflexion         | Yes      | Param.   | Param.     | Episodic   | Propose + reflect      |
-| Voyager           | Log      | Param.   | Code lib   | Procedural | Propose + verify skill |
-| Generative Agents | Stream   | Reflects | Param.     | Epi + Sem  | Retrieve-reflect-plan  |
-| MemGPT            | Recall   | Archival | Functions  | All types  | Self-directed paging   |
-| DEPS              | Errors   | Param.   | Param.     | None       | Describe-explain-plan  |
-| SayCan            | No       | Param.   | Affordances| None       | Score + select         |
+| 智能体            | 情景   | 语义   | 程序性   | 学习     | 决策过程               |
+|-------------------|:------:|:------:|:--------:|:--------:|------------------------|
+| ReAct             | 否     | 参数化 | 参数化   | 无       | 单次提案，执行          |
+| Reflexion         | 是     | 参数化 | 参数化   | 情景     | 提案 + 反思            |
+| Voyager           | 日志   | 参数化 | 代码库   | 程序性   | 提案 + 验证技能         |
+| Generative Agents | 流     | 反思   | 参数化   | 情景+语义| 检索-反思-规划          |
+| MemGPT            | 回忆   | 档案   | 函数     | 所有类型 | 自主分页               |
+| DEPS              | 错误   | 参数化 | 参数化   | 无       | 描述-解释-规划          |
+| SayCan            | 否     | 参数化 | 可供性   | 无       | 评分 + 选择            |
 
-**ReAct vs. Reflexion**: Same basic architecture; Reflexion adds one episodic memory module and
-one learning phase. CoALA reveals this as a minimal extension.
-**Voyager vs. Generative Agents**: Both memory-rich but store different types -- procedural
-(code skills) vs. episodic (events) + semantic (reflections). Different quadrants of memory space.
+**ReAct vs. Reflexion**：基本架构相同；Reflexion 增加了一个情景记忆模块和一个学习阶段。CoALA 揭示这是一个最小扩展。
+**Voyager vs. Generative Agents**：都具有丰富记忆但存储不同类型——程序性（代码技能）vs. 情景（事件）+ 语义（反思）。处于记忆空间的不同象限。
 
-## Comparison with Classical Cognitive Architectures
+## 与经典认知架构的比较
 
-| Dimension         | Soar                        | ACT-R                      | CoALA                      |
-|-------------------|-----------------------------|-----------------------------|----------------------------|
-| Working memory    | Symbolic WMEs               | Goal/problem state          | Text vars + LLM context   |
-| LT memory types   | Procedural, semantic        | Declarative, procedural     | Episodic, semantic, proced.|
-| Decision cycle    | Propose-decide-apply        | Production matching/firing  | Plan then execute          |
-| Learning          | Chunking (rule compilation) | Activation learning         | Memory writes (any type)   |
-| Conflict resoln.  | Preference semantics        | Utility-based selection     | LLM reasoning over cands.  |
-| Flexibility       | Manual rule authoring       | Manual rule authoring       | LLM provides flexible inf. |
+| 维度            | Soar                        | ACT-R                      | CoALA                      |
+|-----------------|-----------------------------|-----------------------------|----------------------------|
+| 工作记忆        | 符号 WME                    | 目标/问题状态               | 文本变量 + LLM 上下文       |
+| 长期记忆类型    | 程序性、语义                 | 声明性、程序性               | 情景、语义、程序性           |
+| 决策循环        | 提案-决定-应用               | 产生式匹配/触发             | 规划然后执行                |
+| 学习            | 分块（规则编译）             | 激活学习                    | 记忆写入（任意类型）         |
+| 冲突解决        | 偏好语义                    | 基于效用的选择               | LLM 对候选项推理            |
+| 灵活性          | 手动规则编写                 | 手动规则编写                | LLM 提供灵活推理            |
 
-Key CoALA advantage: LLM replaces brittle hand-engineered rules with flexible reasoning.
-Key CoALA limitation: Lacks formal decision theory (utility functions, preference semantics).
+CoALA 的关键优势：LLM 用灵活推理取代了脆弱的手工规则。
+CoALA 的关键局限：缺乏形式化决策理论（效用函数、偏好语义）。
 
-## Analysis & Insights
+## 分析与洞察
 
-1. **Most agents underutilize memory**: Full space of 2^3=8 LTM combinations mostly unexplored.
-2. **Procedural memory is most underexplored**: Only Voyager truly learns reusable skills.
-3. **Learning is rare**: Few agents write to long-term memory, limiting self-improvement.
-4. **Decision procedures are simple**: Most use single-step propose-execute, not full planning.
-5. **LLM as dual-role engine**: Simultaneously serves as parametric memory store AND reasoning
-   engine -- unique to LLM agents, no analog in classical architectures.
-6. **Retrieval quality is critical**: Long-term memory is only as useful as retrieval quality.
+1. **大多数智能体未充分利用记忆**：2^3=8 种长期记忆组合的完整空间大部分未被探索。
+2. **程序性记忆最未被探索**：仅 Voyager 真正学习可复用技能。
+3. **学习罕见**：很少有智能体写入长期记忆，限制了自我改进。
+4. **决策过程简单**：大多数使用单步提案-执行，而非完整规划。
+5. **LLM 的双重角色**：同时充当参数化记忆库和推理引擎——LLM 智能体独有，在经典架构中没有类比。
+6. **检索质量至关重要**：长期记忆的有用性取决于检索质量。
 
-## Limitations & Critiques
+## 局限性与批评
 
-1. **Descriptive, not prescriptive**: Maps design space but does not navigate it.
-2. **No empirical validation**: Purely theoretical; no experiments compare CoALA-designed agents.
-3. **LLM as black box**: Parametric memory is not inspectable unlike Soar/ACT-R rules.
-4. **No formal decision theory**: Lacks utility/reward framework for action selection.
-5. **Missing multi-agent dimension**: Focuses on individual agents; coordination not addressed.
-6. **Rapid obsolescence risk**: Static taxonomy in a fast-moving field.
+1. **描述性而非指导性**：映射了设计空间但未导航它。
+2. **无实验验证**：纯理论性；没有实验比较 CoALA 设计的智能体。
+3. **LLM 作为黑箱**：参数化记忆不可检查，不像 Soar/ACT-R 规则。
+4. **无形式化决策理论**：缺乏用于动作选择的效用/奖励框架。
+5. **缺失多智能体维度**：聚焦于个体智能体；协调未被讨论。
+6. **快速过时风险**：在快速发展的领域中的静态分类法。
 
-## Follow-up Work
+## 后续工作
 
-- **MemGPT** (2023): Operationalizes CoALA's memory hierarchy with virtual memory paging.
-- **A-MEM** (2025): Zettelkasten-based memory blending episodic and semantic storage.
-- **MemoryBank**: Implements forgetting curves for the "what to forget" question.
-- **AgentBench/AgentBoard**: Evaluation suites aligned with CoALA capability dimensions.
-- **LangGraph/LangChain memory**: Production frameworks adopting CoALA-style memory taxonomy.
+- **MemGPT**（2023）：用虚拟内存分页实操化 CoALA 的记忆层次结构。
+- **A-MEM**（2025）：混合情景和语义存储的卡片盒笔记式记忆。
+- **MemoryBank**：为"该遗忘什么"问题实现遗忘曲线。
+- **AgentBench/AgentBoard**：与 CoALA 能力维度对齐的评估套件。
+- **LangGraph/LangChain memory**：采用 CoALA 风格记忆分类法的生产框架。
 
-## Key Takeaways
+## 核心要点
 
-1. **Design modularly**: Separate memory, actions, and decision procedures for principled design.
-2. **Use the memory checklist**: Explicitly consider episodic, semantic, procedural LTM needs.
-3. **Invest in learning**: Memory writes enable self-improvement -- most underexplored dimension.
-4. **LLM replaces rules, not architecture**: Soar/ACT-R structural insights remain valuable.
-5. **All runtime learning = non-parametric writes**: Fundamental constraint shaping agent design.
-6. **CoALA as diagnostic**: When agents fail, the framework identifies the bottleneck component.
+1. **模块化设计**：分离记忆、动作和决策过程以进行有原则的设计。
+2. **使用记忆清单**：明确考虑情景、语义、程序性长期记忆需求。
+3. **投资于学习**：记忆写入实现自我改进——最未被探索的维度。
+4. **LLM 替代规则，而非架构**：Soar/ACT-R 的结构性洞察仍有价值。
+5. **所有运行时学习 = 非参数化写入**：塑造智能体设计的基本约束。
+6. **CoALA 作为诊断工具**：当智能体失败时，框架识别瓶颈组件。

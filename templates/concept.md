@@ -4,18 +4,18 @@ tags: []
 related: []
 ---
 
-## Definition
+## 定义
 
-## Intuition
+## 直觉理解
 
-Why does this work? What's the key insight?
+为什么有效？关键洞察是什么？
 
-## Formulation
+## 公式化
 
-Mathematical formulation or pseudocode (if applicable).
+数学公式或伪代码（如适用）。
 
-## Variants
+## 变体
 
-## References
+## 参考文献
 
-Papers and resources where this concept is introduced or used.
+引入或使用此概念的论文和资源。

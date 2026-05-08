@@ -18,209 +18,209 @@ tags:
 status: done
 ---
 
-# Memory for Autonomous LLM Agents: Mechanisms, Evaluation, and Emerging Frontiers
+# 自主 LLM 智能体的记忆：机制、评估与新兴前沿
 
-## TL;DR
+## 摘要
 
-This 2026 survey from the Hong Kong Research Institute of Technology provides the most complete treatment of memory systems for LLM-based agents to date. It formalizes agent memory as a **write-manage-read loop** coupled with perception and action, introduces a **three-dimensional taxonomy** (temporal scope, representational substrate, control policy), examines **five mechanism families** in depth (context-resident compression, retrieval-augmented stores, reflective self-improvement, hierarchical virtual context, policy-learned management), traces the evolution of evaluation from static recall to multi-session agentic benchmarks, and identifies critical open problems including continual consolidation, causal retrieval, trustworthy reflection, learned forgetting, and multimodal embodied memory.
-
----
-
-## Motivation & Problem
-
-Memory is increasingly recognized as the critical differentiator between toy LLM agents and production-grade autonomous systems:
-
-1. **Context window limitations**: Even with 128K-1M token context windows available in 2025-2026 models, agents operating over hours, days, or weeks generate far more information than fits in any single context. Memory systems must decide what to retain, compress, and discard.
-2. **Multi-session persistence**: Real-world agents (personal assistants, coding agents, scientific research agents) must maintain state across multiple interaction sessions. Without explicit memory, each session starts from scratch.
-3. **Learning from experience**: Effective agents must accumulate knowledge from past successes and failures, building expertise over time rather than repeating mistakes.
-4. **No unified framework**: Prior work on agent memory was scattered across systems papers (Generative Agents, MemGPT, A-Mem), cognitive-science-inspired designs, and engineering solutions, without a common analytical framework.
-5. **Evaluation gap**: Existing benchmarks tested narrow aspects of memory (factual recall, simple retrieval) rather than memory's role in supporting complex, multi-step agentic decision-making.
+这篇 2026 年来自香港科技研究院的综述提供了迄今为止最完整的 LLM 智能体记忆系统论述。它将智能体记忆形式化为与感知和动作耦合的**写入-管理-读取循环**，引入**三维分类法**（时间范围、表征基底、控制策略），深入考察**五个机制家族**（上下文驻留压缩、检索增强存储、反思式自我改进、层次化虚拟上下文、策略学习管理），追踪了从静态回忆到多会话智能体基准的评估演进，并识别了关键开放问题，包括持续整合、因果检索、可信反思、学习性遗忘和多模态具身记忆。
 
 ---
 
-## Method / Framework
+## 研究动机与问题
 
-### The Write-Manage-Read Loop Formalization
+记忆日益被认为是玩具级 LLM 智能体与生产级自主系统之间的关键区分因素：
 
-The paper's central contribution is formalizing agent memory as a continuous loop with three phases, tightly coupled with the agent's perception-action cycle:
-
-**Write Phase (Encoding):**
-The agent encodes new information from its perception stream into memory. Key sub-processes:
-
-- **Observation filtering**: Not all perceived information is worth storing. The write path must filter for relevance, novelty, and importance. Example: MemoryScope uses an LLM-based importance scorer to decide whether an observation merits long-term storage.
-- **Abstraction/compression**: Raw observations are often too verbose for efficient storage. The write phase may summarize, extract key facts, or generate structured representations. Example: Generative Agents create natural-language memory records; A-Mem generates structured "memory units" with tags, links, and summaries.
-- **Indexing**: Stored memories must be indexed for efficient retrieval. Approaches include temporal indexing (by timestamp), semantic indexing (by embedding similarity), categorical indexing (by topic/entity), and graph-based indexing (by relational links).
-- **Contradiction detection**: New information may conflict with existing memories. The write path should detect and resolve contradictions rather than storing inconsistent records.
-
-**Manage Phase (Consolidation and Maintenance):**
-The memory store requires ongoing maintenance to remain useful over time:
-
-- **Consolidation**: Periodically merging, restructuring, or re-abstracting stored memories. Analogous to memory consolidation during sleep in biological systems. Example: reflective agents periodically generate higher-level insights from accumulated episodic memories.
-- **Forgetting/pruning**: Removing outdated, irrelevant, or low-importance memories to prevent unbounded growth and retrieval degradation. Example: FadeMem's biologically-inspired forgetting curves that gradually reduce the salience of old, unused memories.
-- **Updating**: Modifying existing memories when new information supersedes them (e.g., updating a user's phone number, revising a belief about a project status).
-- **Reorganization**: Restructuring the memory index as the distribution of stored content changes. Example: rebuilding embedding clusters as new topics emerge.
-
-**Read Phase (Retrieval and Application):**
-The agent queries its memory store to inform current reasoning and action:
-
-- **Query formulation**: The agent must translate its current need into an effective memory query. This may involve the LLM generating a search query, an embedding for similarity search, or a structured database query.
-- **Retrieval strategies**: Recency-based (favor recent memories), relevance-based (embedding similarity to query), importance-based (prioritize high-salience memories), or hybrid combinations. Generative Agents' three-factor scoring (recency + relevance + importance) remains influential.
-- **Context integration**: Retrieved memories must be formatted and inserted into the LLM's context window alongside the current task information. The order, format, and amount of retrieved memory significantly impacts agent performance.
-- **Memory-conditioned reasoning**: The agent reasons over the combined current context + retrieved memories to produce actions.
-
-### Three-Dimensional Taxonomy
-
-The paper organizes memory systems along three orthogonal dimensions:
-
-**Dimension 1 -- Temporal Scope:**
-- **Working memory (in-context)**: Information currently in the LLM's context window. Ephemeral, limited by context length. Fast access but no persistence.
-- **Episodic memory**: Records of specific events, interactions, or experiences with temporal markers. Supports "what happened" queries. Example: a coding agent's memory of debugging sessions.
-- **Semantic memory**: Abstracted, de-contextualized knowledge derived from multiple experiences. Supports "what is generally true" queries. Example: a user's food preferences distilled from multiple restaurant conversations.
-- **Procedural memory**: Learned skills and behavioral patterns. Supports "how to do X" queries. Example: Voyager's skill library of reusable Minecraft behavior programs.
-
-**Dimension 2 -- Representational Substrate:**
-- **Natural language**: Human-readable text strings. Most flexible, directly consumable by the LLM, but verbose and imprecise for structured information.
-- **Dense embeddings**: Vector representations in a continuous space. Efficient for similarity-based retrieval but not human-readable and lossy for precise factual content.
-- **Structured data**: Key-value pairs, relational tables, knowledge graphs. Precise and queryable but require schema design and are less flexible for open-ended information.
-- **Code/executable**: Stored as executable programs or functions. Most relevant for procedural memory (skills, tools). Example: Voyager stores skills as JavaScript functions.
-- **Hybrid**: Combinations of the above. Example: natural language for episodic memories + embeddings for retrieval + knowledge graph for entity relationships.
-
-**Dimension 3 -- Control Policy:**
-- **Heuristic/rule-based**: Fixed rules determine what to write, when to manage, and how to read. Example: "store all observations with importance > 0.7; retrieve top-5 by cosine similarity." Simple, predictable, but inflexible.
-- **LLM-driven**: The LLM itself decides memory operations through prompted reasoning. Example: "Given the current conversation, which of these memories are relevant?" More flexible but adds inference cost and introduces LLM judgment errors.
-- **Learned/optimized**: Memory operations are governed by trained models (reinforcement learning, supervised fine-tuning). Example: policy networks trained to optimize long-term task performance by learning when and what to store/retrieve. Most principled but requires training data and infrastructure.
-
-### Five Mechanism Families
-
-**Family 1 -- Context-Resident Compression:**
-Keeps all memory within the LLM's context window by compressing older content to make room for new information.
-
-- **Summarization chains**: Periodically summarize older context, replacing verbose history with compressed summaries. Example: ConversationSummaryMemory in LangChain progressively summarizes earlier turns as conversation extends.
-- **Sliding-window + summary**: Maintain a fixed window of recent raw content plus a running summary of everything before the window.
-- **Token-level compression**: Models like LLMLingua compress context at the token level, removing redundant or low-information tokens while preserving meaning.
-- **Strengths**: No external infrastructure needed; all memory is always "in context" and directly accessible.
-- **Weaknesses**: Information loss is inevitable; summarization introduces errors; does not scale to very long histories.
-
-**Family 2 -- Retrieval-Augmented Stores (RAG-based Memory):**
-Stores memories externally and retrieves relevant entries on demand, integrating them into the context at query time.
-
-- **Vector store memory**: Embedding all memories and retrieving by cosine similarity against the current query. Most common approach. Example: using FAISS, Pinecone, or Chroma as the memory backend.
-- **Hybrid retrieval**: Combining dense retrieval (embedding similarity) with sparse retrieval (BM25/keyword matching) for better coverage.
-- **Memory-augmented generation**: Tightly coupling retrieval with generation, where retrieved memories condition the LLM's output through attention mechanisms rather than simple context concatenation.
-- **Strengths**: Scalable to large memory stores; supports precise factual retrieval; no context window limitation.
-- **Weaknesses**: Retrieval quality depends on embedding model and query formulation; retrieved context may not integrate seamlessly with current reasoning.
-
-**Family 3 -- Reflective Self-Improvement:**
-Agents periodically reflect on accumulated experiences to generate higher-order insights, plans, and self-corrections.
-
-- **Generative reflection**: Periodically prompting the agent to synthesize insights from recent memories. Example: Generative Agents generate reflections like "I am learning that I enjoy helping people with creative projects."
-- **Reflexion**: After task failure, generating verbal self-feedback stored in memory to avoid repeating mistakes.
-- **Self-critique loops**: Agent evaluates its own past actions and revises stored strategies. Example: A-Mem's agentic memory system that autonomously decides to reflect, consolidate, or restructure its memory based on self-assessed need.
-- **Strengths**: Enables genuine learning from experience; produces increasingly abstract and transferable knowledge.
-- **Weaknesses**: Reflection quality depends on the LLM's self-evaluation ability; risk of compounding errors if reflections are incorrect; computational overhead of reflection cycles.
-
-**Family 4 -- Hierarchical Virtual Context:**
-Organizes memory into multiple layers of abstraction, creating a virtual context that extends far beyond the physical context window.
-
-- **MemGPT / MemoryOS**: Inspired by operating system memory management. Implements a hierarchy: "main context" (in the LLM's context window) and "external storage" (disk). A memory manager decides when to page information in and out.
-- **Multi-tier memory**: Separating short-term working memory, medium-term session memory, and long-term persistent memory with different storage and retrieval policies at each tier.
-- **Memory graphs**: Organizing memories as nodes in a graph with typed edges (temporal, causal, semantic). Enables structured traversal and relational reasoning over memory contents.
-- **Strengths**: Supports both fine-grained and high-level memory access; explicit management policies; scales to very large memory stores.
-- **Weaknesses**: Architectural complexity; requires explicit management decisions that may not always be correct; overhead of maintaining hierarchical structures.
-
-**Family 5 -- Policy-Learned Management:**
-Uses learned policies (trained via RL, supervised learning, or optimization) to govern memory operations.
-
-- **RL-trained memory controllers**: Training a policy network to decide what to write, what to retrieve, and when to forget, optimizing for downstream task performance.
-- **Learned retrieval policies**: Training models to predict which memories will be useful for the current task, moving beyond simple similarity-based retrieval.
-- **Attention-based memory selection**: Using trained attention mechanisms to dynamically weight the relevance of different memory entries.
-- **Strengths**: Can optimize for long-term performance rather than myopic heuristics; adapts to specific task distributions.
-- **Weaknesses**: Requires training data and infrastructure; policies may not generalize across domains; difficult to interpret or debug.
+1. **上下文窗口限制**：即使 2025-2026 年的模型拥有 128K-1M token 的上下文窗口，运行数小时、数天或数周的智能体生成的信息远超任何单一上下文的容量。记忆系统必须决定保留、压缩和丢弃什么。
+2. **多会话持久性**：真实世界的智能体（个人助手、编码智能体、科研智能体）必须跨多个交互会话维护状态。没有显式记忆，每个会话都从零开始。
+3. **从经验中学习**：有效的智能体必须从过去的成功和失败中积累知识，随时间建立专业技能而非重复错误。
+4. **缺乏统一框架**：此前关于智能体记忆的工作分散在系统论文（Generative Agents、MemGPT、A-Mem）、认知科学启发的设计和工程解决方案中，缺乏通用的分析框架。
+5. **评估差距**：现有基准测试了记忆的狭窄方面（事实回忆、简单检索），而非记忆在支持复杂多步智能体决策中的角色。
 
 ---
 
-## Notable 2026 Systems Covered
+## 方法 / 框架
 
-- **FadeMem**: Biologically-inspired forgetting with decay curves calibrated to usage patterns.
-- **ShardMemo**: Masked MoE routing for sharded agentic LLM memory, distributing memory across mixture-of-experts.
-- **E-mem**: Multi-agent episodic context reconstruction, enabling teams of agents to share and align episodic memories.
-- **A-Mem**: Agentic memory with autonomous management -- the agent decides when and how to organize its own memory.
-- **MemMachine**: Ground-truth-preserving memory system that maintains provenance chains for stored facts.
+### 写入-管理-读取循环形式化
+
+论文的核心贡献是将智能体记忆形式化为一个包含三个阶段的持续循环，与智能体的感知-动作循环紧密耦合：
+
+**写入阶段（编码）：**
+智能体将感知流中的新信息编码到记忆中。关键子过程：
+
+- **观察过滤**：并非所有感知信息都值得存储。写入路径必须过滤相关性、新颖性和重要性。示例：MemoryScope 使用基于 LLM 的重要性评分器来决定某个观察是否值得长期存储。
+- **抽象/压缩**：原始观察通常过于冗长，不适合高效存储。写入阶段可能进行摘要、提取关键事实或生成结构化表示。示例：Generative Agents 创建自然语言记忆记录；A-Mem 生成包含标签、链接和摘要的结构化"记忆单元"。
+- **索引**：存储的记忆必须被索引以实现高效检索。方法包括时间索引（按时间戳）、语义索引（按嵌入相似度）、分类索引（按主题/实体）和图索引（按关系链接）。
+- **矛盾检测**：新信息可能与现有记忆冲突。写入路径应检测并解决矛盾，而非存储不一致的记录。
+
+**管理阶段（整合与维护）：**
+记忆存储需要持续维护以保持有用：
+
+- **整合**：定期合并、重组或重新抽象存储的记忆。类似于生物系统中睡眠期间的记忆整合。示例：反思性智能体定期从积累的情景记忆中生成更高级别的洞察。
+- **遗忘/修剪**：移除过时、无关或低重要性的记忆，以防止无界增长和检索退化。示例：FadeMem 受生物学启发的遗忘曲线，逐渐降低旧的、未使用的记忆的显著性。
+- **更新**：当新信息取代旧信息时修改现有记忆（例如，更新用户的电话号码、修正对项目状态的认知）。
+- **重组**：随着存储内容分布变化，重构记忆索引。示例：当新主题出现时重建嵌入聚类。
+
+**读取阶段（检索与应用）：**
+智能体查询其记忆存储以指导当前推理和行动：
+
+- **查询构造**：智能体必须将当前需求转化为有效的记忆查询。这可能涉及 LLM 生成搜索查询、用于相似度搜索的嵌入或结构化数据库查询。
+- **检索策略**：基于近期性（偏好近期记忆）、相关性（嵌入相似度与查询）、重要性（优先高显著性记忆）或混合组合。Generative Agents 的三因素评分（近期性 + 相关性 + 重要性）仍具影响力。
+- **上下文整合**：检索到的记忆必须格式化并与当前任务信息一起插入 LLM 上下文窗口。检索记忆的顺序、格式和数量显著影响智能体性能。
+- **记忆条件推理**：智能体对当前上下文 + 检索记忆的组合进行推理以产生行动。
+
+### 三维分类法
+
+论文沿三个正交维度组织记忆系统：
+
+**维度 1 —— 时间范围：**
+- **工作记忆（上下文内）**：当前在 LLM 上下文窗口中的信息。短暂的，受上下文长度限制。快速访问但无持久性。
+- **情景记忆**：具有时间标记的特定事件、交互或经验的记录。支持"发生了什么"的查询。示例：编码智能体对调试会话的记忆。
+- **语义记忆**：从多次经验中提炼的抽象化、去上下文化的知识。支持"通常什么是对的"的查询。示例：从多次餐厅对话中提炼出的用户饮食偏好。
+- **程序性记忆**：学习到的技能和行为模式。支持"如何做 X"的查询。示例：Voyager 的可复用 Minecraft 行为程序技能库。
+
+**维度 2 —— 表征基底：**
+- **自然语言**：人类可读的文本字符串。最灵活，LLM 可直接消费，但对结构化信息来说冗长且不精确。
+- **稠密嵌入**：连续空间中的向量表示。适合基于相似度的检索，但不可人类阅读，对精确事实内容有损。
+- **结构化数据**：键值对、关系表、知识图谱。精确且可查询，但需要模式设计，对开放式信息灵活性较低。
+- **代码/可执行**：存储为可执行程序或函数。与程序性记忆（技能、工具）最相关。示例：Voyager 将技能存储为 JavaScript 函数。
+- **混合**：以上方式的组合。示例：情景记忆用自然语言 + 检索用嵌入 + 实体关系用知识图谱。
+
+**维度 3 —— 控制策略：**
+- **启发式/规则式**：固定规则决定写入什么、何时管理、如何读取。示例："存储所有重要性 > 0.7 的观察；按余弦相似度检索 top-5。"简单、可预测但不灵活。
+- **LLM 驱动**：LLM 本身通过提示推理决定记忆操作。示例："根据当前对话，这些记忆中哪些是相关的？"更灵活但增加推理成本，引入 LLM 判断误差。
+- **学习/优化**：记忆操作由训练过的模型（强化学习、监督微调）管理。示例：训练策略网络通过学习何时存储/检索来优化长期任务性能。最有原则但需要训练数据和基础设施。
+
+### 五个机制家族
+
+**家族 1 —— 上下文驻留压缩：**
+通过压缩旧内容为新信息腾出空间，将所有记忆保持在 LLM 上下文窗口内。
+
+- **摘要链**：定期摘要旧上下文，用压缩摘要替换冗长历史。示例：LangChain 中的 ConversationSummaryMemory 随着对话延伸逐步摘要早期轮次。
+- **滑动窗口 + 摘要**：维护最近原始内容的固定窗口加上窗口之前所有内容的运行摘要。
+- **Token 级压缩**：如 LLMLingua 等模型在 token 级别压缩上下文，移除冗余或低信息 token 同时保留语义。
+- **优势**：无需外部基础设施；所有记忆始终"在上下文中"且可直接访问。
+- **劣势**：信息损失不可避免；摘要引入误差；不适合非常长的历史。
+
+**家族 2 —— 检索增强存储（基于 RAG 的记忆）：**
+将记忆外部存储，按需检索相关条目，在查询时整合到上下文中。
+
+- **向量存储记忆**：嵌入所有记忆，通过余弦相似度与当前查询检索。最常见方法。示例：使用 FAISS、Pinecone 或 Chroma 作为记忆后端。
+- **混合检索**：结合稠密检索（嵌入相似度）和稀疏检索（BM25/关键词匹配）以获得更好覆盖。
+- **记忆增强生成**：将检索与生成紧密耦合，检索到的记忆通过注意力机制而非简单上下文拼接来条件化 LLM 输出。
+- **优势**：可扩展到大规模记忆存储；支持精确的事实检索；无上下文窗口限制。
+- **劣势**：检索质量取决于嵌入模型和查询构造；检索到的上下文可能无法与当前推理无缝整合。
+
+**家族 3 —— 反思式自我改进：**
+智能体定期反思积累的经验，生成更高阶的洞察、计划和自我修正。
+
+- **生成式反思**：定期提示智能体从近期记忆中综合洞察。示例：Generative Agents 生成如"我正在发现我喜欢帮助人们完成创意项目"的反思。
+- **Reflexion**：任务失败后，生成存储在记忆中的语言自我反馈，以避免重复错误。
+- **自我批评循环**：智能体评估自己过去的行动并修改存储的策略。示例：A-Mem 的智能体记忆系统，基于自我评估的需求自主决定反思、整合或重组记忆。
+- **优势**：实现从经验中真正学习；产生日益抽象和可迁移的知识。
+- **劣势**：反思质量取决于 LLM 的自我评估能力；如果反思不正确，有累积误差的风险；反思循环的计算开销。
+
+**家族 4 —— 层次化虚拟上下文：**
+将记忆组织成多层抽象，创建远超物理上下文窗口的虚拟上下文。
+
+- **MemGPT / MemoryOS**：受操作系统内存管理启发。实现层次结构："主上下文"（在 LLM 上下文窗口中）和"外部存储"（磁盘）。内存管理器决定何时将信息页入和页出。
+- **多层记忆**：分离短期工作记忆、中期会话记忆和长期持久记忆，在每层使用不同的存储和检索策略。
+- **记忆图谱**：将记忆组织为图中的节点，带有类型化的边（时间、因果、语义）。支持结构化遍历和记忆内容的关系推理。
+- **优势**：支持细粒度和高级别的记忆访问；显式管理策略；可扩展到非常大的记忆存储。
+- **劣势**：架构复杂；需要的显式管理决策可能并不总是正确；维护层次结构的开销。
+
+**家族 5 —— 策略学习管理：**
+使用学习到的策略（通过 RL、监督学习或优化训练）来管理记忆操作。
+
+- **RL 训练的记忆控制器**：训练策略网络来决定写入什么、检索什么以及何时遗忘，优化下游任务性能。
+- **学习检索策略**：训练模型预测哪些记忆对当前任务有用，超越简单的基于相似度的检索。
+- **基于注意力的记忆选择**：使用训练的注意力机制动态加权不同记忆条目的相关性。
+- **优势**：可以优化长期性能而非短视启发式；适应特定任务分布。
+- **劣势**：需要训练数据和基础设施；策略可能无法跨领域泛化；难以解释或调试。
 
 ---
 
-## Evaluation Benchmarks Comparison
+## 值得关注的 2026 年系统
+
+- **FadeMem**：受生物学启发的遗忘，衰减曲线根据使用模式校准。
+- **ShardMemo**：用于分片智能体 LLM 记忆的掩码 MoE 路由，在混合专家中分布记忆。
+- **E-mem**：多智能体情景上下文重建，使智能体团队能够共享和对齐情景记忆。
+- **A-Mem**：自主管理的智能体记忆——智能体决定何时以及如何组织自己的记忆。
+- **MemMachine**：保持真实性的记忆系统，维护存储事实的溯源链。
+
+---
+
+## 评估基准比较
 
 ### MemBench
-- **Focus**: Factual vs. reflective memory, participation vs. observation modes.
-- **Metrics**: Three-dimensional -- effectiveness (accuracy of recall), efficiency (number of memory operations needed), capacity (performance degradation as memory store grows).
-- **Strength**: Clean separation of memory types and measurement dimensions.
-- **Limitation**: Relatively artificial scenarios; does not test memory in full agentic task completion.
+- **聚焦**：事实性 vs. 反思性记忆，参与 vs. 观察模式。
+- **指标**：三维——有效性（回忆准确率）、效率（所需记忆操作数）、容量（随记忆存储增长的性能退化）。
+- **优势**：记忆类型和测量维度的清晰分离。
+- **局限**：场景相对人工；未在完整智能体任务完成中测试记忆。
 
 ### MemoryAgentBench
-- **Focus**: Cognitive-science-grounded evaluation of four competencies.
-- **Competencies tested**: (1) Accurate retrieval -- can the agent find the right memory? (2) Test-time learning -- can the agent update behavior based on new stored information? (3) Long-range understanding -- can the agent connect information across large temporal gaps? (4) Selective forgetting -- can the agent appropriately ignore outdated information?
-- **Strength**: Grounded in cognitive science theory of memory functions.
-- **Limitation**: Individual competencies tested in isolation; does not assess how they interact.
+- **聚焦**：基于认知科学的四种能力评估。
+- **测试的能力**：(1) 准确检索——智能体能找到正确的记忆吗？(2) 测试时学习——智能体能基于新存储的信息更新行为吗？(3) 长程理解——智能体能连接跨大时间间隔的信息吗？(4) 选择性遗忘——智能体能适当地忽略过时信息吗？
+- **优势**：以记忆功能的认知科学理论为基础。
+- **局限**：各能力孤立测试；未评估它们如何交互。
 
 ### MemoryArena
-- **Focus**: Memory evaluation embedded in complete agentic tasks.
-- **Task types**: Web navigation with memory of past visits, preference-constrained planning requiring recall of user preferences, progressive information search building on prior findings, sequential reasoning over accumulated evidence.
-- **Strength**: Most realistic evaluation setting; tests memory as part of the full agent loop.
-- **Limitation**: Complex evaluation setup; harder to isolate memory-specific contributions.
+- **聚焦**：嵌入在完整智能体任务中的记忆评估。
+- **任务类型**：带过去访问记忆的网络导航、需要回忆用户偏好的约束规划、基于先前发现的渐进信息搜索、基于积累证据的顺序推理。
+- **优势**：最真实的评估设置；在完整智能体循环中测试记忆。
+- **局限**：复杂的评估设置；更难隔离记忆特定的贡献。
 
 ### LOCOMO
-- **Focus**: Long-term conversational memory benchmark.
-- **Design**: Tests agents on retaining and using information from extended multi-session conversations.
-- **Strength**: Directly evaluates the most common use case (persistent conversational assistants).
+- **聚焦**：长期对话记忆基准。
+- **设计**：测试智能体在扩展的多会话对话中保留和使用信息。
+- **优势**：直接评估最常见的用例（持久对话助手）。
 
 ---
 
-## Open Problems (Research Roadmap)
+## 开放问题（研究路线图）
 
-### 1. Continual Consolidation
-How should agents periodically restructure and re-abstract their memory stores? Biological memory consolidation during sleep provides inspiration, but computational analogues remain primitive. The field needs principled consolidation algorithms that preserve critical information while enabling efficient retrieval over ever-growing memory stores.
+### 1. 持续整合
+智能体应如何定期重构和重新抽象其记忆存储？生物记忆在睡眠期间的整合提供了启发，但计算类比仍然原始。该领域需要有原则的整合算法，在保留关键信息的同时支持不断增长的记忆存储上的高效检索。
 
-### 2. Causally Grounded Retrieval
-Current retrieval is predominantly based on surface-level similarity (embedding cosine distance). Agents need retrieval mechanisms that understand causal relationships: "retrieve the memory that *caused* the current situation" or "retrieve memories about *consequences* of similar actions." This requires moving beyond associative retrieval to causal and interventional retrieval.
+### 2. 因果锚定的检索
+当前检索主要基于表面级别相似度（嵌入余弦距离）。智能体需要理解因果关系的检索机制："检索*导致*当前情况的记忆"或"检索关于类似行动*后果*的记忆。"这需要从关联检索转向因果和干预检索。
 
-### 3. Trustworthy Reflection
-Reflective memory assumes the agent's self-evaluations are accurate, but LLMs can generate plausible-sounding but incorrect reflections. The field needs verification mechanisms for reflective outputs and methods to detect and correct erroneous reflections before they corrupt the memory store.
+### 3. 可信反思
+反思式记忆假设智能体的自我评估是准确的，但 LLM 可能生成听起来合理但不正确的反思。该领域需要反思输出的验证机制以及在错误反思腐蚀记忆存储之前检测和修正它们的方法。
 
-### 4. Learned Forgetting
-Selective, purposeful forgetting is as important as remembering. Agents must forget outdated information, superseded beliefs, and irrelevant details. Current forgetting mechanisms are either too aggressive or too conservative. Principled forgetting policies that balance retention and pruning remain an open problem.
+### 4. 学习性遗忘
+选择性的、有目的的遗忘与记住同等重要。智能体必须遗忘过时信息、被取代的信念和无关细节。当前的遗忘机制要么过于激进，要么过于保守。平衡保留和修剪的有原则的遗忘策略仍是一个开放问题。
 
-### 5. Multimodal Embodied Memory
-Agents operating in physical or richly visual environments need memory systems that handle spatial maps, visual scenes, audio events, and sensorimotor experiences alongside text. Extending the write-manage-read loop to multimodal representations is a major research challenge.
-
----
-
-## Limitations
-
-1. **Single-author perspective**: May reflect narrower viewpoints than multi-author collaborative surveys.
-2. **Early 2026 snapshot**: The field is evolving rapidly; systems published after March 2026 are not covered.
-3. **Limited empirical comparison**: Categorizes and analyzes mechanisms but does not run controlled experiments comparing them on a common benchmark.
-4. **Multimodal memory underexplored**: Detailed treatment focuses primarily on text-based memory; visual, auditory, and embodied memory systems receive lighter coverage.
-5. **Scale gap**: Most analyzed systems operate at the scale of hundreds to thousands of memory entries. Memory management at millions-of-entries scale is discussed as open problem but not empirically studied.
-6. **Privacy and safety**: Data governance and privacy implications of persistent agent memory are acknowledged but not deeply analyzed from a technical solutions perspective.
+### 5. 多模态具身记忆
+在物理或视觉丰富环境中运行的智能体需要处理空间地图、视觉场景、音频事件和感觉运动经验的记忆系统，而不仅仅是文本。将写入-管理-读取循环扩展到多模态表示是一个重大研究挑战。
 
 ---
 
-## Key Takeaways
+## 局限性
 
-1. **The write-manage-read loop is the right abstraction** for thinking about agent memory. It separates concerns cleanly and maps to both engineering reality and biological analogy.
-2. **No single mechanism family dominates**: Different applications call for different memory approaches. Context compression for short-lived assistants; RAG-based memory for knowledge-intensive agents; reflective memory for learning agents; hierarchical systems for long-lived persistent agents.
-3. **Management (the "manage" phase) is the most underexplored** aspect of the loop. Most systems focus on writing and reading but neglect consolidation, pruning, contradiction resolution, and reorganization.
-4. **Evaluation is catching up but still lagging**: The shift from MemBench-style factual recall to MemoryArena-style agentic evaluation is positive, but no benchmark yet fully captures the challenge of memory over weeks or months of continuous operation.
-5. **The engineering challenges are as important as the algorithmic ones**: Write-path filtering, latency budgets, contradiction handling, and privacy governance are practical concerns that determine deployability.
-6. **Memory is the bridge from demonstration agents to production agents**: Memory capability is what separates agents that handle a single task from agents that serve as persistent, learning assistants over extended time horizons.
-7. **Connection to cognitive science is productive but should not be overextended**: Concepts like episodic/semantic/procedural memory provide useful design inspiration, but agent memory faces different constraints than biological memory.
+1. **单作者视角**：可能反映比多作者协作综述更窄的观点。
+2. **2026 年初快照**：该领域快速发展；2026 年 3 月后发表的系统未被覆盖。
+3. **有限的实证比较**：分类和分析了机制，但未在通用基准上运行对照实验进行比较。
+4. **多模态记忆探索不足**：详细论述主要聚焦于文本记忆；视觉、听觉和具身记忆系统覆盖较少。
+5. **规模差距**：大多数分析的系统在数百到数千条记忆条目的规模上运行。百万级记忆管理作为开放问题讨论但未被实证研究。
+6. **隐私与安全**：持久智能体记忆的数据治理和隐私影响被承认但未从技术解决方案的角度深入分析。
 
 ---
 
-## Related Work
+## 核心要点
 
-- Also see: "Memory in the Age of AI Agents" (arXiv:2512.13564) for complementary perspectives.
-- "A Survey on the Security of Long-Term Memory in LLM Agents" (2026) for safety-focused treatment.
-- Wang et al. (2308.11432) Fudan survey's memory module section for the foundational taxonomy.
-- MemGPT (Packer et al.) for the OS-inspired hierarchical approach detailed in this repository.
+1. **写入-管理-读取循环是正确的抽象**，用于思考智能体记忆。它清晰地分离了关注点，并映射到工程现实和生物学类比。
+2. **没有单一机制家族占主导**：不同应用需要不同的记忆方法。短期助手用上下文压缩；知识密集型智能体用基于 RAG 的记忆；学习型智能体用反思式记忆；长期持久智能体用层次化系统。
+3. **管理（"管理"阶段）是最未被探索的**循环方面。大多数系统聚焦于写入和读取，但忽视了整合、修剪、矛盾解决和重组。
+4. **评估正在追赶但仍落后**：从 MemBench 风格的事实回忆到 MemoryArena 风格的智能体评估的转变是积极的，但没有基准完全捕捉到数周或数月持续运行中的记忆挑战。
+5. **工程挑战与算法挑战同样重要**：写入路径过滤、延迟预算、矛盾处理和隐私治理是决定可部署性的实际关切。
+6. **记忆是从演示智能体到生产智能体的桥梁**：记忆能力是区分处理单一任务的智能体和在延长时间范围内作为持久学习助手服务的智能体的关键。
+7. **与认知科学的联系富有成效但不应过度延伸**：情景/语义/程序性记忆等概念提供了有用的设计灵感，但智能体记忆面临与生物记忆不同的约束。
+
+---
+
+## 相关工作
+
+- 另见："Memory in the Age of AI Agents"（arXiv:2512.13564）获取互补视角。
+- "A Survey on the Security of Long-Term Memory in LLM Agents"（2026）获取安全聚焦的论述。
+- Wang et al.（2308.11432）复旦综述的记忆模块部分获取基础分类法。
+- MemGPT（Packer et al.）获取本仓库中详述的操作系统启发的层次化方法。

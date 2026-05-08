@@ -22,220 +22,183 @@ tags:
 status: done
 ---
 
-## TL;DR
+## 简要总结
 
-A comprehensive survey of agent workflow systems covering 20+ representative frameworks
-(academic and industrial). The paper proposes a two-dimensional classification along
-functional capabilities (planning, multi-agent collaboration, API integration) and
-architectural features (agent roles, orchestration flows, specification languages).
-It also introduces the HAWK framework -- a hierarchical five-layer architecture
-(User, Workflow, Operator, Agent, Resource) with sixteen standardized interfaces for
-end-to-end agent workflow orchestration.
+一篇关于智能体工作流系统的全面综述，涵盖了 20+ 个代表性框架（学术和工业）。论文提出了沿功能能力（规划、多智能体协作、API 集成）和架构特征（智能体角色、编排流程、规范语言）两个维度的分类框架。它还引入了 HAWK 框架 -- 一个层次化的五层架构（用户层、工作流层、算子层、智能体层、资源层），具有十六个标准化接口，用于端到端的智能体工作流编排。
 
-## Motivation & Problem
+## 动机与问题
 
-As LLM-based autonomous agents grow in complexity, ad-hoc implementations become
-unmaintainable. The field lacks:
+随着基于 LLM 的自主智能体日益复杂，临时性实现变得不可维护。该领域缺乏：
 
-1. **Systematic taxonomy**: No unified framework for comparing the growing zoo of agent
-   workflow systems (LangChain, AutoGen, CrewAI, MetaGPT, etc.).
-2. **Architectural clarity**: Systems conflate agent logic, orchestration, and resource
-   management, making them hard to extend and debug.
-3. **Standardization**: Each framework defines its own abstractions, making
-   interoperability and migration difficult.
-4. **Security considerations**: As workflows gain autonomy, the security implications of
-   tool access, data flow, and agent delegation remain under-explored.
+1. **系统化分类体系**：缺乏用于比较日益增长的智能体工作流系统（LangChain、AutoGen、CrewAI、MetaGPT 等）的统一框架。
+2. **架构清晰度**：系统混淆了智能体逻辑、编排和资源管理，使其难以扩展和调试。
+3. **标准化**：每个框架定义自己的抽象，使互操作性和迁移变得困难。
+4. **安全考量**：随着工作流获得更多自主权，工具访问、数据流和智能体委托的安全影响仍未被充分探索。
 
-## Method
+## 方法
 
-### Two-Dimensional Classification Framework
+### 两维度分类框架
 
-The survey organizes existing systems along two orthogonal axes:
+综述沿两个正交轴组织现有系统：
 
 ```
 +------------------------------------------------------------------+
-|                    CLASSIFICATION FRAMEWORK                       |
+|                    分类框架                                        |
 +------------------------------------------------------------------+
 |                                                                   |
-|  Dimension 1: FUNCTIONAL CAPABILITIES                            |
+|  维度 1：功能能力                                                  |
 |  +------------------------------------------------------------+  |
-|  | - Planning (task decomposition, goal-driven)                |  |
-|  | - Multi-Agent Collaboration (role assignment, delegation)   |  |
-|  | - External API / Tool Integration                           |  |
-|  | - Memory Management (short-term, long-term, shared)         |  |
-|  | - Human-in-the-Loop (approval, feedback, override)          |  |
+|  | - 规划（任务分解、目标驱动）                                  |  |
+|  | - 多智能体协作（角色分配、委托）                               |  |
+|  | - 外部 API / 工具集成                                         |  |
+|  | - 记忆管理（短期、长期、共享）                                 |  |
+|  | - 人在回路中（审批、反馈、覆盖）                               |  |
 |  +------------------------------------------------------------+  |
 |                                                                   |
-|  Dimension 2: ARCHITECTURAL FEATURES                             |
+|  维度 2：架构特征                                                  |
 |  +------------------------------------------------------------+  |
-|  | - Agent Roles (single, specialized, hierarchical)           |  |
-|  | - Orchestration Flows (sequential, parallel, DAG, cyclic)   |  |
-|  | - Specification Languages (code, YAML, visual, natural lang)|  |
-|  | - Control Type (centralized, decentralized, hybrid)         |  |
-|  | - Deployment Model (local, cloud, hybrid)                   |  |
-|  | - Memory Model (per-agent, shared, hierarchical)            |  |
+|  | - 智能体角色（单一、专用、层次化）                             |  |
+|  | - 编排流程（顺序、并行、DAG、循环）                            |  |
+|  | - 规范语言（代码、YAML、可视化、自然语言）                     |  |
+|  | - 控制类型（集中、去中心化、混合）                             |  |
+|  | - 部署模型（本地、云端、混合）                                 |  |
+|  | - 记忆模型（每智能体、共享、层次化）                           |  |
 |  +------------------------------------------------------------+  |
 +------------------------------------------------------------------+
 ```
 
-### Systems Compared (20+ frameworks)
+### 比较的系统（20+ 框架）
 
-The survey covers major frameworks across both academic and industrial settings:
+综述涵盖了学术和工业环境中的主要框架：
 
-| Category   | Systems                                                     |
+| 类别      | 系统                                                        |
 |-----------|-------------------------------------------------------------|
-| Academic  | MetaGPT, CAMEL, AgentVerse, AutoGen (MSR), ChatDev         |
-| Industry  | LangChain/LangGraph, CrewAI, LlamaIndex, Semantic Kernel   |
-| Hybrid    | AutoGPT, BabyAGI, OpenDevin, Dify, Coze                    |
+| 学术      | MetaGPT、CAMEL、AgentVerse、AutoGen (MSR)、ChatDev         |
+| 工业      | LangChain/LangGraph、CrewAI、LlamaIndex、Semantic Kernel   |
+| 混合      | AutoGPT、BabyAGI、OpenDevin、Dify、Coze                    |
 
-Each system is evaluated across dimensions including:
-- Planning approach (reactive vs. deliberative)
-- Control type (centralized vs. decentralized)
-- Configuration method (programmatic vs. declarative)
-- Architecture (monolithic vs. modular)
-- Specification language (Python, YAML, visual, etc.)
-- Deployment model (local, cloud, serverless)
-- Memory model (ephemeral, persistent, shared)
+每个系统沿以下维度进行评估：
+- 规划方法（反应式 vs. 审慎式）
+- 控制类型（集中 vs. 去中心化）
+- 配置方式（程序化 vs. 声明式）
+- 架构（单体 vs. 模块化）
+- 规范语言（Python、YAML、可视化等）
+- 部署模型（本地、云端、无服务器）
+- 记忆模型（临时、持久、共享）
 
-### HAWK: Hierarchical Agent Workflow Framework
+### HAWK：层次化智能体工作流框架
 
-The survey proposes HAWK as a reference architecture with five layers:
+综述提出 HAWK 作为具有五个层次的参考架构：
 
 ```
 +================================================================+
-|                       USER LAYER                                |
-|  - Task submission interface                                    |
-|  - Task translation and parsing                                 |
-|  - User preference management                                   |
+|                       用户层                                     |
+|  - 任务提交接口                                                  |
+|  - 任务翻译和解析                                                |
+|  - 用户偏好管理                                                  |
 +================================================================+
                               |
 +================================================================+
-|                     WORKFLOW LAYER                               |
-|  - Workflow definition and management                           |
-|  - Adaptive scheduling and optimization                         |
-|  - Real-time feedback and dynamic strategy adjustment           |
-|  - DAG/graph-based workflow representation                      |
+|                     工作流层                                      |
+|  - 工作流定义和管理                                               |
+|  - 自适应调度和优化                                               |
+|  - 实时反馈和动态策略调整                                         |
+|  - 基于 DAG/图的工作流表示                                        |
 +================================================================+
                               |
 +================================================================+
-|                     OPERATOR LAYER                               |
-|  - Atomic operation definitions                                 |
-|  - Composition rules for complex operations                     |
-|  - Pre/post-condition checking                                  |
+|                     算子层                                        |
+|  - 原子操作定义                                                   |
+|  - 复杂操作的组合规则                                             |
+|  - 前置/后置条件检查                                              |
 +================================================================+
                               |
 +================================================================+
-|                      AGENT LAYER                                 |
-|  - Agent instantiation and lifecycle                            |
-|  - Role assignment and capability matching                      |
-|  - Inter-agent communication protocols                          |
+|                      智能体层                                     |
+|  - 智能体实例化和生命周期                                         |
+|  - 角色分配和能力匹配                                             |
+|  - 智能体间通信协议                                               |
 +================================================================+
                               |
 +================================================================+
-|                     RESOURCE LAYER                                |
-|  - LLM provider abstraction                                    |
-|  - Tool/API registry and access control                         |
-|  - Memory stores (vector DBs, KV stores)                        |
-|  - External service connectors                                  |
+|                     资源层                                        |
+|  - LLM 提供者抽象                                                |
+|  - 工具/API 注册和访问控制                                        |
+|  - 记忆存储（向量数据库、KV 存储）                                |
+|  - 外部服务连接器                                                 |
 +================================================================+
 
-Supported by 16 standardized interfaces across layers
+支持跨层的 16 个标准化接口
 ```
 
-### Workflow Pattern Taxonomy
+### 工作流模式分类体系
 
-The survey identifies several fundamental orchestration patterns:
+综述识别了几种基本的编排模式：
 
-1. **Sequential**: Linear chain of agent actions (A -> B -> C)
-2. **Parallel**: Concurrent execution with synchronization (fan-out/fan-in)
-3. **DAG (Directed Acyclic Graph)**: Complex dependencies without cycles
-4. **Cyclic/Iterative**: Feedback loops for refinement (review-revise cycles)
-5. **Hierarchical**: Manager agents delegate to worker agents
-6. **Event-Driven**: Agents react to asynchronous events/triggers
-7. **Conversational**: Multi-turn dialogue-based coordination
+1. **顺序**：线性智能体动作链 (A -> B -> C)
+2. **并行**：带同步的并发执行（扇出/扇入）
+3. **DAG（有向无环图）**：无循环的复杂依赖关系
+4. **循环/迭代**：用于改进的反馈循环（审查-修改循环）
+5. **层次化**：管理智能体委托给工作智能体
+6. **事件驱动**：智能体响应异步事件/触发器
+7. **对话式**：基于多轮对话的协调
 
-## Key Innovations
+## 关键创新
 
-1. **Dual-axis taxonomy**: First survey to systematically classify agent workflow systems
-   along both functional capabilities and architectural features simultaneously.
+1. **双轴分类体系**：首个同时沿功能能力和架构特征两个维度系统分类智能体工作流系统的综述。
 
-2. **HAWK reference architecture**: Proposes a concrete five-layer architecture with
-   sixteen standardized interfaces, providing a blueprint for interoperable systems.
+2. **HAWK 参考架构**：提出了具有十六个标准化接口的具体五层架构，为可互操作系统提供蓝图。
 
-3. **Security analysis**: Explicitly addresses workflow security concerns including
-   tool access control, data leakage through agent communication, and prompt injection
-   attacks in multi-agent settings.
+3. **安全分析**：明确讨论了工作流安全问题，包括工具访问控制、通过智能体通信的数据泄露以及多智能体设置中的提示注入攻击。
 
-4. **Practical comparison**: Side-by-side evaluation of 20+ systems enables practitioners
-   to make informed framework selection decisions.
+4. **实用比较**：20+ 系统的并排评估使从业者能够做出明智的框架选择决策。
 
-## Experimental Setup
+## 实验设置
 
-As a survey paper, the evaluation is primarily qualitative and comparative rather than
-benchmark-driven. The methodology includes:
+作为综述论文，评估主要是定性和比较性的，而非基准测试驱动的。方法论包括：
 
-- **System selection**: 20+ representative frameworks from 2023-2025
-- **Feature extraction**: Systematic analysis of documentation, source code, and
-  published papers for each system
-- **Comparison dimensions**: 7+ architectural and functional dimensions per system
-- **Gap analysis**: Identification of under-served areas and open problems
+- **系统选择**：2023-2025 年的 20+ 代表性框架
+- **特征提取**：对每个系统的文档、源代码和已发表论文进行系统分析
+- **比较维度**：每个系统 7+ 个架构和功能维度
+- **差距分析**：识别不足的领域和开放问题
 
-## Results
+## 结果
 
-### Key Comparative Findings
+### 关键比较发现
 
-| Feature              | LangChain | AutoGen | CrewAI | MetaGPT | LlamaIndex |
+| 特征               | LangChain | AutoGen | CrewAI | MetaGPT | LlamaIndex |
 |---------------------|-----------|---------|--------|---------|------------|
-| Multi-agent          | Via Graph | Native  | Native | Native  | Limited    |
-| Workflow spec        | Code      | Code    | YAML   | Code    | Code       |
-| Planning             | Manual    | Auto    | Auto   | SOP     | Manual     |
-| Memory               | Modular   | Shared  | Shared | Role    | Index      |
-| Human-in-loop        | Yes       | Yes     | Yes    | Limited | Limited    |
+| 多智能体           | 通过 Graph | 原生    | 原生   | 原生    | 有限       |
+| 工作流规范         | 代码      | 代码    | YAML   | 代码    | 代码       |
+| 规划               | 手动      | 自动    | 自动   | SOP     | 手动       |
+| 记忆               | 模块化    | 共享    | 共享   | 角色    | 索引       |
+| 人在回路中         | 是        | 是      | 是     | 有限    | 有限       |
 
-### Identified Trends
+### 识别的趋势
 
-1. **Convergence toward graph-based orchestration**: Most modern frameworks adopt
-   DAG or state-graph representations for workflow definition.
-2. **Declarative specification**: Movement from purely programmatic APIs toward
-   YAML/JSON-based workflow definitions for non-developer accessibility.
-3. **Role-based multi-agent**: Dominant paradigm assigns specialized roles to agents
-   (coder, reviewer, planner) rather than using homogeneous agents.
-4. **Tool ecosystem integration**: All major frameworks now support MCP/function-calling
-   for external tool access.
+1. **向基于图的编排收敛**：大多数现代框架采用 DAG 或状态图表示来定义工作流。
+2. **声明式规范**：从纯程序化 API 向 YAML/JSON 基础的工作流定义转变，提高非开发者的可访问性。
+3. **基于角色的多智能体**：主导范式为智能体分配专用角色（编码者、审查者、规划者），而非使用同质化的智能体。
+4. **工具生态系统集成**：所有主要框架现在都支持 MCP/函数调用进行外部工具访问。
 
-## Limitations
+## 局限性
 
-1. **Snapshot bias**: The survey captures the state of a rapidly evolving field;
-   some systems may have changed significantly since analysis.
-2. **Quantitative gaps**: Limited empirical benchmarking across systems on standardized
-   tasks; comparisons are primarily feature-based.
-3. **HAWK validation**: The proposed reference architecture is not empirically validated
-   against the surveyed systems through implementation or benchmarks.
-4. **Industrial coverage**: Some proprietary/commercial systems (e.g., internal tools at
-   major tech companies) are underrepresented due to access constraints.
-5. **Evaluation methodology**: No standardized benchmark exists for comparing agent
-   workflow systems end-to-end, making rigorous comparison difficult.
+1. **快照偏差**：综述捕捉的是快速发展领域的状态；部分系统自分析以来可能已发生重大变化。
+2. **定量不足**：跨系统在标准化任务上的经验性基准测试有限；比较主要基于特征。
+3. **HAWK 验证**：提出的参考架构未通过实现或基准测试对照已调查的系统进行实证验证。
+4. **工业覆盖**：由于访问限制，一些专有/商业系统（例如主要科技公司的内部工具）代表不足。
+5. **评估方法**：不存在用于端到端比较智能体工作流系统的标准化基准测试，使严格比较变得困难。
 
-## Key Takeaways
+## 核心要点
 
-1. Agent workflow systems are converging on common patterns: graph-based orchestration,
-   role-based multi-agent coordination, and modular tool integration. Understanding these
-   patterns helps practitioners select and design systems effectively.
+1. 智能体工作流系统正在向共同模式收敛：基于图的编排、基于角色的多智能体协调和模块化工具集成。理解这些模式有助于从业者有效地选择和设计系统。
 
-2. The five-layer HAWK architecture (User, Workflow, Operator, Agent, Resource) provides
-   a useful mental model for separating concerns in agent systems, even if not adopted
-   as a literal implementation standard.
+2. 五层 HAWK 架构（用户层、工作流层、算子层、智能体层、资源层）为智能体系统中的关注点分离提供了有用的心智模型，即使不作为字面实现标准采用也是如此。
 
-3. Standardization is the most critical open problem. The lack of common interfaces and
-   specification languages across frameworks creates lock-in and limits interoperability.
+3. 标准化是最关键的开放问题。跨框架缺乏通用接口和规范语言造成了锁定并限制了互操作性。
 
-4. Security in agent workflows remains under-explored. As agents gain tool access and
-   autonomy, the attack surface (prompt injection, data exfiltration, unauthorized
-   actions) grows significantly.
+4. 智能体工作流中的安全性仍未被充分探索。随着智能体获得工具访问权和自主权，攻击面（提示注入、数据窃取、未授权操作）显著增长。
 
-5. The gap between academic research frameworks and production-grade industrial systems
-   is narrowing, but differences in reliability, observability, and error handling
-   remain substantial.
+5. 学术研究框架与生产级工业系统之间的差距正在缩小，但在可靠性、可观测性和错误处理方面的差异仍然很大。
 
-6. Multimodal integration (vision, audio, structured data) in workflows is an emerging
-   frontier that most current frameworks handle poorly or not at all.
+6. 工作流中的多模态集成（视觉、音频、结构化数据）是一个新兴前沿，大多数当前框架处理得很差或根本不支持。

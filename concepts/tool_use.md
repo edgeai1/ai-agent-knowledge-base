@@ -1,42 +1,42 @@
 ---
-title: Tool Use & Function Calling
+title: 工具使用与函数调用
 tags: [tool-use, function-calling, api, core-concept]
 related: [agent_architecture, mcp_a2a_protocols]
 ---
 
-## Definition
+## 定义
 
-Tool use enables LLM agents to interact with external systems -- APIs, databases, code interpreters, web browsers, file systems -- extending their capabilities beyond text generation.
+工具使用使 LLM 智能体能够与外部系统交互——API、数据库、代码解释器、网页浏览器、文件系统——将其能力扩展到文本生成之外。
 
-## Evolution
+## 演进历程
 
 ```
-MRKL (2022)           -> route to expert modules (conceptual)
-Toolformer (2023)     -> learn tool use via self-supervision
-ChatGPT Plugins (2023) -> commercial tool use platform
-GPT-4 Function Calling -> structured JSON tool calls
-Claude Tool Use       -> structured tool use with schemas
-MCP (2024-2026)       -> universal protocol for tool connection
+MRKL (2022)           -> 路由到专家模块（概念性）
+Toolformer (2023)     -> 通过自监督学习工具使用
+ChatGPT Plugins (2023) -> 商业化工具使用平台
+GPT-4 Function Calling -> 结构化 JSON 工具调用
+Claude Tool Use       -> 带模式的结构化工具使用
+MCP (2024-2026)       -> 工具连接的通用协议
 ```
 
-## How It Works
+## 工作原理
 
-1. **Tool Definition**: describe available tools with name, description, parameters (JSON Schema)
-2. **Tool Selection**: LLM decides when and which tool to call based on task
-3. **Parameter Generation**: LLM generates structured input for the tool
-4. **Execution**: system executes the tool call
-5. **Result Processing**: LLM processes the tool's output and continues
+1. **工具定义**：用名称、描述、参数（JSON Schema）描述可用工具
+2. **工具选择**：LLM 根据任务决定何时调用哪个工具
+3. **参数生成**：LLM 为工具生成结构化输入
+4. **执行**：系统执行工具调用
+5. **结果处理**：LLM 处理工具输出并继续
 
-## Approaches
+## 方法
 
-### Prompted Tool Use (ReAct-style)
+### 基于提示的工具使用（ReAct 风格）
 ```
 Thought: I need to search for X
 Action: search("query")
 Observation: [results]
 ```
 
-### Native Function Calling (modern APIs)
+### 原生函数调用（现代 API）
 ```json
 {
   "type": "function",
@@ -47,16 +47,16 @@ Observation: [results]
 }
 ```
 
-### Learned Tool Use (Toolformer)
-Model fine-tuned to insert API calls when beneficial.
+### 学习式工具使用（Toolformer）
+模型经过微调，在有益时插入 API 调用。
 
-## Agent-Computer Interface (ACI)
+## 智能体-计算机接口（ACI）
 
-Key insight from SWE-Agent: the design of the tool interface matters as much as the model.
-- Clear, concise output formats
-- Error messages that help the LLM recover
-- Tools designed for LLM ergonomics, not human ergonomics
+来自 SWE-Agent 的关键洞察：工具接口的设计与模型同等重要。
+- 清晰、简洁的输出格式
+- 帮助 LLM 恢复的错误消息
+- 为 LLM 人体工程学设计的工具，而非为人类人体工程学
 
-## MCP (Model Context Protocol)
+## MCP（模型上下文协议）
 
-See: `mcp_a2a_protocols.md` for the universal protocol standardizing tool connections.
+参见：`mcp_a2a_protocols.md` 了解标准化工具连接的通用协议。

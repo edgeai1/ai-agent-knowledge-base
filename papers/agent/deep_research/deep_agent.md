@@ -26,35 +26,23 @@ tags:
 status: done
 ---
 
-## TL;DR
+## 摘要
 
-DeepAgent is an end-to-end deep reasoning agent that performs autonomous thinking, tool
-discovery, and action execution within a single coherent reasoning process. It scales to
-16,000+ RapidAPI tools through an autonomous memory folding mechanism (episodic, working,
-and tool memories) and is trained with ToolPO -- a novel RL method using LLM-simulated
-APIs with tool-call advantage attribution for fine-grained credit assignment to individual
-tool invocations. DeepAgent-32B-RL achieves state-of-the-art on 8 benchmarks, including
-89.0% on TMDB, 91.8% on ALFWorld, and 53.3 on GAIA.
+DeepAgent 是一个端到端深度推理智能体，在单一连贯的推理过程中执行自主思考、工具发现和动作执行。它通过自主记忆折叠机制（情景记忆、工作记忆和工具记忆）扩展到 16,000 多个 RapidAPI 工具，并使用 ToolPO——一种新型强化学习方法进行训练，该方法利用 LLM 模拟的 API 和工具调用优势归因实现对单个工具调用的细粒度信用分配。DeepAgent-32B-RL 在 8 个基准测试上达到最先进水平，包括 TMDB 上的 89.0%、ALFWorld 上的 91.8% 和 GAIA 上的 53.3。
 
-## Motivation & Problem
+## 动机与问题
 
-Current tool-augmented LLM agents face three core challenges:
+当前工具增强的 LLM 智能体面临三个核心挑战：
 
-1. **Tool discovery at scale**: Most agents assume a small, pre-defined toolset. Real-world
-   scenarios require discovering and selecting from thousands of available APIs (e.g.,
-   16,000+ on RapidAPI), which existing methods cannot handle.
+1. **大规模工具发现**：大多数智能体假设有一组小型、预定义的工具集。真实场景需要从数千个可用 API 中发现和选择（例如 RapidAPI 上的 16,000 多个），现有方法无法处理。
 
-2. **Long-horizon context collapse**: Multi-step tool use generates lengthy interaction
-   histories that overflow context windows, leading to error accumulation and loss of
-   critical information.
+2. **长程上下文崩溃**：多步工具使用生成冗长的交互历史，溢出上下文窗口，导致错误累积和关键信息丢失。
 
-3. **Sparse reward attribution**: Standard RL methods assign reward only to the final
-   outcome, but in multi-tool reasoning chains, credit must be attributed to individual
-   tool calls to learn which invocations contributed to success.
+3. **稀疏奖励归因**：标准强化学习方法仅对最终结果分配奖励，但在多工具推理链中，信用必须归因到单个工具调用，以学习哪些调用对成功有贡献。
 
-## Method
+## 方法
 
-### System Architecture
+### 系统架构
 
 ```
 +================================================================+
@@ -81,10 +69,9 @@ Current tool-augmented LLM agents face three core challenges:
 +================================================================+
 ```
 
-### Autonomous Memory Folding
+### 自主记忆折叠
 
-When interaction history exceeds a threshold, DeepAgent compresses past interactions into
-three structured memory types:
+当交互历史超过阈值时，DeepAgent 将过去的交互压缩为三种结构化记忆类型：
 
 ```
 MEMORY_FOLD(interaction_history):
@@ -132,10 +119,9 @@ MEMORY_FOLD(interaction_history):
 +------------------------------------------------------------------+
 ```
 
-### ToolPO: Tool-Call Advantage Attribution RL
+### ToolPO：工具调用优势归因强化学习
 
-Standard RL (e.g., PPO, GRPO) assigns a single reward to the entire trajectory. ToolPO
-introduces fine-grained credit assignment at the tool-call level:
+标准强化学习（如 PPO、GRPO）对整个轨迹分配单一奖励。ToolPO 在工具调用级别引入细粒度信用分配：
 
 ```
 ToolPO Training Process:
@@ -164,7 +150,7 @@ ToolPO Training Process:
    - Non-tool tokens receive standard trajectory-level reward
 ```
 
-### Training Pipeline
+### 训练流水线
 
 ```
 Phase 1: Supervised Fine-Tuning (SFT)
@@ -179,114 +165,84 @@ Backbone: QwQ-32B (reasoning model)
 Auxiliary: Qwen2.5-32B-Instruct (for tool simulation)
 ```
 
-## Key Innovations
+## 关键创新
 
-1. **Unified reasoning-discovery-action loop**: DeepAgent integrates thinking, tool
-   discovery, and action execution into a single coherent reasoning process rather
-   than treating them as separate pipeline stages.
+1. **统一的推理-发现-执行循环**：DeepAgent 将思考、工具发现和动作执行集成到单一连贯的推理过程中，而非作为独立的流水线阶段处理。
 
-2. **Memory folding**: A principled approach to context compression that preserves
-   task-critical information across three complementary memory types (episodic,
-   working, tool), enabling long-horizon interactions without context overflow.
+2. **记忆折叠**：一种有原则的上下文压缩方法，通过三种互补的记忆类型（情景、工作、工具）保留任务关键信息，在不丢失关键信息的情况下实现长程交互。
 
-3. **ToolPO with tool-call advantage attribution**: First RL method to assign
-   fine-grained credit to individual tool invocations within multi-step reasoning
-   chains, rather than relying solely on sparse trajectory-level rewards.
+3. **带有工具调用优势归因的 ToolPO**：首个将细粒度信用分配到多步推理链中单个工具调用的强化学习方法，而非仅依赖稀疏的轨迹级奖励。
 
-4. **Scale to 16K+ tools**: Demonstration that open-set tool discovery from massive
-   tool corpora is feasible, moving beyond the assumption of small, pre-defined toolsets.
+4. **扩展至 16K 以上工具**：证明了从大规模工具语料库中进行开放集工具发现的可行性，超越了智能体使用小型预定义工具集的假设。
 
-5. **LLM-simulated APIs**: Using LLMs to simulate API responses enables scalable RL
-   training without the cost and reliability issues of real API calls.
+5. **LLM 模拟的 API**：使用 LLM 模拟 API 响应，实现了无需真实 API 调用成本和可靠性问题的可扩展强化学习训练。
 
-## Experimental Setup
+## 实验设置
 
-- **Model**: QwQ-32B backbone, Qwen2.5-32B-Instruct auxiliary
-- **Benchmarks** (8 total):
-  - General tool-use (labeled tools): TMDB, Spotify, API-Bank
-  - General tool-use (open-set discovery): ToolBench, ToolHop
-  - Downstream applications: ALFWorld, WebShop, GAIA, HLE
-- **Baselines**: GPT-4o, Claude, Qwen-Agent, ReAct, ToolLlama, and other
-  32B-class reasoning agents
-- **Settings**: Both labeled-tool (tools given) and open-set (agent must discover tools)
+- **模型**：QwQ-32B 骨干网络，Qwen2.5-32B-Instruct 辅助
+- **基准测试**（共 8 个）：
+  - 通用工具使用（标注工具）：TMDB、Spotify、API-Bank
+  - 通用工具使用（开放集发现）：ToolBench、ToolHop
+  - 下游应用：ALFWorld、WebShop、GAIA、HLE
+- **基线**：GPT-4o、Claude、Qwen-Agent、ReAct、ToolLlama 及其他 32B 级推理智能体
+- **设置**：标注工具（给定工具）和开放集（智能体必须自行发现工具）
 
-## Results
+## 结果
 
-### Labeled-Tool Tasks
+### 标注工具任务
 
-| Benchmark | DeepAgent-32B-RL | Best 32B Baseline | Improvement |
+| 基准测试 | DeepAgent-32B-RL | 最佳 32B 基线 | 提升 |
 |-----------|------------------|-------------------|-------------|
 | TMDB      | 89.0%            | 55.0%             | +34.0       |
 | Spotify   | 75.4%            | 52.6%             | +22.8       |
-| API-Bank  | Strong           | --                | --          |
+| API-Bank  | 强               | --                | --          |
 
-### Open-Set Tool Discovery
+### 开放集工具发现
 
-| Benchmark | DeepAgent-32B-RL | Best Baseline | Improvement |
+| 基准测试 | DeepAgent-32B-RL | 最佳基线 | 提升 |
 |-----------|------------------|---------------|-------------|
 | ToolBench | 64.0%            | 54.0%         | +10.0       |
 | ToolHop   | 40.6%            | 29.0%         | +11.6       |
 
-### Downstream Applications
+### 下游应用
 
-| Benchmark | DeepAgent-32B-RL | Notes                        |
+| 基准测试 | DeepAgent-32B-RL | 备注                        |
 |-----------|------------------|------------------------------|
-| ALFWorld  | 91.8%            | Success rate                 |
-| WebShop   | 34.4% / 56.3     | Success rate / Score         |
-| GAIA      | 53.3             | Outperforms workflow agents  |
-| HLE       | Higher than WF   | Vs. workflow-based agents    |
+| ALFWorld  | 91.8%            | 成功率                 |
+| WebShop   | 34.4% / 56.3     | 成功率 / 得分         |
+| GAIA      | 53.3             | 优于工作流智能体  |
+| HLE       | 高于 WF   | 对比基于工作流的智能体    |
 
-### Ablation Results
+### 消融实验结果
 
-- Memory folding improves performance significantly on long-horizon tasks
-  (ALFWorld, GAIA) by reducing error accumulation
-- ToolPO outperforms standard GRPO on tool-intensive benchmarks by 5-10%
-  through better credit assignment to tool invocation tokens
-- Tool simulation enables training at scale without real API costs
+- 记忆折叠在长程任务（ALFWorld、GAIA）上通过减少错误累积显著提升了性能
+- ToolPO 在工具密集型基准测试上通过更好的工具调用词元信用分配比标准 GRPO 高出 5-10%
+- 工具模拟实现了无需真实 API 成本的大规模训练
 
-## Limitations
+## 局限性
 
-1. **Base model dependency**: Performance is tied to QwQ-32B's reasoning capability;
-   weaker base models may not benefit as much from ToolPO training.
+1. **基础模型依赖**：性能与 QwQ-32B 的推理能力密切相关；较弱的基础模型可能无法从 ToolPO 训练中获得同等收益。
 
-2. **Simulation fidelity**: LLM-simulated APIs may not perfectly capture the behavior
-   of real APIs, particularly for edge cases, errors, and rate limiting.
+2. **模拟保真度**：LLM 模拟的 API 可能无法完美捕捉真实 API 的行为，特别是在边缘情况、错误和速率限制方面。
 
-3. **Memory folding heuristics**: The trigger threshold and compression strategy for
-   memory folding involve design choices that may need task-specific tuning.
+3. **记忆折叠的启发式方法**：触发阈值和记忆折叠的压缩策略涉及可能需要任务特定调优的设计选择。
 
-4. **Tool discovery noise**: With 16K+ tools, the search space is enormous; false
-   positive tool matches can lead the agent down unproductive paths.
+4. **工具发现噪声**：在 16K 以上的工具中，搜索空间巨大；误匹配的工具可能导致智能体走上无效的路径。
 
-5. **Evaluation scope**: While 8 benchmarks are covered, the tasks are primarily
-   text-based; multimodal tool use (vision APIs, audio processing) is not evaluated.
+5. **评估范围**：虽然涵盖了 8 个基准测试，但任务主要是基于文本的；多模态工具使用（视觉 API、音频处理）未被评估。
 
-6. **Reproducibility cost**: Training ToolPO with simulated APIs at scale requires
-   significant compute resources and access to auxiliary LLMs for simulation.
+6. **复现成本**：大规模使用模拟 API 训练 ToolPO 需要大量计算资源和辅助 LLM 的访问。
 
-## Key Takeaways
+## 核心要点
 
-1. The unified thinking-discovery-action paradigm is more effective than pipeline
-   approaches that separate reasoning from tool selection and execution. Integration
-   enables the reasoning process to inform tool selection and vice versa.
+1. 统一的思考-发现-执行范式比将推理与工具选择和执行分离的流水线方法更有效。集成使推理过程能够指导工具选择，反之亦然。
 
-2. Memory folding is an essential mechanism for long-horizon agent interactions. The
-   three-way decomposition (episodic/working/tool) captures complementary aspects of
-   interaction history and enables meaningful compression without critical information
-   loss.
+2. 记忆折叠是长程智能体交互的关键机制。三重分解（情景/工作/工具）捕获了交互历史的互补方面，在不丢失关键信息的情况下实现有意义的压缩。
 
-3. Tool-call advantage attribution (ToolPO) solves a fundamental credit assignment
-   problem in tool-augmented RL. By attributing reward to individual tool calls rather
-   than entire trajectories, the agent learns which tool invocations are valuable.
+3. 工具调用优势归因（ToolPO）解决了工具增强强化学习中的一个根本性信用分配问题。通过将奖励归因到单个工具调用而非整个轨迹，智能体学会了哪些工具调用是有价值的。
 
-4. Open-set tool discovery from massive corpora (16K+ APIs) is feasible and practically
-   useful. This moves the field beyond the assumption that agents operate with small,
-   curated toolsets.
+4. 从大规模语料库（16K 以上 API）中进行开放集工具发现是可行且实用的。这将该领域从智能体使用小型策划工具集的假设推进到更实际的场景。
 
-5. LLM-simulated APIs are a viable and cost-effective proxy for real APIs during RL
-   training, enabling scalable experimentation without real-world API costs and
-   reliability concerns.
+5. LLM 模拟的 API 是强化学习训练中真实 API 的可行且成本有效的替代，实现了无需真实 API 成本和可靠性担忧的可扩展实验。
 
-6. The massive gains over baselines on TMDB (+34%) and Spotify (+22.8%) suggest that
-   current tool-use agents are substantially undertrained, and proper RL with fine-grained
-   credit assignment can unlock significant performance improvements.
+6. 在 TMDB（+34%）和 Spotify（+22.8%）上相对基线的巨大提升表明，当前工具使用智能体的训练严重不足，适当的强化学习配合细粒度信用分配可以释放显著的性能提升。

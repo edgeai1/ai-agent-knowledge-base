@@ -1,5 +1,5 @@
 ---
-title: "Tree of Thoughts: Deliberate Problem Solving with Large Language Models"
+title: "Tree of Thoughts: Deliberate Problem Solving with Large Language Models (思维树：大语言模型的审慎问题求解)"
 authors: "Shunyu Yao, Dian Yu, Jeffrey Zhao, Izhak Shafran, Thomas L. Griffiths, Yuan Cao, Karthik Narasimhan"
 venue: "NeurIPS 2023"
 year: 2023
@@ -11,88 +11,83 @@ status: done
 date_reviewed: 2026-05-08
 ---
 
-# Tree of Thoughts: Deliberate Problem Solving with Large Language Models
+# 思维树：大语言模型的审慎问题求解
 
-## TL;DR
+## 简述
 
-Tree of Thoughts (ToT) generalizes chain-of-thought prompting by framing LLM reasoning as
-search over a tree of intermediate "thought" steps. The LLM itself generates candidate
-thoughts, evaluates their promise via value or vote mechanisms, and a classical search
-algorithm (BFS or DFS) navigates the tree -- enabling deliberate planning, exploration of
-alternatives, and backtracking. On Game of 24, success rate jumps from 4% (CoT) to 74%
-(ToT). The paper establishes a formal four-component framework (thought decomposition,
-generation, evaluation, search) that subsumes IO, CoT, and CoT-SC as special cases.
+思维树（ToT）通过将大语言模型推理构建为对中间"思维"步骤树的搜索，泛化了思维链
+提示。大语言模型本身生成候选思维，通过价值或投票机制评估其前景，经典搜索算法
+（BFS 或 DFS）在树中导航——实现审慎规划、替代方案探索和回溯。在 24 点游戏上，
+成功率从 4%（CoT）跃升至 74%（ToT）。论文建立了一个形式化的四组件框架（思维
+分解、生成、评估、搜索），将 IO、CoT 和 CoT-SC 作为特殊情况统一纳入。
 
-## Motivation & Problem
+## 动机与问题
 
-The dominant paradigm for LLM reasoning circa early 2023:
+2023 年初大语言模型推理的主导范式：
 
-1. **IO prompting**: Direct input-to-output, no intermediate reasoning
-2. **Chain-of-Thought (CoT)** (Wei et al., 2022): Single linear chain of reasoning steps
-3. **CoT with Self-Consistency (CoT-SC)** (Wang et al., 2023): Sample multiple independent
-   chains and majority-vote on the final answer
+1. **IO 提示**：直接输入到输出，无中间推理
+2. **思维链 (CoT)** (Wei et al., 2022)：单一线性推理链
+3. **带自一致性的 CoT (CoT-SC)** (Wang et al., 2023)：采样多条独立链并
+   对最终答案进行多数投票
 
-All three share a critical limitation: **reasoning is left-to-right and irrevocable**.
-Once a token is generated, the model cannot explore alternatives or backtrack -- unsuitable
-for problems requiring exploration, strategic lookahead, or backtracking.
+三者共有一个关键局限：**推理是从左到右且不可撤回的**。一旦 token 被生成，
+模型就无法探索替代方案或回溯——不适合需要探索、战略前瞻或回溯的问题。
 
-Drawing on Newell & Simon's (1972) problem space theory and Kahneman's (2011) dual-process
-theory (CoT = System 1, ToT = System 2), the key insight is that the LLM can serve as both
-**generator** and **evaluator**, unifying search in a single model without hand-crafted
-heuristics.
+借鉴 Newell & Simon (1972) 的问题空间理论和 Kahneman (2011) 的双过程理论
+（CoT = 系统 1，ToT = 系统 2），关键洞察是大语言模型可以同时充当**生成器**
+和**评估器**，在单个模型中统一搜索，无需手工设计的启发式方法。
 
-## Method
+## 方法
 
-### Formal Framework
+### 形式化框架
 
-ToT defines four independently configurable components:
+ToT 定义了四个可独立配置的组件：
 
-**1. Thought Decomposition** -- granularity of intermediate reasoning steps:
+**1. 思维分解**——中间推理步骤的粒度：
 
-| Task             | Thought Unit        | Depth (T) | Rationale                          |
-|------------------|---------------------|-----------|------------------------------------|
-| Game of 24       | An equation line    | 3         | 3 binary ops reduce 4 nums to 1   |
-| Creative Writing | A paragraph plan    | 2         | Plan then write, each via voting   |
-| Mini Crosswords  | A word fill         | 5-10      | 5 across + 5 down clues           |
+| 任务             | 思维单元            | 深度 (T) | 理由                              |
+|------------------|---------------------|----------|------------------------------------|
+| 24 点游戏        | 一行方程式          | 3        | 3 次二元运算将 4 个数化为 1        |
+| 创意写作         | 一个段落规划        | 2        | 规划然后写作，各通过投票            |
+| 迷你填字游戏     | 一个单词填充        | 5-10     | 5 个横向 + 5 个纵向线索            |
 
-Thoughts must be: small enough for diverse generation, large enough for meaningful
-evaluation, and compositional (sequences form complete solutions).
+思维必须：足够小以便多样生成，足够大以便有意义地评估，且具有组合性
+（序列形成完整解决方案）。
 
-**2. Thought Generation** G(p_theta, s, k) -- produce k candidates from state s:
+**2. 思维生成** G(p_theta, s, k)——从状态 s 生成 k 个候选：
 
-(a) **i.i.d. Sampling**: Draw k thoughts independently via temperature sampling:
+(a) **独立同分布采样**：通过温度采样独立抽取 k 个思维：
 ```
 t_i ~ p_theta(thought | s),  i = 1..k
 ```
-Best when thought space is rich (e.g., creative writing paragraphs).
+当思维空间丰富时最佳（例如创意写作段落）。
 
-(b) **Sequential Proposal**: Single LLM call proposes k distinct candidates:
+(b) **顺序提议**：单次大语言模型调用提议 k 个不同候选：
 ```
 [t_1, ..., t_k] = LLM("Given state s, propose k different next steps")
 ```
-Better when diversity requires explicit prompting (e.g., Game of 24 arithmetic).
-Avoids duplicates and is more token-efficient.
+当多样性需要显式提示时更好（例如 24 点游戏的算术运算）。
+避免重复且更节省 token。
 
-**3. State Evaluation** V(p_theta, S) -- assess promise of each partial solution:
+**3. 状态评估** V(p_theta, S)——评估每个部分解的前景：
 
-(a) **Value Prompting** -- independently classify each state:
+(a) **价值提示**——独立分类每个状态：
 ```
 V(s) = LLM("Evaluate if this partial solution can reach the goal.
              Answer: sure / maybe / impossible")
 ```
-For Game of 24: commonsense reasoning ("remaining numbers too large" -> impossible).
-Each state evaluated independently, enabling caching and parallelism.
+对于 24 点游戏：常识推理（"剩余数字太大" -> impossible）。
+每个状态独立评估，支持缓存和并行。
 
-(b) **Deliberate Voting** -- comparative assessment across candidates:
+(b) **审慎投票**——跨候选的比较评估：
 ```
 best = LLM("Given states {s_1,...,s_k}, vote for the most promising one")
 ```
-Repeated across multiple rounds; majority determines winner. Used for creative writing
-where quality is comparative and subjective.
+重复多轮；多数决定优胜者。用于创意写作，其中质量是比较性和主观性的。
 
-**4. Search Algorithm** -- navigate the tree structure:
+**4. 搜索算法**——导航树结构：
 
-**(a) Breadth-First Search (BFS)** -- used for Game of 24 and Creative Writing:
+**(a) 广度优先搜索 (BFS)**——用于 24 点游戏和创意写作：
 
 ```
 Algorithm: ToT-BFS(x, T, b, B)
@@ -108,7 +103,7 @@ Algorithm: ToT-BFS(x, T, b, B)
   return best state in S_T
 ```
 
-**(b) Depth-First Search (DFS)** -- used for Mini Crosswords:
+**(b) 深度优先搜索 (DFS)**——用于迷你填字游戏：
 
 ```
 Algorithm: ToT-DFS(s, t, T, v_th)
@@ -123,163 +118,158 @@ Algorithm: ToT-DFS(s, t, T, v_th)
   return failure                       # all branches pruned
 ```
 
-### ToT as Generalization
+### ToT 作为泛化
 
-IO = single forward pass. CoT = single linear chain. CoT-SC = multiple independent chains
-+ majority vote. ToT = deliberate tree search with generation, evaluation, and backtracking.
-All prior methods are formally special cases of ToT.
+IO = 单次前向传递。CoT = 单一线性链。CoT-SC = 多条独立链+多数投票。
+ToT = 带生成、评估和回溯的审慎树搜索。所有先前方法形式上都是 ToT 的特殊情况。
 
-## Key Innovations
+## 关键创新
 
-1. **LLM as both generator and evaluator**: The same LLM proposes candidate reasoning
-   steps AND evaluates their quality, eliminating external reward models or hand-crafted
-   heuristics -- analogous to neural value functions in AlphaGo but zero-shot.
+1. **大语言模型同时作为生成器和评估器**：同一大语言模型提议候选推理步骤并评估
+   其质量，消除了外部奖励模型或手工启发式——类似于 AlphaGo 中的神经价值
+   函数，但是零样本的。
 
-2. **Deliberate search over language**: First framework to apply classical AI search (BFS,
-   DFS) to natural language reasoning within LLMs, enabling backtracking and exploration
-   fundamentally absent from CoT.
+2. **对语言的审慎搜索**：首个将经典 AI 搜索（BFS、DFS）应用于大语言模型内
+   自然语言推理的框架，实现了 CoT 中根本不存在的回溯和探索。
 
-3. **Modular and task-agnostic**: The four components (decompose, generate, evaluate,
-   search) are independently configured per task, making ToT a general framework.
+3. **模块化和任务无关**：四个组件（分解、生成、评估、搜索）按任务独立配置，
+   使 ToT 成为通用框架。
 
-4. **Principled generalization**: IO, CoT, and CoT-SC are formally special cases of ToT
-   (single branch = CoT; multiple independent branches with voting = CoT-SC).
+4. **有原则的泛化**：IO、CoT 和 CoT-SC 形式上是 ToT 的特殊情况
+   （单分支 = CoT；多条独立分支加投票 = CoT-SC）。
 
-## Experimental Setup
+## 实验设置
 
-- **Model**: GPT-4 for all experiments
-- **Baselines**: IO prompting, CoT, CoT-SC (k=100 samples for fair compute comparison)
+- **模型**：所有实验使用 GPT-4
+- **基线**：IO 提示、CoT、CoT-SC（k=100 样本用于公平计算比较）
 
-**Task 1 -- Game of 24**: Use 4 numbers with +,-,*,/ to reach 24. Each number used exactly
-once. 100 hard games (index 901-1000). Config: sequential proposal (b=5), value evaluation
-({sure/maybe/impossible}), BFS with beam B=5, depth T=3.
+**任务 1——24 点游戏**：用 +,-,*,/ 使 4 个数字得到 24。每个数字恰好使用一次。
+100 个困难游戏（索引 901-1000）。配置：顺序提议（b=5），价值评估
+（{sure/maybe/impossible}），BFS，beam B=5，深度 T=3。
 
-**Task 2 -- Creative Writing**: Write a coherent 4-paragraph passage where each paragraph
-ends with one of 4 given random sentences. 100 test inputs. Config: i.i.d. sampling (k=5),
-vote evaluation (5 votes), BFS with B=1, depth T=2 (plan then passage).
+**任务 2——创意写作**：写一篇连贯的 4 段文章，每段以给定的 4 个随机句子之一结尾。
+100 个测试输入。配置：独立同分布采样（k=5），投票评估（5 票），BFS，B=1，
+深度 T=2（规划然后写段落）。
 
-**Task 3 -- Mini Crosswords (5x5)**: Fill a 5x5 crossword grid given 10 clues. 20 games
-from NYT Mini archive. Config: sequential proposal, value evaluation, DFS with pruning
-(prune if any clue deemed "impossible"), depth up to 10.
+**任务 3——迷你填字游戏 (5x5)**：根据 10 条线索填充 5x5 填字格。20 个游戏
+来自 NYT Mini 存档。配置：顺序提议，价值评估，DFS 带剪枝
+（如果任何线索被判定为"impossible"则剪枝），深度最多 10。
 
-## Results
+## 结果
 
-### Game of 24
+### 24 点游戏
 
-| Method              | Success Rate | LLM Calls (approx) |
-|---------------------|-------------|---------------------|
-| IO prompting        | 7.3%        | 1                   |
-| CoT prompting       | 4.0%        | 1                   |
-| CoT-SC (k=100)      | 9.0%        | 100                 |
-| Best of 100 CoT     | 49%         | 100                 |
-| **ToT-BFS (b=1)**   | **45%**     | ~20                 |
-| **ToT-BFS (b=5)**   | **74%**     | ~60                 |
+| 方法                | 成功率      | 大语言模型调用次数（约）|
+|---------------------|------------|------------------------|
+| IO 提示             | 7.3%       | 1                      |
+| CoT 提示            | 4.0%       | 1                      |
+| CoT-SC (k=100)      | 9.0%       | 100                    |
+| 100 次 CoT 取最优    | 49%        | 100                    |
+| **ToT-BFS (b=1)**   | **45%**    | ~20                    |
+| **ToT-BFS (b=5)**   | **74%**    | ~60                    |
 
-ToT (b=5) achieves 74% -- an **18x improvement** over CoT. Even b=1 (no beam diversity)
-yields 45% via evaluation-based pruning alone. Best-of-100 CoT (49%) samples 100
-independent chains but still underperforms ToT (b=5), which explores far fewer total
-paths but does so strategically via informed search.
+ToT (b=5) 达到 74%——比 CoT **提升 18 倍**。即使 b=1（无 beam 多样性）
+也通过基于评估的剪枝达到 45%。100 次 CoT 取最优（49%）采样了 100 条
+独立链但仍不及 ToT (b=5)，后者探索的总路径少得多但通过知情搜索进行
+战略性探索。
 
-### Creative Writing (Coherency, 1-10 scale)
+### 创意写作（连贯性，1-10 分）
 
-| Method   | GPT-4 Score | Human Score | Human Preference vs IO |
-|----------|-------------|-------------|------------------------|
-| IO       | 6.19        | 3.43        | --                     |
-| CoT      | 6.93        | 4.56        | --                     |
-| **ToT**  | **7.56**    | **4.88**    | **67% preferred**      |
+| 方法   | GPT-4 评分 | 人类评分 | 相对 IO 的人类偏好 |
+|--------|-----------|---------|-------------------|
+| IO     | 6.19      | 3.43    | --                |
+| CoT    | 6.93      | 4.56    | --                |
+| **ToT**| **7.56**  | **4.88**| **67% 偏好**      |
 
-ToT preferred over CoT in 61% of pairwise human comparisons. The two-stage voting
-process (vote on best plan, then vote on best passage) yields more coherent narratives.
+ToT 在 61% 的成对人类比较中优于 CoT。两阶段投票过程（对最佳规划投票，
+然后对最佳段落投票）产生了更连贯的叙述。
 
-### Mini Crosswords
+### 迷你填字游戏
 
-| Method       | Word Success | Letter Success | Games Solved |
-|--------------|-------------|----------------|--------------|
-| IO           | 16.0%       | 33.6%          | 0/20         |
-| CoT          | 15.6%       | 34.8%          | 0/20         |
-| **ToT-DFS**  | **60.0%**   | **78.7%**      | **4/20**     |
-| ToT + oracle | ~60%+       | ~78%+          | 7/20         |
+| 方法         | 单词成功率 | 字母成功率 | 游戏通过   |
+|-------------|-----------|-----------|-----------|
+| IO          | 16.0%     | 33.6%     | 0/20      |
+| CoT         | 15.6%     | 34.8%     | 0/20      |
+| **ToT-DFS** | **60.0%** | **78.7%** | **4/20**  |
+| ToT+预言机  | ~60%+     | ~78%+     | 7/20      |
 
-DFS with backtracking enables the model to try a word, discover crossing-word conflicts,
-backtrack, and try alternatives -- fundamentally impossible in left-to-right generation.
-Oracle evaluation (ground-truth pruning) shows significant remaining headroom.
+带回溯的 DFS 使模型能够尝试一个单词、发现交叉单词冲突、回溯并尝试
+替代方案——这在从左到右的生成中根本不可能。预言机评估（真实剪枝）
+显示仍有显著提升空间。
 
-### Computational Cost Analysis
+### 计算成本分析
 
-| Task             | Method  | Avg LLM Calls | Approx Tokens |
-|------------------|---------|---------------|---------------|
-| Game of 24       | CoT     | 1             | ~100          |
-| Game of 24       | CoT-SC  | 100           | ~10,000       |
-| Game of 24       | ToT-BFS | ~60           | ~6,500        |
-| Creative Writing | CoT     | 1             | ~400          |
-| Creative Writing | ToT     | ~25           | ~10,000       |
-| Crosswords       | CoT     | 1             | ~200          |
-| Crosswords       | ToT-DFS | ~50-200       | ~15,000       |
+| 任务             | 方法    | 平均 LLM 调用 | 大约 Token 数 |
+|------------------|---------|-------------|-------------|
+| 24 点游戏        | CoT     | 1           | ~100        |
+| 24 点游戏        | CoT-SC  | 100         | ~10,000     |
+| 24 点游戏        | ToT-BFS | ~60         | ~6,500      |
+| 创意写作         | CoT     | 1           | ~400        |
+| 创意写作         | ToT     | ~25         | ~10,000     |
+| 填字游戏         | CoT     | 1           | ~200        |
+| 填字游戏         | ToT-DFS | ~50-200     | ~15,000     |
 
-The cost-performance tradeoff is highly favorable for Game of 24: 10x performance gain
-for ~60x compute increase, vs. CoT-SC's 2x gain for 100x compute.
+成本-性能权衡对 24 点游戏非常有利：约 60 倍计算增加换来 10 倍性能增益，
+而 CoT-SC 需要 100 倍计算才获得 2 倍增益。
 
-## Analysis & Insights
+## 分析与洞察
 
-1. **Evaluation quality is the bottleneck**: The value/vote accuracy directly determines
-   search effectiveness. Game of 24's "sure/maybe/impossible" classification is ~80%
-   precise, enabling effective pruning. Creative writing evaluation is noisier, hence
-   smaller gains. Oracle experiments show significant headroom when evaluation is perfect.
+1. **评估质量是瓶颈**：价值/投票准确率直接决定搜索有效性。24 点游戏的
+   "sure/maybe/impossible"分类约 80% 精确，实现了有效剪枝。创意写作评估
+   噪声更大，因此增益较小。预言机实验显示当评估完美时有显著提升空间。
 
-2. **Thought granularity is a critical design choice**: Too fine (single tokens) creates
-   intractable trees; too coarse (entire solutions) eliminates search benefit. The right
-   granularity depends on problem decomposition structure.
+2. **思维粒度是关键设计选择**：太细（单个 token）创建不可处理的树；太粗
+   （完整解决方案）消除搜索收益。正确的粒度取决于问题的分解结构。
 
-3. **BFS vs. DFS tradeoffs**: BFS suits shallow search spaces with good early discrimination
-   (Game of 24: depth 3). DFS suits deep constraint-satisfaction where violations are
-   detectable early (crosswords: depth 10 with constraint conflicts).
+3. **BFS vs. DFS 权衡**：BFS 适合浅搜索空间且早期区分度好的情况
+   （24 点游戏：深度 3）。DFS 适合深度约束满足问题且违反可以早期
+   检测（填字游戏：深度 10，有约束冲突）。
 
-4. **CoT failure modes ToT addresses**: (a) Commitment to wrong arithmetic path --
-   ToT prunes impossible branches. (b) No global coherence view -- ToT's voting provides
-   holistic comparison. (c) No constraint recovery -- DFS naturally backtracks on conflicts.
+4. **ToT 解决的 CoT 失败模式**：(a) 对错误算术路径的承诺——ToT 剪枝
+   不可能的分支。(b) 无全局连贯性视图——ToT 的投票提供整体比较。
+   (c) 无约束恢复——DFS 自然地在冲突时回溯。
 
-5. **LLM as heuristic function**: The evaluation component turns the LLM into a learned
-   heuristic for search, zero-shot and prompt-specified rather than trained, previewing
-   the "scaling test-time compute" paradigm.
+5. **大语言模型作为启发式函数**：评估组件将大语言模型变成了搜索的学习
+   启发式，零样本且通过提示指定而非训练，预示了"扩展测试时计算"范式。
 
-## Limitations & Critiques
+## 局限性与批评
 
-1. **Computational expense**: 10-200x more LLM calls than CoT. Impractical for
-   latency-sensitive or cost-constrained applications.
-2. **Task-specific engineering**: Each task requires manual configuration of all four
-   components. No automatic adaptation or meta-learning.
-3. **Limited task diversity**: Only three small-scale tasks. Scalability to deep trees
-   (depth >> 10) or wide branching (b >> 10) is unknown.
-4. **No learning from search**: Each instance starts fresh; no heuristic transfer.
-5. **Evaluation reliability**: LLM self-evaluation is uncalibrated. False positives
-   waste compute; false negatives lose valid paths.
-6. **GPT-4 dependence**: Unclear if smaller/open-source models can serve as evaluators.
-7. **No theoretical analysis**: Purely empirical; no formal guarantees on when ToT
-   outperforms CoT or convergence properties.
+1. **计算开销**：比 CoT 多 10-200 倍大语言模型调用。对延迟敏感或
+   成本受限的应用不切实际。
+2. **任务特定的工程**：每个任务需要手动配置所有四个组件。
+   无自动适应或元学习。
+3. **有限的任务多样性**：仅三个小规模任务。对深树（深度 >> 10）或宽分支
+   （b >> 10）的可扩展性未知。
+4. **不从搜索中学习**：每个实例从头开始；无启发式迁移。
+5. **评估可靠性**：大语言模型自评估未经校准。假阳性浪费计算；
+   假阴性丢失有效路径。
+6. **GPT-4 依赖**：不确定较小/开源模型能否充当评估器。
+7. **无理论分析**：纯经验性；无关于 ToT 何时优于 CoT 或收敛特性的
+   形式保证。
 
-## Follow-up Work
+## 后续工作
 
-- **Graph of Thoughts** (Besta et al., 2023): DAG structure with thought merging/refinement.
-- **Algorithm of Thoughts** (Sel et al., 2023): Simulates tree search in a single LLM call.
-- **RAP** (Hao et al., 2023): MCTS + LLM world model with UCB-based exploration.
-- **LATS** (Zhou et al., 2023): ToT + ReAct + MCTS for agent decision-making.
-- **XoT** (Ding et al., 2023): RL-trained policy network to guide thought generation.
-- **iToT** (2024): A*/D* informed search reducing nodes while preserving accuracy.
-- **Scaling test-time compute**: ToT directly influenced OpenAI's o1/o3 paradigm.
+- **Graph of Thoughts** (Besta et al., 2023)：具有思维合并/改进的 DAG 结构。
+- **Algorithm of Thoughts** (Sel et al., 2023)：在单次大语言模型调用中模拟树搜索。
+- **RAP** (Hao et al., 2023)：MCTS + 大语言模型世界模型，带 UCB 探索。
+- **LATS** (Zhou et al., 2023)：ToT + ReAct + MCTS 用于智能体决策。
+- **XoT** (Ding et al., 2023)：RL 训练的策略网络指导思维生成。
+- **iToT** (2024)：A*/D* 知情搜索，减少节点同时保持准确率。
+- **扩展测试时计算**：ToT 直接影响了 OpenAI 的 o1/o3 范式。
 
-## Key Takeaways
+## 核心要点
 
-1. **Framing LLM reasoning as search** is a powerful paradigm that enables exploration and
-   backtracking, dramatically expanding what LLMs can solve.
+1. **将大语言模型推理构建为搜索**是一种强大的范式，实现了探索和回溯，
+   显著扩展了大语言模型能够求解的范围。
 
-2. **Self-evaluation is surprisingly effective**: LLMs can assess their own partial solutions
-   well enough to guide meaningful search, at least for well-structured problems.
+2. **自评估出人意料地有效**：大语言模型可以足够好地评估自己的部分解
+   以指导有意义的搜索，至少对结构良好的问题如此。
 
-3. **The compute-accuracy frontier is movable**: Additional inference-time tokens yield
-   outsized improvements -- a principle now central to reasoning model design (o1, o3).
+3. **计算-准确率前沿是可移动的**：额外的推理时 token 产生超额改进——
+   这一原则现在是推理模型设计（o1、o3）的核心。
 
-4. **Task decomposition is the key design choice**: The granularity and structure of
-   "thoughts" determines the search space and thus the framework's effectiveness.
+4. **任务分解是关键设计选择**："思维"的粒度和结构决定了搜索空间，
+   从而决定了框架的有效性。
 
-5. **ToT opened the door** to a family of inference-time reasoning methods (GoT, MCTS,
-   RAP, eventually o1) that treat generation as search rather than a single forward pass.
+5. **ToT 开启了大门**，引出了一系列推理时推理方法（GoT、MCTS、RAP，
+   最终 o1），将生成视为搜索而非单次前向传递。

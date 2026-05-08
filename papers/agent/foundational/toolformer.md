@@ -1,5 +1,5 @@
 ---
-title: "Toolformer: Language Models Can Teach Themselves to Use Tools"
+title: "Toolformer: Language Models Can Teach Themselves to Use Tools (Toolformer：语言模型可以自学使用工具)"
 authors:
   - Timo Schick
   - Jane Dwivedi-Yu
@@ -25,94 +25,91 @@ tags:
 status: done
 ---
 
-# Toolformer: Language Models Can Teach Themselves to Use Tools
+# Toolformer：语言模型可以自学使用工具
 
-## TL;DR
+## 简述
 
-Toolformer is a self-supervised method that teaches a language model (GPT-J 6.7B) to autonomously
-decide when and how to call external tool APIs (calculator, Q&A system, search engine, calendar,
-translator) by embedding API calls directly into text sequences. The model generates candidate API
-call annotations on a large corpus, filters them by whether they reduce perplexity on future tokens,
-and fine-tunes on the surviving annotations. The resulting 6.7B model matches or exceeds GPT-3 175B
-on several zero-shot benchmarks -- achieving this with 25x fewer parameters.
-
----
-
-## Motivation & Problem
-
-Large language models exhibit fundamental limitations that cannot be resolved by scaling alone:
-
-1. **Inability to access up-to-date information** -- LMs are frozen at training time and cannot
-   retrieve current facts, prices, weather, or news.
-2. **Weak mathematical reasoning** -- even 175B-parameter models fail on basic multi-digit
-   arithmetic and word problems.
-3. **Lack of temporal awareness** -- LMs have no concept of the current date or time.
-4. **Hallucination on factual recall** -- parametric memory is unreliable for long-tail knowledge.
-5. **Limited multilinguality** -- translation quality degrades for low-resource language pairs.
-
-Prior approaches to tool-augmented LMs (e.g., TALM, WebGPT, LaMDA) relied on extensive human
-annotations or task-specific supervision. Toolformer asks: can a model teach *itself* when tools
-are helpful, using only a few demonstrations per tool and no task-specific labels?
+Toolformer 是一种自监督方法，教会语言模型（GPT-J 6.7B）自主决定何时以及如何调用
+外部工具 API（计算器、问答系统、搜索引擎、日历、翻译器），通过将 API 调用直接嵌入
+文本序列中实现。模型在大规模语料库上生成候选 API 调用标注，通过判断其是否降低了后续
+token 的困惑度来过滤候选标注，然后在保留的标注上进行微调。最终的 6.7B 模型在多个
+零样本基准测试上匹配或超越了 GPT-3 175B——仅用 25 分之一的参数量实现了这一成绩。
 
 ---
 
-## Method
+## 动机与问题
 
-### High-Level Pipeline
+大语言模型存在仅靠扩展规模无法解决的根本局限：
 
-The approach consists of three phases applied independently for each tool:
+1. **无法访问最新信息**——语言模型在训练时被冻结，无法检索当前的事实、
+   价格、天气或新闻。
+2. **数学推理能力弱**——即使是 175B 参数的模型在基本的多位数算术和
+   应用题上也会失败。
+3. **缺乏时间意识**——语言模型没有当前日期或时间的概念。
+4. **事实回忆中的幻觉**——参数化记忆在长尾知识上不可靠。
+5. **多语言能力有限**——低资源语言对的翻译质量会退化。
+
+先前的工具增强语言模型方法（例如 TALM、WebGPT、LaMDA）依赖于大量的人工标注或
+任务特定的监督。Toolformer 提出：模型能否仅使用每个工具的少量演示、不需要任何
+任务特定标签就_自行_学会工具何时有用？
+
+---
+
+## 方法
+
+### 高层流水线
+
+该方法对每个工具独立应用三个阶段：
 
 ```
-Phase 1: Annotate        Phase 2: Filter           Phase 3: Fine-tune
+阶段 1: 标注           阶段 2: 过滤            阶段 3: 微调
 +-----------------+      +------------------+      +------------------+
-| Sample candidate|      | Execute API calls|      | Merge all tool   |
-| API call        | ---> | Compare loss with| ---> | datasets         |
-| positions &     |      | vs without result|      | Fine-tune GPT-J  |
-| arguments from  |      | Keep if loss     |      | on augmented     |
-| corpus C        |      | reduction >= t_f |      | text + original C|
+| 从语料库 C 中   |      | 执行 API 调用    |      | 合并所有工具     |
+| 采样候选 API    | ---> | 比较有结果和无    | ---> | 数据集           |
+| 调用位置和      |      | 结果时的损失      |      | 在增强文本 +     |
+| 参数            |      | 若损失减少 >= t_f |      | 原始 C 上微调    |
+|                 |      | 则保留            |      | GPT-J            |
 +-----------------+      +------------------+      +------------------+
 ```
 
-### Step-by-Step Annotation Pipeline
+### 逐步标注流水线
 
-**Step 1: Position Sampling**
+**步骤 1：位置采样**
 
-Given a text sequence x = (x_1, ..., x_n) from corpus C (a subset of CCNet), compute for each
-position i the probability that the model M assigns to generating the special `<API>` token:
+给定语料库 C（CCNet 子集）中的文本序列 x = (x_1, ..., x_n)，对每个位置 i
+计算模型 M 生成特殊 `<API>` token 的概率：
 
 ```
 p_i = P_M(<API> | x_1, ..., x_i)
 ```
 
-Keep all positions where p_i > tau_s (sampling threshold). If more than k positions qualify,
-retain only the top-k by probability. This is bootstrapped using few-shot prompting: the model
-is given 2-3 examples of text with API calls for each tool, which biases it to assign non-trivial
-probability to `<API>` at relevant positions.
+保留所有 p_i > tau_s（采样阈值）的位置。如果超过 k 个位置符合条件，仅保留
+概率最高的 top-k 个。这通过少样本提示引导实现：为每个工具向模型提供 2-3 个
+带 API 调用的文本示例，使其在相关位置对 `<API>` 赋予非零概率。
 
-- **tau_s = 0.05** (5% probability threshold)
-- **k = 5** candidate positions per sequence (at most)
+- **tau_s = 0.05**（5% 概率阈值）
+- **k = 5** 每个序列最多候选位置数
 
-**Step 2: Candidate Generation**
+**步骤 2：候选生成**
 
-For each selected position i, sample m candidate API calls by continuing generation from the
-prefix [x_1, ..., x_i, <API>] with the tool-specific prompt format until the model generates
-`</API>`. This yields candidate calls c_1, ..., c_m.
+对每个选定位置 i，从前缀 [x_1, ..., x_i, <API>] 继续生成，采样 m 个候选
+API 调用，直到模型生成 `</API>`。生成候选调用 c_1, ..., c_m。
 
-- **m = 5** candidates per position
-- Sampling uses nucleus sampling or temperature-based decoding
+- **m = 5** 每个位置的候选数
+- 采样使用核采样或基于温度的解码
 
-**Step 3: API Execution**
+**步骤 3：API 执行**
 
-Execute each candidate API call c_j to obtain the result r_j. Construct two augmented sequences:
+执行每个候选 API 调用 c_j 以获取结果 r_j。构建两个增强序列：
 
 ```
-e_i^+ = (x_1,...,x_{i-1}, <API> c_j -> r_j </API>, x_i,...,x_n)   [with result]
-e_i^- = (x_1,...,x_{i-1}, <API> c_j ->  </API>, x_i,...,x_n)       [empty result]
+e_i^+ = (x_1,...,x_{i-1}, <API> c_j -> r_j </API>, x_i,...,x_n)   [有结果]
+e_i^- = (x_1,...,x_{i-1}, <API> c_j ->  </API>, x_i,...,x_n)       [无结果]
 ```
 
-**Step 4: Perplexity-Based Filtering**
+**步骤 4：基于困惑度的过滤**
 
-Compute the weighted cross-entropy loss over tokens following the API call for both variants:
+计算 API 调用后续 token 的加权交叉熵损失：
 
 ```
                    n
@@ -120,31 +117,30 @@ L_i(z) = - SUM   w_{t-i} * log P_M(x_t | z, x_{1:t-1})
                t=i
 ```
 
-where:
-- z is the inserted API call (with or without result)
-- w_{t-i} are position-dependent weights (tokens closer to the API call weighted more heavily)
-- The sum runs over all tokens after position i
+其中：
+- z 是插入的 API 调用（有或无结果）
+- w_{t-i} 是位置相关的权重（距 API 调用越近的 token 权重越大）
+- 求和遍历位置 i 之后的所有 token
 
-Define two key quantities:
+定义两个关键量：
 
 ```
-L_i^+ = L(e_i^+)    -- loss WITH the API result
-L_i^- = L(e_i^-)    -- loss WITHOUT the API result (or with empty string)
+L_i^+ = L(e_i^+)    -- 有 API 结果时的损失
+L_i^- = L(e_i^-)    -- 无 API 结果时的损失（或空字符串）
 ```
 
-**Filtering criterion:** Keep API call c_j at position i if and only if:
+**过滤准则：** 仅当满足以下条件时保留位置 i 处的 API 调用 c_j：
 
 ```
 L_i^- - L_i^+ >= tau_f
 ```
 
-where **tau_f = 1.0** (the API call must reduce loss by at least 1.0 nat).
+其中 **tau_f = 1.0**（API 调用必须至少降低 1.0 nat 的损失）。
 
-This means: the call is retained only when having the tool's answer makes the model substantially
-better at predicting the subsequent tokens compared to not having it. This is the core insight --
-the model itself judges tool usefulness via its own loss function.
+这意味着：仅当工具的答案使模型在预测后续 token 时比没有工具答案时显著更好，
+该调用才被保留。这是核心洞察——模型通过自身的损失函数判断工具的有用性。
 
-### Pseudocode: Full Annotation Pipeline
+### 伪代码：完整标注流水线
 
 ```
 Algorithm: Toolformer Self-Supervised Annotation
@@ -186,129 +182,126 @@ M* = finetune(M, C_final, lr=1e-5, warmup=10%)
 return M*
 ```
 
-### Tool API Formats
+### 工具 API 格式
 
-Each tool uses a consistent annotation syntax: `[ToolName(input) -> output]`
+每个工具使用一致的标注语法：`[ToolName(input) -> output]`
 
-**1. Calculator (Calc)**
+**1. 计算器 (Calc)**
 ```
-Syntax:   [Calculator(mathematical_expression) -> result]
-Example:  Out of 1400 participants, 400 (or [Calculator(400/1400) -> 0.29] 29%) passed.
-Scope:    Four basic arithmetic operations (+, -, *, /)
-Output:   Rounded to two decimal places
+语法:     [Calculator(mathematical_expression) -> result]
+示例:     Out of 1400 participants, 400 (or [Calculator(400/1400) -> 0.29] 29%) passed.
+范围:     四种基本算术运算 (+, -, *, /)
+输出:     四舍五入到小数点后两位
 ```
 
-**2. Question Answering (QA)**
+**2. 问答 (QA)**
 ```
-Syntax:   [QA(natural_language_question) -> answer]
-Example:  The NEJM is a trademark of [QA("Publisher of NEJM?") -> Massachusetts Medical
+语法:     [QA(natural_language_question) -> answer]
+示例:     The NEJM is a trademark of [QA("Publisher of NEJM?") -> Massachusetts Medical
           Society] the MMS.
-Backend:  Atlas retrieval-augmented LM (few-shot, no fine-tuning)
+后端:     Atlas 检索增强语言模型（少样本，未微调）
 ```
 
-**3. Wikipedia Search (WikiSearch)**
+**3. 维基百科搜索 (WikiSearch)**
 ```
-Syntax:   [WikiSearch(query) -> first_sentence_of_article]
-Example:  The Brown Act is [WikiSearch("Brown Act") -> The Ralph M. Brown Act is an act
+语法:     [WikiSearch(query) -> first_sentence_of_article]
+示例:     The Brown Act is [WikiSearch("Brown Act") -> The Ralph M. Brown Act is an act
           of the California State Legislature...] California's open meetings law.
-Backend:  BM25 retrieval over Wikipedia, returns first sentence of top result
+后端:     基于 Wikipedia 的 BM25 检索，返回排名第一结果的首句
 ```
 
-**4. Machine Translation (MT)**
+**4. 机器翻译 (MT)**
 ```
-Syntax:   [MT(text_in_source_language) -> translated_text]
-Example:  "la tortuga", the Spanish word for [MT("tortuga") -> turtle] turtle.
-Backend:  600M-parameter NLLB model (200 languages)
+语法:     [MT(text_in_source_language) -> translated_text]
+示例:     "la tortuga", the Spanish word for [MT("tortuga") -> turtle] turtle.
+后端:     600M 参数的 NLLB 模型（200 种语言）
 ```
 
-**5. Calendar**
+**5. 日历**
 ```
-Syntax:   [Calendar() -> current_date_string]
-Example:  The WL opens on Friday, [Calendar() -> Today is Thursday, March 9, 2017.]
+语法:     [Calendar() -> current_date_string]
+示例:     The WL opens on Friday, [Calendar() -> Today is Thursday, March 9, 2017.]
           March 10.
-Backend:  Simple system call returning current date (no input arguments)
+后端:     返回当前日期的简单系统调用（无输入参数）
 ```
 
-### Fine-Tuning Details
+### 微调细节
 
-After filtering, the surviving annotated examples from all tools are merged with the original
-unannotated corpus C. The model is then fine-tuned on this combined dataset.
+过滤后，来自所有工具的存活标注示例与原始未标注语料库 C 合并。然后在这个
+组合数据集上微调模型。
 
-- **Base model:** GPT-J 6.7B (EleutherAI)
-- **Training corpus:** Subset of CCNet
-- **Learning rate:** 1e-5 with linear warmup for the first 10% of training steps
-- **Weight decay:** 0.01
-- **Sequence length:** 1024 tokens
-- **Objective:** Standard language modeling (next token prediction)
-- **Dataset composition:** Augmented examples interleaved with original text to prevent
-  catastrophic forgetting of general language modeling ability
+- **基础模型：** GPT-J 6.7B (EleutherAI)
+- **训练语料：** CCNet 子集
+- **学习率：** 1e-5，前 10% 训练步骤线性预热
+- **权重衰减：** 0.01
+- **序列长度：** 1024 tokens
+- **目标：** 标准语言建模（下一个 token 预测）
+- **数据集组成：** 增强示例与原始文本交替排列，以防止灾难性遗忘
+  通用语言建模能力
 
-At inference time, when the model generates `<API>`, generation pauses, the API call is executed,
-the result is inserted, and generation continues from `</API>`.
-
----
-
-## Key Innovations
-
-1. **Self-supervised tool annotation** -- No human labeling of when to use tools. The model
-   discovers useful tool invocations entirely through its own loss signal. Only a handful
-   (2-3) of demonstrations per tool are needed to bootstrap the process.
-
-2. **Perplexity-as-reward** -- Using the model's own next-token prediction loss as a filtering
-   criterion is elegant: it directly measures whether a tool call helps the model do its job
-   better. This avoids needing task-specific reward models.
-
-3. **Tool-agnostic framework** -- The same annotate/filter/fine-tune pipeline works for any
-   tool that can be expressed as a text-in/text-out API. Adding a new tool only requires
-   writing a few demonstration examples.
-
-4. **Inline API calls** -- Tool invocations are embedded directly in the token stream using
-   special tokens, rather than requiring a separate action space or multi-turn protocol. This
-   preserves the autoregressive generation paradigm.
-
-5. **Decoupled tool training** -- Each tool's annotations are generated independently, allowing
-   parallelism and modularity. The final fine-tuning merges all tools.
+在推理时，当模型生成 `<API>` 时，生成暂停，API 调用被执行，结果被插入，
+然后从 `</API>` 继续生成。
 
 ---
 
-## Experimental Setup
+## 关键创新
 
-### Datasets and Benchmarks
+1. **自监督工具标注**——无需人工标注何时使用工具。模型完全通过自身的损失信号
+   发现有用的工具调用。每个工具仅需少量（2-3 个）演示即可引导流程。
 
-| Category   | Dataset     | Task                          | Metric   |
-|------------|-------------|-------------------------------|----------|
-| Math       | ASDiv       | Arithmetic word problems      | Accuracy |
-| Math       | SVAMP       | Math word problems            | Accuracy |
-| Math       | MAWPS       | Math word problems            | Accuracy |
-| QA         | WebQS       | Open-domain QA (web)          | Accuracy |
-| QA         | NQ          | Natural Questions             | Accuracy |
-| QA         | TriviaQA    | Trivia question answering     | Accuracy |
-| Knowledge  | LAMA-SQuAD  | Factual cloze (SQuAD subset)  | Accuracy |
-| Knowledge  | LAMA-T-REx  | Factual cloze (T-REx subset)  | Accuracy |
-| Knowledge  | LAMA-G-RE   | Factual cloze (Google-RE)     | Accuracy |
-| Temporal   | TempLAMA    | Time-sensitive factual cloze  | Accuracy |
-| Temporal   | DateSet     | Date understanding            | Accuracy |
-| Translation| MLQA        | Multilingual QA (6 languages) | F1       |
+2. **困惑度作为奖励**——使用模型自身的下一个 token 预测损失作为过滤标准
+   非常优雅：它直接衡量工具调用是否帮助模型更好地完成任务。这避免了需要
+   任务特定的奖励模型。
 
-### Baselines
+3. **工具无关框架**——相同的标注/过滤/微调流水线适用于任何可以表示为
+   文本输入/文本输出 API 的工具。添加新工具仅需编写几个演示示例。
 
-- **GPT-J 6.7B** -- base model, no tools
-- **GPT-J 6.7B fine-tuned on CCNet** -- same data, no tool annotations
-- **OPT 66B** -- 10x larger, no tools
-- **GPT-3 175B** -- 25x larger, no tools (via OpenAI API)
-- **Toolformer disabled** -- fine-tuned with tool data but tool calls suppressed at inference
+4. **内联 API 调用**——工具调用使用特殊 token 直接嵌入 token 流中，而非
+   需要单独的动作空间或多轮协议。这保持了自回归生成范式。
 
-### Model Variants for Ablation
-
-- GPT-2 124M, GPT-2 355M, GPT-2 775M, GPT-2 1.6B, GPT-J 6.7B
+5. **解耦的工具训练**——每个工具的标注独立生成，允许并行化和模块化。
+   最终微调合并所有工具。
 
 ---
 
-## Results
+## 实验设置
 
-### Main Results Table
+### 数据集与基准测试
 
-| Benchmark    | GPT-J 6.7B | OPT 66B | GPT-3 175B | Toolformer 6.7B |
+| 类别   | 数据集     | 任务                          | 指标     |
+|--------|------------|-------------------------------|----------|
+| 数学   | ASDiv      | 算术应用题                    | 准确率   |
+| 数学   | SVAMP      | 数学应用题                    | 准确率   |
+| 数学   | MAWPS      | 数学应用题                    | 准确率   |
+| 问答   | WebQS      | 开放域问答（网络）            | 准确率   |
+| 问答   | NQ         | Natural Questions             | 准确率   |
+| 问答   | TriviaQA   | 知识问答                      | 准确率   |
+| 知识   | LAMA-SQuAD | 事实完形填空（SQuAD 子集）    | 准确率   |
+| 知识   | LAMA-T-REx | 事实完形填空（T-REx 子集）    | 准确率   |
+| 知识   | LAMA-G-RE  | 事实完形填空（Google-RE）     | 准确率   |
+| 时间   | TempLAMA   | 时间敏感事实完形填空          | 准确率   |
+| 时间   | DateSet    | 日期理解                      | 准确率   |
+| 翻译   | MLQA       | 多语言问答（6 种语言）        | F1       |
+
+### 基线
+
+- **GPT-J 6.7B**——基础模型，无工具
+- **GPT-J 6.7B 在 CCNet 上微调**——相同数据，无工具标注
+- **OPT 66B**——大 10 倍，无工具
+- **GPT-3 175B**——大 25 倍，无工具（通过 OpenAI API）
+- **Toolformer 禁用工具**——使用工具数据微调但在推理时禁止工具调用
+
+### 消融模型变体
+
+- GPT-2 124M、GPT-2 355M、GPT-2 775M、GPT-2 1.6B、GPT-J 6.7B
+
+---
+
+## 结果
+
+### 主要结果表
+
+| 基准测试     | GPT-J 6.7B | OPT 66B | GPT-3 175B | Toolformer 6.7B |
 |--------------|-----------|---------|------------|-----------------|
 | ASDiv        | 7.5       | --      | 14.0       | **40.4**        |
 | SVAMP        | 5.2       | 4.9     | 10.0       | **29.4**        |
@@ -320,165 +313,157 @@ the result is inserted, and generation continues from `</API>`.
 | TempLAMA     | 13.7      | --      | --         | 16.3            |
 | DateSet      | 3.9       | --      | --         | **27.3**        |
 
-Key observations:
-- On math benchmarks (ASDiv, SVAMP, MAWPS), Toolformer **quadruples** GPT-J performance
-  and **doubles to triples** GPT-3 performance using only 6.7B parameters
-- On LAMA-SQuAD, Toolformer uses the QA tool in 98.1% of cases, boosting from 19.2 to 33.8
-- On DateSet, Toolformer achieves a ~7x improvement by invoking the Calendar tool
-- On QA benchmarks (WebQS, NQ, TriviaQA), gains are more modest since factual recall partially
-  overlaps with the model's parametric knowledge
-- Toolformer easily outperforms OPT 66B and GPT-3 175B on all math benchmarks
-- On LAMA knowledge benchmarks, Toolformer outperforms all baselines of the same size and
-  achieves results competitive with or exceeding GPT-3
+关键观察：
+- 在数学基准测试（ASDiv、SVAMP、MAWPS）上，Toolformer 将 GPT-J 的表现
+  **提高了四倍**，并将 GPT-3 的表现**提高了两到三倍**，仅使用 6.7B 参数
+- 在 LAMA-SQuAD 上，Toolformer 在 98.1% 的案例中使用 QA 工具，从 19.2
+  提升到 33.8
+- 在 DateSet 上，Toolformer 通过调用日历工具实现了约 7 倍的改进
+- 在问答基准测试（WebQS、NQ、TriviaQA）上，增益较为温和，因为事实回忆
+  与模型的参数化知识部分重叠
+- Toolformer 在所有数学基准测试上轻松超越 OPT 66B 和 GPT-3 175B
+- 在 LAMA 知识基准测试上，Toolformer 超越了所有同规模基线，并取得了
+  与 GPT-3 相当或更优的结果
 
-### Tool Usage Analysis
+### 工具使用分析
 
-| Tool          | Primary Benchmarks   | Usage Rate    | Benefit Level |
+| 工具          | 主要基准测试         | 使用率        | 收益级别      |
 |---------------|----------------------|---------------|---------------|
-| Calculator    | ASDiv, SVAMP, MAWPS  | Very high     | Very high     |
-| QA (Atlas)    | LAMA, WebQS, NQ      | ~98% on LAMA  | High          |
-| WikiSearch    | LAMA (some subsets)  | Moderate      | Moderate      |
-| Calendar      | TempLAMA, DateSet    | High on date  | High          |
-| MT (NLLB)     | MLQA                 | Variable      | Mixed         |
+| 计算器        | ASDiv, SVAMP, MAWPS  | 非常高        | 非常高        |
+| QA (Atlas)    | LAMA, WebQS, NQ      | LAMA 上约 98% | 高            |
+| WikiSearch    | LAMA（部分子集）     | 中等          | 中等          |
+| 日历          | TempLAMA, DateSet    | 日期相关上高  | 高            |
+| MT (NLLB)     | MLQA                 | 变化较大      | 混合          |
 
-- The **Calculator** provides the single largest benefit -- math benchmarks see 4-5x gains
-- The **QA tool** is used most frequently on knowledge benchmarks with consistent improvements
-- **WikiSearch** shows moderate benefit; partially redundant with QA on some benchmarks
-- **Calendar** is crucial for temporal reasoning but narrow in applicability
-- **MT** provides benefits across most languages on MLQA, but CCNet fine-tuning can hurt
-  multilingual performance, so Toolformer does not consistently outperform base GPT-J
+- **计算器**提供了最大的单项收益——数学基准测试获得 4-5 倍的增益
+- **QA 工具**在知识基准测试上使用最频繁，带来持续改进
+- **WikiSearch** 显示适度收益；在某些基准测试上与 QA 部分冗余
+- **日历**对时间推理至关重要但适用范围较窄
+- **MT** 在 MLQA 的大多数语言上提供收益，但 CCNet 微调可能损害
+  多语言性能，因此 Toolformer 并不总是优于基础 GPT-J
 
-### Ablation: Model Size and Tool Use Emergence
+### 消融：模型规模与工具使用涌现
 
-| Model Size | Uses Tools Effectively? | Notes                                         |
-|------------|------------------------|-----------------------------------------------|
-| 124M       | No                     | No improvement from tool availability         |
-| 355M       | No                     | No improvement from tool availability         |
-| 775M       | Partially              | First signs of tool use; WikiSearch works     |
-| 1.6B       | Mostly                 | Reasonable tool use across most APIs          |
-| 6.7B       | Yes                    | Full tool use capability; strong gains        |
+| 模型规模 | 能有效使用工具？ | 备注                                          |
+|----------|------------------|-----------------------------------------------|
+| 124M     | 否               | 工具可用性未带来改进                          |
+| 355M     | 否               | 工具可用性未带来改进                          |
+| 775M     | 部分             | 工具使用的初步迹象；WikiSearch 有效           |
+| 1.6B     | 基本可以         | 在大多数 API 上有合理的工具使用               |
+| 6.7B     | 是               | 完整的工具使用能力；强劲增益                  |
 
-Critical finding: **Tool use is an emergent capability** that only appears reliably at ~775M
-parameters. Below this scale, models cannot learn when tools are helpful, even with the same
-training signal. The exception is WikiSearch, which is "comparably easy to use" and shows some
-benefit even at smaller scales.
-
----
-
-## Analysis & Insights
-
-### Why Self-Supervision Works
-
-The perplexity filtering criterion acts as a natural reward signal. An API call is only useful if
-it provides information the model could not have predicted on its own. This creates an automatic
-curriculum: easy factual completions where the model already knows the answer get filtered out
-(the API call does not reduce loss), while genuinely difficult predictions where the tool helps
-are retained.
-
-### The "Right" Level of Abstraction
-
-Toolformer operates at the token level -- API calls are just special token sequences. This means:
-- No separate "action space" is needed
-- No RL or reward modeling is required
-- Standard language modeling training works
-- The model naturally learns to place calls at contextually appropriate positions
-
-### Distribution of Tool Calls
-
-The model learns intuitive placement patterns:
-- Calculator calls appear right before numerical results in text
-- QA calls appear before entity names or factual statements
-- Calendar calls appear near date references
-- MT calls appear near foreign-language terms
-
-### Scaling Dynamics
-
-While models become better at solving tasks without API calls as they grow in size, their ability
-to make good use of provided APIs improves at the same time. The tool-use benefit and the raw
-capability benefit are additive, not substitutive.
-
-### Comparison with Contemporary Work
-
-Toolformer predates and differs from subsequent agent frameworks (ReAct, function calling) in that
-it does NOT use chain-of-thought reasoning or multi-step planning. Each API call is a single,
-independent invocation. This is both a strength (simplicity) and a limitation (no multi-step
-tool use).
+关键发现：**工具使用是一种涌现能力**，仅在约 775M 参数以上才可靠出现。
+低于此规模的模型即使有相同的训练信号，也无法学会工具何时有用。例外是
+WikiSearch，它"相对容易使用"，即使在较小规模上也显示出一些收益。
 
 ---
 
-## Limitations & Critiques
+## 分析与洞察
 
-1. **No tool chaining** -- API calls are generated independently per tool. The output of one tool
-   cannot be fed as input to another. This severely limits complex reasoning that requires
-   multi-step tool use (e.g., "search for X, then calculate Y from the result").
+### 为什么自监督有效
 
-2. **No interactive tool use** -- The model cannot browse search results, refine queries, or
-   engage in multi-turn interactions with tools. It gets one shot per call.
+困惑度过滤标准作为自然的奖励信号发挥作用。API 调用仅在提供模型自身无法预测
+的信息时才有用。这创建了自动课程：模型已知答案的简单事实完成被过滤掉（API
+调用不降低损失），而工具确实有帮助的真正困难预测被保留。
 
-3. **Limited to text-in/text-out APIs** -- Tools that require structured input (JSON schemas,
-   images, files) or produce non-textual output cannot be integrated.
+### "正确"的抽象层级
 
-4. **Scale requirements** -- The approach only works for models >= 775M parameters, which limits
-   applicability to smaller or edge-deployed models.
+Toolformer 在 token 层面运作——API 调用只是特殊的 token 序列。这意味着：
+- 不需要单独的"动作空间"
+- 不需要强化学习或奖励建模
+- 标准语言建模训练即可
+- 模型自然地学会在上下文合适的位置放置调用
 
-5. **CCNet fine-tuning trade-off** -- Fine-tuning on CCNet can hurt performance on some tasks
-   (e.g., multilingual QA), making it hard to disentangle tool benefits from data effects.
+### 工具调用的分布
 
-6. **Static tool set** -- Adding new tools requires re-running the full annotation/filter/fine-tune
-   pipeline. No plug-and-play tool addition at inference time.
+模型学会了直观的放置模式：
+- 计算器调用出现在文本中数字结果之前
+- QA 调用出现在实体名称或事实陈述之前
+- 日历调用出现在日期引用附近
+- MT 调用出现在外语术语附近
 
-7. **Evaluation gaps** -- The paper does not evaluate on tasks requiring genuine multi-step
-   reasoning, planning, or complex tool orchestration -- the exact scenarios where agents are
-   most needed.
+### 规模动态
 
-8. **Single-tool per position** -- Each annotated position uses exactly one tool. The model cannot
-   reason about which of multiple tools would be most appropriate for a given context at the
-   same position.
+虽然模型随规模增长在不使用 API 调用的情况下解决任务的能力提高，但它们
+有效利用所提供 API 的能力也同时提高。工具使用收益和原始能力收益是加性的，
+而非替代性的。
 
-9. **Annotation quality depends on base model** -- If the base model assigns low probability to
-   `<API>` at genuinely useful positions (distribution mismatch), those positions are never
-   sampled and potentially valuable tool uses are missed.
+### 与同期工作的比较
 
----
-
-## Follow-up Work
-
-- **Gorilla (2023)** -- Extended tool learning to thousands of APIs with retrieval-augmented
-  generation for API documentation.
-- **ToolLLM / ToolBench (2023)** -- Scaled to 16,000+ real-world APIs with multi-step tool use.
-- **ART (Automatic Reasoning and Tool-use, 2023)** -- Combined chain-of-thought with tool use
-  in a multi-step framework.
-- **Chameleon (2023)** -- Plug-and-play tool composition with an LLM-based planner.
-- **TaskMatrix.AI / HuggingGPT (2023)** -- Used LLMs to orchestrate many specialized models
-  as tools.
-- **Function Calling (OpenAI, 2023)** -- Commercial implementation of structured tool use with
-  JSON schemas, directly inspired by the Toolformer paradigm.
-- **ReAct (2022)** -- Interleaved reasoning and acting; complementary approach that adds
-  chain-of-thought before tool calls.
+Toolformer 先于后续智能体框架（ReAct、function calling）出现，与之不同的
+是它不使用思维链推理或多步规划。每次 API 调用都是单一的独立调用。这既是
+优势（简单性），也是局限（不支持多步工具使用）。
 
 ---
 
-## Key Takeaways
+## 局限性与批评
 
-1. **Self-supervision suffices for tool learning** -- With only 2-3 demonstrations per tool, a
-   model can learn when and how to use tools by filtering on its own loss. No human annotation
-   of tool-use examples at scale is needed.
+1. **不支持工具链式调用**——API 调用按工具独立生成。一个工具的输出不能作为
+   另一个工具的输入。这严重限制了需要多步工具使用的复杂推理（例如"搜索 X，
+   然后根据结果计算 Y"）。
 
-2. **Small models + tools > large models alone** -- Toolformer 6.7B + Calculator beats GPT-3
-   175B on math by 2-3x. This suggests that tool augmentation can be more parameter-efficient
-   than scaling.
+2. **无交互式工具使用**——模型无法浏览搜索结果、优化查询或与工具进行多轮
+   交互。每次调用只有一次机会。
 
-3. **Perplexity is a universal tool-usefulness signal** -- The loss-reduction criterion
-   (L_i^- - L_i^+ >= tau_f) is elegant, principled, and tool-agnostic. It can be applied
-   to any text-in/text-out tool without modification.
+3. **仅限文本输入/文本输出 API**——需要结构化输入（JSON 模式、图像、文件）
+   或产生非文本输出的工具无法集成。
 
-4. **Tool use is emergent** -- It requires a minimum model scale (~775M) to appear, suggesting
-   tool use depends on sufficient reasoning capability in the base model.
+4. **规模要求**——该方法仅适用于 >= 775M 参数的模型，限制了对较小或
+   边缘部署模型的适用性。
 
-5. **The inline-API paradigm is powerful but limited** -- Embedding tool calls in the token
-   stream is simple and effective for single-step tool use, but does not support the multi-step,
-   interactive tool use that modern agent frameworks require.
+5. **CCNet 微调的权衡**——在 CCNet 上微调可能损害某些任务的表现（例如多语言
+   问答），使得难以区分工具收益和数据效应。
 
-6. **Foundational contribution** -- Toolformer established that LMs can autonomously learn
-   tool use, directly inspiring the function-calling and tool-use capabilities now standard
-   in commercial LLMs (GPT-4, Claude, Gemini).
+6. **静态工具集**——添加新工具需要重新运行完整的标注/过滤/微调流水线。
+   推理时无法即插即用地添加工具。
+
+7. **评估不足**——论文未评估需要真正多步推理、规划或复杂工具编排的任务——
+   正是智能体最需要的场景。
+
+8. **每个位置单一工具**——每个标注位置仅使用一个工具。模型无法推理在同一
+   位置哪个工具最合适。
+
+9. **标注质量依赖基础模型**——如果基础模型在真正有用的位置对 `<API>` 赋予
+   低概率（分布不匹配），这些位置永远不会被采样，潜在有价值的工具使用就会
+   被遗漏。
+
+---
+
+## 后续工作
+
+- **Gorilla (2023)**——将工具学习扩展到数千个 API，使用检索增强生成
+  获取 API 文档。
+- **ToolLLM / ToolBench (2023)**——扩展到 16,000+ 个真实世界 API，
+  支持多步工具使用。
+- **ART (Automatic Reasoning and Tool-use, 2023)**——将思维链与工具使用
+  结合在多步框架中。
+- **Chameleon (2023)**——使用基于大语言模型的规划器进行即插即用的工具组合。
+- **TaskMatrix.AI / HuggingGPT (2023)**——使用大语言模型编排许多专业模型
+  作为工具。
+- **Function Calling (OpenAI, 2023)**——结构化工具使用的商业实现，使用
+  JSON 模式，直接受 Toolformer 范式启发。
+- **ReAct (2022)**——交替推理与行动；互补方法，在工具调用前添加思维链。
+
+---
+
+## 核心要点
+
+1. **自监督足以进行工具学习**——每个工具仅需 2-3 个演示，模型就能通过
+   自身损失过滤来学习何时以及如何使用工具。无需大规模的工具使用示例
+   人工标注。
+
+2. **小模型+工具 > 大模型**——Toolformer 6.7B + 计算器在数学上以 2-3 倍
+   超越 GPT-3 175B。这表明工具增强比纯规模扩展更具参数效率。
+
+3. **困惑度是通用的工具有用性信号**——损失降低标准（L_i^- - L_i^+ >= tau_f）
+   优雅、有原则且工具无关。可以无需修改地应用于任何文本输入/文本输出工具。
+
+4. **工具使用是涌现能力**——它需要最低模型规模（约 775M）才能出现，表明
+   工具使用依赖于基础模型中足够的推理能力。
+
+5. **内联 API 范式强大但有限**——将工具调用嵌入 token 流中对单步工具使用
+   简单有效，但不支持现代智能体框架所需的多步、交互式工具使用。
+
+6. **奠基性贡献**——Toolformer 确立了语言模型可以自主学习工具使用，直接
+   启发了现在商业大语言模型（GPT-4、Claude、Gemini）中标准配置的函数调用
+   和工具使用能力。

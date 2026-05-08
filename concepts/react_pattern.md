@@ -1,62 +1,62 @@
 ---
-title: ReAct Pattern (Reasoning + Acting)
+title: ReAct 模式（推理 + 行动）
 tags: [react, pattern, agent-loop, core-concept]
 related: [agent_architecture, tool_use]
 ---
 
-## Definition
+## 定义
 
-ReAct is the foundational agent loop pattern where an LLM interleaves reasoning (thinking) with actions (tool calls), processing observations from the environment to iteratively work toward a goal.
+ReAct 是基础性的智能体循环模式，其中 LLM 交替进行推理（思考）和行动（工具调用），处理来自环境的观察以迭代地朝着目标前进。
 
-## The Loop
+## 循环
 
 ```
 ┌──────────────────────────────────┐
 │                                  │
 │  ┌─────────┐                    │
-│  │ Thought │  "I need to..."    │
+│  │  思考   │  "我需要……"        │
 │  └────┬────┘                    │
 │       │                         │
 │  ┌────▼────┐                    │
-│  │ Action  │  search/execute    │
+│  │  行动   │  搜索/执行         │
 │  └────┬────┘                    │
 │       │                         │
 │  ┌────▼───────────┐             │
-│  │  Observation   │  result     │
+│  │   观察结果     │  结果       │
 │  └────┬───────────┘             │
 │       │                         │
 │       └─────────────────────────┘
-│       (repeat until done)
+│       （重复直到完成）
 ```
 
-## Implementation Variants
+## 实现变体
 
-### Basic ReAct (few-shot prompting)
-The original -- few-shot examples showing Thought/Action/Observation format.
+### 基础 ReAct（少样本提示）
+原始版本——用少样本示例展示 Thought/Action/Observation 格式。
 
-### Function-Calling ReAct (modern)
-Same loop but using native function calling:
-1. LLM decides to call a tool (structured JSON)
-2. System executes the tool
-3. Result returned to LLM as tool response
-4. LLM continues reasoning
+### 函数调用 ReAct（现代）
+相同的循环但使用原生函数调用：
+1. LLM 决定调用工具（结构化 JSON）
+2. 系统执行工具
+3. 结果作为工具响应返回给 LLM
+4. LLM 继续推理
 
-### ReAct + Reflection (Reflexion)
-Add a reflection step after failure to learn from mistakes.
+### ReAct + 反思（Reflexion）
+在失败后添加反思步骤以从错误中学习。
 
-### ReAct + Planning (Plan-and-Execute)
-First generate a full plan, then execute each step with ReAct.
+### ReAct + 规划（规划与执行）
+先生成完整计划，然后用 ReAct 执行每个步骤。
 
-## When to Use
+## 何时使用
 
-- General-purpose agent tasks
-- Tasks requiring external information
-- Multi-step reasoning with tool use
-- When the number of steps is not known in advance
+- 通用智能体任务
+- 需要外部信息的任务
+- 带工具使用的多步骤推理
+- 步骤数事先未知时
 
-## Limitations
+## 局限性
 
-- Can get stuck in loops
-- No exploration of alternative paths (vs. Tree of Thoughts)
-- Linear reasoning only
-- Quality depends heavily on the model's reasoning ability
+- 可能陷入循环
+- 不探索替代路径（vs. 思维树）
+- 仅支持线性推理
+- 质量高度依赖于模型的推理能力

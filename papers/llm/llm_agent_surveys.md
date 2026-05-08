@@ -7,322 +7,322 @@ tags: [agent, survey, llm, taxonomy, comprehensive]
 status: reference
 ---
 
-## TL;DR
+## 简要总结
 
-A curated collection of the most influential survey papers on LLM-based agents, covering taxonomies, architectures, capabilities, applications, evaluation, and open challenges.
+关于基于 LLM 的智能体最具影响力的综述论文精选集，涵盖分类体系、架构、能力、应用、评估和开放挑战。
 
 ---
 
-## Survey 1: "The Rise and Potential of Large Language Model Based Agents: A Survey"
+## 综述 1："The Rise and Potential of Large Language Model Based Agents: A Survey"
 
-- **Authors**: Zhiheng Xi, Wenxiang Chen, Xin Guo, et al.
-- **Affiliation**: Fudan University
-- **arXiv**: 2309.07864
-- **Date**: September 2023 (updated 2024)
-- **Pages**: ~86 pages
-- **Citations**: One of the most cited agent surveys
+- **作者**：Zhiheng Xi, Wenxiang Chen, Xin Guo 等
+- **机构**：Fudan University
+- **arXiv**：2309.07864
+- **日期**：2023 年 9 月（2024 年更新）
+- **页数**：约 86 页
+- **引用**：智能体综述中引用最多的之一
 
-### Taxonomy
-The paper proposes a three-module agent framework:
-1. **Brain (LLM)**: Natural language interaction, knowledge, reasoning, planning, transferability
-2. **Perception**: Textual, visual, auditory input processing
-3. **Action**: Tool use, embodied actions, communication
+### 分类体系
+论文提出了三模块智能体框架：
+1. **大脑 (LLM)**：自然语言交互、知识、推理、规划、迁移性
+2. **感知**：文本、视觉、听觉输入处理
+3. **行动**：工具使用、具身行动、通信
 
-### Key Contributions
-- Comprehensive taxonomy of agent capabilities
-- Detailed analysis of single-agent vs. multi-agent systems
-- Application domains: social science, natural science, engineering
-- Agent society analysis: cooperation, competition, social norms
-- Discussion of safety and ethical considerations
+### 关键贡献
+- 全面的智能体能力分类体系
+- 单智能体 vs. 多智能体系统的详细分析
+- 应用领域：社会科学、自然科学、工程
+- 智能体社会分析：合作、竞争、社会规范
+- 安全和伦理考量的讨论
 
-### Agent Capability Taxonomy
+### 智能体能力分类体系
 ```
 Agent
-├── Brain (LLM)
-│   ├── Natural Language Interaction
-│   ├── Knowledge (linguistic, commonsense, professional, domain)
-│   ├── Memory (in-context, external, long-term)
-│   ├── Reasoning (inductive, deductive, abductive)
-│   └── Planning (w/o feedback, w/ env feedback, w/ human feedback)
-├── Perception
-│   ├── Textual Input
-│   ├── Visual Input
-│   └── Auditory Input
-└── Action
-    ├── Tool Use
-    ├── Embodied Action
-    └── Communication / Output
+├── 大脑 (LLM)
+│   ├── 自然语言交互
+│   ├── 知识（语言、常识、专业、领域）
+│   ├── 记忆（上下文内、外部、长期）
+│   ├── 推理（归纳、演绎、溯因）
+│   └── 规划（无反馈、有环境反馈、有人类反馈）
+├── 感知
+│   ├── 文本输入
+│   ├── 视觉输入
+│   └── 听觉输入
+└── 行动
+    ├── 工具使用
+    ├── 具身行动
+    └── 通信 / 输出
 ```
 
 ---
 
-## Survey 2: "A Survey on Large Language Model based Autonomous Agents"
+## 综述 2："A Survey on Large Language Model based Autonomous Agents"
 
-- **Authors**: Lei Wang, Chen Ma, Xueyang Feng, et al.
-- **Affiliation**: Renmin University of China, Tencent
-- **arXiv**: 2308.11432
-- **Date**: August 2023 (updated 2024)
-- **Pages**: ~45 pages
+- **作者**：Lei Wang, Chen Ma, Xueyang Feng 等
+- **机构**：Renmin University of China, Tencent
+- **arXiv**：2308.11432
+- **日期**：2023 年 8 月（2024 年更新）
+- **页数**：约 45 页
 
-### Taxonomy
-The paper organizes agents around a **construction-application** framework:
+### 分类体系
+论文围绕**构建-应用**框架组织智能体：
 
-**Agent Construction:**
-1. **Profile Module**: Agent identity, role, personality
-2. **Memory Module**: Short-term, long-term, hybrid memory structures
-3. **Planning Module**: 
-   - Without feedback: single-path (CoT, zero-shot CoT), multi-path (ToT, GoT, CoT-SC)
-   - With feedback: environmental, human, model-based
-4. **Action Module**: Tool use, embodied actions, goal completion
+**智能体构建：**
+1. **角色模块**：智能体身份、角色、性格
+2. **记忆模块**：短期、长期、混合记忆结构
+3. **规划模块**：
+   - 无反馈：单路径（CoT、零样本 CoT）、多路径（ToT、GoT、CoT-SC）
+   - 有反馈：环境、人类、基于模型的
+4. **行动模块**：工具使用、具身行动、目标完成
 
-**Agent Applications:**
-- Single-agent: Task-oriented (code, data), simulation-based
-- Multi-agent: Cooperative, adversarial, debate, society simulation
-- Human-agent interaction: Education, health, work assistance
+**智能体应用：**
+- 单智能体：面向任务（代码、数据）、基于模拟
+- 多智能体：合作、对抗、辩论、社会模拟
+- 人机交互：教育、健康、工作辅助
 
-### Key Contributions
-- Clear separation of agent construction and application
-- Detailed comparison of memory architectures
-- Planning module taxonomy (with/without feedback)
-- Evaluation strategies for agents
-
----
-
-## Survey 3: "Cognitive Architectures for Language Agents" (CoALA)
-
-- **Authors**: Theodore R. Sumers, Shunyu Yao, Karthik Narasimhan, Thomas L. Griffiths
-- **Affiliation**: Princeton University
-- **arXiv**: 2309.02427
-- **Date**: September 2023
-
-### Framework
-CoALA provides a formal cognitive architecture framework for language agents:
-
-**Structural Components:**
-- **Memory**: Working memory (context), episodic (interaction history), semantic (knowledge base), procedural (code/prompts)
-- **Decision-making**: Planning and reasoning processes
-- **Grounding**: Interfaces to external environments
-
-**Processing Cycle:**
-```
-Observe -> Retrieve from memory -> Reason/Plan -> Act -> Update memory
-```
-
-### Key Insight
-Language agents can be understood through the lens of cognitive science -- they implement (simplified) versions of cognitive architectures like ACT-R and SOAR, with the LLM serving as a flexible reasoning engine.
-
-### Agent Design Space
-The paper defines a systematic design space along dimensions:
-- Memory type (what kinds of memory)
-- Decision procedure (how decisions are made)
-- Grounding (what external interfaces exist)
-- Learning (how the agent improves over time)
+### 关键贡献
+- 智能体构建和应用的清晰分离
+- 记忆架构的详细比较
+- 规划模块分类体系（有/无反馈）
+- 智能体评估策略
 
 ---
 
-## Survey 4: "Agent AI: Surveying the Horizons of Multimodal Interaction"
+## 综述 3："Cognitive Architectures for Language Agents" (CoALA)
 
-- **Authors**: Zane Durante, Qiuyuan Huang, Naoki Wake, et al.
-- **Affiliation**: Microsoft Research, Stanford, CMU, et al.
-- **arXiv**: 2401.03568
-- **Date**: January 2024
+- **作者**：Theodore R. Sumers, Shunyu Yao, Karthik Narasimhan, Thomas L. Griffiths
+- **机构**：Princeton University
+- **arXiv**：2309.02427
+- **日期**：2023 年 9 月
 
-### Focus
-Broader view of "Agent AI" encompassing multimodal, embodied, and interactive agents:
-- Vision-Language-Action models
-- Gaming and virtual world agents
-- Robotics and embodied agents
-- Healthcare and scientific agents
+### 框架
+CoALA 为语言智能体提供了一个形式化的认知架构框架：
 
-### Key Contribution
-Bridges the gap between LLM-based text agents and multimodal/embodied agents, providing a unified perspective.
+**结构组件：**
+- **记忆**：工作记忆（上下文）、情景记忆（交互历史）、语义记忆（知识库）、程序记忆（代码/提示）
+- **决策**：规划和推理过程
+- **接地**：与外部环境的接口
+
+**处理循环：**
+```
+观察 -> 从记忆中检索 -> 推理/规划 -> 行动 -> 更新记忆
+```
+
+### 核心洞察
+语言智能体可以通过认知科学的视角来理解 -- 它们实现了认知架构（如 ACT-R 和 SOAR）的（简化）版本，LLM 充当灵活的推理引擎。
+
+### 智能体设计空间
+论文定义了系统化的设计空间维度：
+- 记忆类型（哪些种类的记忆）
+- 决策过程（如何做出决策）
+- 接地方式（哪些外部接口存在）
+- 学习（智能体如何随时间改进）
 
 ---
 
-## Survey 5: "A Survey on the Memory Mechanism of Large Language Model based Agents"
+## 综述 4："Agent AI: Surveying the Horizons of Multimodal Interaction"
 
-- **Authors**: Zeyu Zhang, Xiaohe Bo, Chen Ma, et al.
-- **Affiliation**: Multiple institutions
-- **arXiv**: 2404.13501
-- **Date**: April 2024
+- **作者**：Zane Durante, Qiuyuan Huang, Naoki Wake 等
+- **机构**：Microsoft Research, Stanford, CMU 等
+- **arXiv**：2401.03568
+- **日期**：2024 年 1 月
 
-### Focus
-Deep dive into memory systems for LLM agents:
+### 重点
+对"智能体 AI"的更广泛视角，涵盖多模态、具身和交互式智能体：
+- 视觉-语言-行动模型
+- 游戏和虚拟世界智能体
+- 机器人和具身智能体
+- 医疗和科学智能体
 
-**Memory Taxonomy:**
+### 关键贡献
+弥合了基于 LLM 的文本智能体与多模态/具身智能体之间的差距，提供了统一的视角。
+
+---
+
+## 综述 5："A Survey on the Memory Mechanism of Large Language Model based Agents"
+
+- **作者**：Zeyu Zhang, Xiaohe Bo, Chen Ma 等
+- **机构**：多个机构
+- **arXiv**：2404.13501
+- **日期**：2024 年 4 月
+
+### 重点
+深入研究 LLM 智能体的记忆系统：
+
+**记忆分类体系：**
 ```
-Agent Memory
-├── Inside-trial Memory (within a single task)
-│   ├── Working Memory (context window)
-│   ├── Episodic Buffer (observation cache)
-│   └── Semantic Cache (intermediate knowledge)
-├── Cross-trial Memory (across tasks)
-│   ├── Episodic Memory (past experiences)
-│   ├── Semantic Memory (accumulated knowledge)
-│   └── Procedural Memory (learned strategies)
-└── Memory Operations
-    ├── Reading (retrieval)
-    ├── Writing (storage)
-    ├── Reflection (meta-cognition)
-    └── Consolidation (compression, abstraction)
+智能体记忆
+├── 试验内记忆（单个任务内）
+│   ├── 工作记忆（上下文窗口）
+│   ├── 情景缓冲区（观察缓存）
+│   └── 语义缓存（中间知识）
+├── 跨试验记忆（跨任务）
+│   ├── 情景记忆（过去经验）
+│   ├── 语义记忆（积累的知识）
+│   └── 程序记忆（学到的策略）
+└── 记忆操作
+    ├── 读取（检索）
+    ├── 写入（存储）
+    ├── 反思（元认知）
+    └── 巩固（压缩、抽象）
 ```
 
 ---
 
-## Survey 6: "Large Language Model based Multi-Agents: A Survey of Progress and Challenges"
+## 综述 6："Large Language Model based Multi-Agents: A Survey of Progress and Challenges"
 
-- **Authors**: Taicheng Guo, Xiuying Chen, Yaqi Wang, et al.
-- **arXiv**: 2402.01680
-- **Date**: February 2024
+- **作者**：Taicheng Guo, Xiuying Chen, Yaqi Wang 等
+- **arXiv**：2402.01680
+- **日期**：2024 年 2 月
 
-### Focus
-Dedicated survey of multi-agent LLM systems:
+### 重点
+专门的多智能体 LLM 系统综述：
 
-**Taxonomy of Multi-Agent Interactions:**
-1. **Cooperative**: Agents work together toward a shared goal
-   - Ordered messaging (round-robin, chain)
-   - Unordered messaging (blackboard, broadcast)
-2. **Competitive/Adversarial**: Agents compete or debate
-3. **Mixed**: Combination of cooperative and competitive elements
+**多智能体交互分类体系：**
+1. **合作**：智能体共同朝着共享目标工作
+   - 有序消息传递（轮替制、链式）
+   - 无序消息传递（黑板、广播）
+2. **竞争/对抗**：智能体竞争或辩论
+3. **混合**：合作和竞争元素的组合
 
-**Applications:**
-- Software development (ChatDev, MetaGPT)
-- Science and research (multi-agent scientific debate)
-- Society simulation (Generative Agents, AgentSims)
-- Gaming (Voyager, Ghost in the Minecraft)
-- Reasoning (multi-agent debate for factuality)
-
----
-
-## Survey 7: "Tool Learning with Large Language Models: A Survey"
-
-- **Authors**: Changle Qu, Sunhao Dai, Xiaochi Wei, et al.
-- **arXiv**: 2405.17935
-- **Date**: May 2024
-
-### Focus
-Comprehensive survey of tool use by LLMs:
-
-**Tool Learning Pipeline:**
-1. **Tool Creation**: Creating new tools (code generation, API wrapping)
-2. **Tool Selection**: Choosing appropriate tools for a task
-3. **Tool Calling**: Generating correct function calls with proper arguments
-4. **Tool Result Processing**: Interpreting and using tool outputs
-5. **Tool Learning**: Improving tool use through experience
-
-**Tool Types:**
-- Perception tools (search, read, browse)
-- Action tools (write, execute, communicate)
-- Computation tools (calculate, analyze, transform)
-- Domain-specific tools (scientific instruments, databases)
+**应用：**
+- 软件开发（ChatDev、MetaGPT）
+- 科学与研究（多智能体科学辩论）
+- 社会模拟（Generative Agents、AgentSims）
+- 游戏（Voyager、Ghost in the Minecraft）
+- 推理（多智能体辩论以提高事实性）
 
 ---
 
-## Survey 8: "Retrieval-Augmented Generation for Large Language Models: A Survey"
+## 综述 7："Tool Learning with Large Language Models: A Survey"
 
-- **Authors**: Yunfan Gao, Yun Xiong, Xinyu Gao, et al.
-- **arXiv**: 2312.10997
-- **Date**: December 2023 (updated 2024)
+- **作者**：Changle Qu, Sunhao Dai, Xiaochi Wei 等
+- **arXiv**：2405.17935
+- **日期**：2024 年 5 月
 
-### RAG Paradigm Evolution
+### 重点
+LLM 工具使用的全面综述：
+
+**工具学习流水线：**
+1. **工具创建**：创建新工具（代码生成、API 封装）
+2. **工具选择**：为任务选择合适的工具
+3. **工具调用**：使用正确参数生成正确的函数调用
+4. **工具结果处理**：解释和使用工具输出
+5. **工具学习**：通过经验改进工具使用
+
+**工具类型：**
+- 感知工具（搜索、阅读、浏览）
+- 行动工具（写入、执行、通信）
+- 计算工具（计算、分析、转换）
+- 领域特定工具（科学仪器、数据库）
+
+---
+
+## 综述 8："Retrieval-Augmented Generation for Large Language Models: A Survey"
+
+- **作者**：Yunfan Gao, Yun Xiong, Xinyu Gao 等
+- **arXiv**：2312.10997
+- **日期**：2023 年 12 月（2024 年更新）
+
+### RAG 范式演化
 ```
-Naive RAG -> Advanced RAG -> Modular RAG
+朴素 RAG -> 高级 RAG -> 模块化 RAG
 ```
 
-**Naive RAG**: Simple retrieve-then-generate pipeline
-**Advanced RAG**: Pre-retrieval optimization + post-retrieval processing
-**Modular RAG**: Flexible, reconfigurable RAG components
+**朴素 RAG**：简单的检索-然后-生成流水线
+**高级 RAG**：检索前优化 + 检索后处理
+**模块化 RAG**：灵活的、可重新配置的 RAG 组件
 
-### RAG vs. Fine-tuning vs. Prompt Engineering
-| Aspect | RAG | Fine-tuning | Prompt Engineering |
+### RAG vs. 微调 vs. 提示工程
+| 方面 | RAG | 微调 | 提示工程 |
 |--------|-----|-------------|-------------------|
-| External knowledge | Yes | Embedded in weights | In-context only |
-| Training required | No (retrieval model optional) | Yes | No |
-| Updatable knowledge | Easy (update docs) | Requires retraining | Limited by context |
-| Best for | Dynamic knowledge, citations | Style/format/domain adaptation | Simple tasks |
+| 外部知识 | 是 | 嵌入在权重中 | 仅上下文内 |
+| 是否需要训练 | 否（检索模型可选） | 是 | 否 |
+| 可更新的知识 | 容易（更新文档） | 需要重新训练 | 受限于上下文 |
+| 最适合 | 动态知识、引用 | 风格/格式/领域适应 | 简单任务 |
 
 ---
 
-## Survey 9: "Personal LLM Agents: Insights and Survey about the Capability, Efficiency and Security"
+## 综述 9："Personal LLM Agents: Insights and Survey about the Capability, Efficiency and Security"
 
-- **Authors**: Yuanchun Li, Hao Wen, Weijun Wang, et al.
-- **Affiliation**: Tsinghua University, Microsoft
-- **arXiv**: 2401.05459
-- **Date**: January 2024
+- **作者**：Yuanchun Li, Hao Wen, Weijun Wang 等
+- **机构**：Tsinghua University, Microsoft
+- **arXiv**：2401.05459
+- **日期**：2024 年 1 月
 
-### Focus
-Agents that run on personal devices and interact with personal data:
-- On-device agent capabilities
-- Privacy and security considerations
-- Efficiency challenges (running on limited hardware)
-- Personal data management and consent
-
----
-
-## Survey 10: "The Landscape of Emerging AI Agent Architectures for Reasoning, Planning, and Tool Calling"
-
-- **Authors**: Tula Masterman, Sandi Besen, Mason Sawtell, Alex Chao
-- **Affiliation**: Neudesic (an IBM Company)
-- **arXiv**: 2404.11584
-- **Date**: April 2024
-
-### Architectural Classification
-1. **Single Agent**: One LLM with tools (ReAct, Plan-Execute)
-2. **Multi-Agent - Vertical**: Hierarchical delegation (manager-worker)
-3. **Multi-Agent - Horizontal**: Peer-to-peer collaboration
-4. **Hybrid**: Combination approaches
-
-### Evaluation Framework
-Proposes criteria for selecting agent architectures:
-- Task complexity
-- Required autonomy level
-- Latency requirements
-- Cost constraints
-- Safety requirements
+### 重点
+在个人设备上运行并与个人数据交互的智能体：
+- 端侧智能体能力
+- 隐私和安全考量
+- 效率挑战（在有限硬件上运行）
+- 个人数据管理和同意
 
 ---
 
-## Chronological Reading Order (Recommended)
+## 综述 10："The Landscape of Emerging AI Agent Architectures for Reasoning, Planning, and Tool Calling"
 
-1. **Start here**: CoALA (2309.02427) -- for the theoretical framework
-2. **Comprehensive overview**: Fudan survey (2309.07864) -- most thorough
-3. **Construction-focused**: Renmin survey (2308.11432) -- practical taxonomy
-4. **Architecture patterns**: Masterman et al. (2404.11584) -- practical selection guide
-5. **Multi-agent deep dive**: Guo et al. (2402.01680) -- if building multi-agent systems
-6. **Memory deep dive**: Zhang et al. (2404.13501) -- if designing memory systems
-7. **RAG deep dive**: Gao et al. (2312.10997) -- if building RAG-based agents
-8. **Tool use deep dive**: Qu et al. (2405.17935) -- if focusing on tool integration
+- **作者**：Tula Masterman, Sandi Besen, Mason Sawtell, Alex Chao
+- **机构**：Neudesic (an IBM Company)
+- **arXiv**：2404.11584
+- **日期**：2024 年 4 月
 
-## Key Observations Across Surveys
+### 架构分类
+1. **单智能体**：一个 LLM 配工具（ReAct、Plan-Execute）
+2. **多智能体 - 纵向**：层次化委托（管理者-工作者）
+3. **多智能体 - 横向**：点对点协作
+4. **混合**：组合方法
 
-1. **Convergent taxonomy**: All surveys converge on similar core components (planning, memory, tools, action) despite different nomenclature
-2. **Memory is underexplored**: Most agent frameworks have rudimentary memory compared to what surveys recommend
-3. **Evaluation is hard**: No standardized evaluation framework for agents exists; benchmarks are fragmented
-4. **Multi-agent is promising but costly**: Multi-agent systems show strong results but at significant computational cost
-5. **Safety is critical**: All surveys highlight safety/alignment as a major open challenge
-6. **The field moves fast**: Many survey papers are already partially outdated due to the pace of development
+### 评估框架
+提出了选择智能体架构的标准：
+- 任务复杂度
+- 所需的自主级别
+- 延迟要求
+- 成本约束
+- 安全要求
 
-## Notes
+---
 
-Key benchmarks mentioned across surveys for evaluating agents:
-- **AgentBench**: Comprehensive multi-environment agent benchmark
-- **ToolBench**: Tool use evaluation
-- **WebArena**: Web browsing tasks
-- **SWE-bench**: Software engineering tasks
-- **GAIA**: General AI assistant evaluation
-- **HumanEval / MBPP**: Code generation (limited agent evaluation)
-- **ALFWorld**: Embodied household tasks
-- **HotPotQA**: Multi-hop question answering
+## 推荐阅读顺序（按时间）
 
-## Cross-References (this knowledge base)
+1. **从这里开始**：CoALA (2309.02427) -- 获取理论框架
+2. **全面概述**：复旦综述 (2309.07864) -- 最全面
+3. **构建导向**：人民大学综述 (2308.11432) -- 实用分类体系
+4. **架构模式**：Masterman et al. (2404.11584) -- 实用选择指南
+5. **多智能体深入**：Guo et al. (2402.01680) -- 如果构建多智能体系统
+6. **记忆深入**：Zhang et al. (2404.13501) -- 如果设计记忆系统
+7. **RAG 深入**：Gao et al. (2312.10997) -- 如果构建基于 RAG 的智能体
+8. **工具使用深入**：Qu et al. (2405.17935) -- 如果聚焦于工具集成
 
-This file provides a consolidated annotated overview. For detailed individual paper notes, see:
-- `papers/agent/_index.md` -- master index of all agent papers in this repository
-- `papers/agent/survey/llm_agent_survey_fudan.md` -- detailed Fudan survey notes
-- `papers/agent/survey/llm_agent_survey_renmin.md` -- detailed Renmin survey notes
-- `papers/agent/memory/coala.md` -- CoALA paper notes
-- `papers/agent/memory/reflexion.md` -- Reflexion paper notes
-- `papers/agent/memory/memgpt.md` -- MemGPT paper notes
-- `papers/agent/foundational/react.md` -- ReAct paper notes
-- `papers/agent/foundational/chain_of_thought.md` -- CoT paper notes
-- `papers/agent/foundational/tree_of_thoughts.md` -- ToT paper notes
+## 跨综述的关键观察
+
+1. **分类体系趋同**：尽管命名不同，所有综述都趋向相似的核心组件（规划、记忆、工具、行动）
+2. **记忆被低估**：大多数智能体框架的记忆实现远不如综述建议的复杂
+3. **评估很难**：不存在用于智能体的标准化评估框架；基准测试是碎片化的
+4. **多智能体前景光明但成本高**：多智能体系统显示出强结果但计算成本显著
+5. **安全至关重要**：所有综述都将安全/对齐作为主要开放挑战
+6. **领域发展迅速**：许多综述论文由于发展速度已经部分过时
+
+## 笔记
+
+跨综述提到的评估智能体的关键基准测试：
+- **AgentBench**：全面的多环境智能体基准测试
+- **ToolBench**：工具使用评估
+- **WebArena**：网页浏览任务
+- **SWE-bench**：软件工程任务
+- **GAIA**：通用 AI 助手评估
+- **HumanEval / MBPP**：代码生成（有限的智能体评估）
+- **ALFWorld**：具身家务任务
+- **HotPotQA**：多跳问答
+
+## 交叉参考（本知识库）
+
+本文件提供了统一的标注概述。详细的单篇论文笔记请参见：
+- `papers/agent/_index.md` -- 本仓库所有智能体论文的主索引
+- `papers/agent/survey/llm_agent_survey_fudan.md` -- 详细的复旦综述笔记
+- `papers/agent/survey/llm_agent_survey_renmin.md` -- 详细的人民大学综述笔记
+- `papers/agent/memory/coala.md` -- CoALA 论文笔记
+- `papers/agent/memory/reflexion.md` -- Reflexion 论文笔记
+- `papers/agent/memory/memgpt.md` -- MemGPT 论文笔记
+- `papers/agent/foundational/react.md` -- ReAct 论文笔记
+- `papers/agent/foundational/chain_of_thought.md` -- CoT 论文笔记
+- `papers/agent/foundational/tree_of_thoughts.md` -- ToT 论文笔记

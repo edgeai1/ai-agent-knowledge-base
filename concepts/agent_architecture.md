@@ -1,94 +1,94 @@
 ---
-title: LLM Agent Architecture
+title: LLM 智能体架构
 tags: [agent, architecture, core-concept]
 related: [react_pattern, agent_memory, tool_use, multi_agent_systems]
 ---
 
-## Definition
+## 定义
 
-An LLM Agent is a system that uses a large language model as its core reasoning engine, augmented with the ability to perceive its environment, plan actions, use tools, and learn from feedback.
+LLM 智能体是一种以大型语言模型作为核心推理引擎的系统，具备感知环境、规划行动、使用工具以及从反馈中学习的能力。
 
-## Core Components
+## 核心组件
 
 ```
                     ┌─────────────┐
-                    │   User Goal │
+                    │   用户目标   │
                     └──────┬──────┘
                            │
                     ┌──────▼──────┐
-                    │  Perception │  <- environment, user input, observations
+                    │    感知     │  <- 环境、用户输入、观察
                     └──────┬──────┘
                            │
               ┌────────────▼────────────┐
-              │     Reasoning (LLM)     │  <- planning, decomposition, reflection
+              │     推理（LLM）         │  <- 规划、分解、反思
               │  ┌─────────────────┐    │
-              │  │ Working Memory  │    │
+              │  │   工作记忆      │    │
               │  └─────────────────┘    │
               └────────────┬────────────┘
                      ┌─────┴─────┐
                      │           │
               ┌──────▼──┐  ┌────▼─────┐
-              │  Memory │  │  Action  │  <- tool call, code exec, API, UI
-              │  System │  │  System  │
+              │  记忆   │  │  行动    │  <- 工具调用、代码执行、API、UI
+              │  系统   │  │  系统    │
               └─────────┘  └────┬─────┘
                                 │
                          ┌──────▼──────┐
-                         │ Observation │  <- tool result, env feedback
+                         │   观察结果   │  <- 工具结果、环境反馈
                          └──────┬──────┘
                                 │
-                         (loop back to Reasoning)
+                         （循环回到推理）
 ```
 
-### 1. Perception
-Converts environmental percepts into meaningful representations for the LLM.
+### 1. 感知
+将环境感知信号转换为 LLM 可理解的有意义表示。
 
-### 2. Reasoning (Brain)
-The LLM core. Handles:
-- **Task decomposition**: breaking complex goals into sub-tasks
-- **Planning**: generating action sequences
-- **Decision-making**: choosing which action to take next
-- **Reflection**: evaluating past actions and learning from mistakes
+### 2. 推理（大脑）
+LLM 核心。负责处理：
+- **任务分解**：将复杂目标拆分为子任务
+- **规划**：生成行动序列
+- **决策**：选择下一步要执行的行动
+- **反思**：评估过去的行动并从错误中学习
 
-### 3. Memory
-- **Working Memory**: current context window contents
-- **Episodic Memory**: past experiences and interactions
-- **Semantic Memory**: facts, knowledge, world model
-- **Procedural Memory**: learned skills, code snippets, procedures
-See: `agent_memory.md`
+### 3. 记忆
+- **工作记忆**：当前上下文窗口内容
+- **情景记忆**：过去的经验和交互
+- **语义记忆**：事实、知识、世界模型
+- **程序性记忆**：已学习的技能、代码片段、程序
+参见：`agent_memory.md`
 
-### 4. Action
-Translates decisions into concrete actions:
-- Tool/API calls (function calling)
-- Code execution
-- Web browsing
-- File system operations
-- GUI interaction (mouse, keyboard)
+### 4. 行动
+将决策转化为具体行动：
+- 工具/API 调用（函数调用）
+- 代码执行
+- 网页浏览
+- 文件系统操作
+- GUI 交互（鼠标、键盘）
 
-### 5. Observation
-Feedback from the environment after an action. Closes the perception-action loop.
+### 5. 观察
+行动执行后来自环境的反馈。闭合感知-行动循环。
 
-## Architecture Patterns
+## 架构模式
 
-| Pattern | Description | Use Case |
-|---------|-------------|----------|
-| **ReAct** | Thought-Action-Observation loop | General-purpose agent tasks |
-| **Plan-and-Execute** | First plan all steps, then execute | Well-defined multi-step tasks |
-| **Reflexion** | Attempt, reflect, retry with lessons | Tasks with clear success/failure signal |
-| **Tree of Thoughts** | Explore multiple reasoning paths | Tasks requiring exploration/backtracking |
-| **Multi-Agent** | Multiple specialized agents collaborate | Complex tasks requiring diverse expertise |
+| 模式 | 描述 | 应用场景 |
+|------|------|----------|
+| **ReAct** | 思考-行动-观察循环 | 通用智能体任务 |
+| **规划与执行** | 先规划所有步骤，再执行 | 定义明确的多步骤任务 |
+| **Reflexion** | 尝试、反思、汲取教训后重试 | 具有明确成功/失败信号的任务 |
+| **思维树** | 探索多条推理路径 | 需要探索/回溯的任务 |
+| **多智能体** | 多个专业化智能体协同工作 | 需要多样化专业知识的复杂任务 |
 
-## Key Design Decisions
+## 关键设计决策
 
-1. **How much autonomy?** Full autonomous loop vs. human-in-the-loop
-2. **What memory structure?** Simple context vs. external retrieval vs. managed memory
-3. **Single vs. multi-agent?** One agent with many tools vs. specialized agents
-4. **Tool design (ACI)**: How the environment is presented to the agent matters as much as the model
+1. **自主程度如何？** 完全自主循环 vs. 人在回路中
+2. **采用何种记忆结构？** 简单上下文 vs. 外部检索 vs. 管理式记忆
+3. **单智能体还是多智能体？** 一个具备多种工具的智能体 vs. 多个专业化智能体
+4. **工具设计（ACI）**：环境如何呈现给智能体，其重要性不亚于模型本身
 
-## Detailed References (in this knowledge base)
+## 详细参考资料（本知识库内）
 
-- Detailed architecture patterns (ReAct, Plan-Execute, Reflexion, Multi-Agent): `agent_architecture_patterns.md`
-- Comprehensive fundamentals and component deep-dive: `llm_agent_fundamentals.md`
-- Memory systems deep-dive: `agent_memory_systems.md`, `agent_memory.md`
-- Framework comparison: `agent_frameworks.md`
-- Key techniques (function calling, RAG, CoT, ToT): `agent_techniques.md`
-- Survey papers: `papers/llm/llm_agent_surveys.md`
+- 详细架构模式（ReAct、Plan-Execute、Reflexion、Multi-Agent）：`agent_architecture_patterns.md`
+- 全面的基础知识和组件深入分析：`llm_agent_fundamentals.md`
+- 记忆系统深入分析：`agent_memory_systems.md`、`agent_memory.md`
+- 框架对比：`agent_frameworks.md`
+- 关键技术（函数调用、RAG、CoT、ToT）：`agent_techniques.md`
+- 综述论文：`papers/llm/llm_agent_surveys.md`

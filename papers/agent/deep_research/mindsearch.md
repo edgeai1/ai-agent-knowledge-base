@@ -11,40 +11,28 @@ status: done
 date_read: 2026-05-08
 ---
 
-# MindSearch: Mimicking Human Minds Elicits Deep AI Searcher
+# MindSearch：模仿人类思维激发深度 AI 搜索器
 
-## TL;DR
+## 摘要
 
-MindSearch is a multi-agent framework for deep web information seeking that mimics human cognitive
-search processes. It decomposes complex queries into a dynamic directed acyclic graph (DAG) of
-atomic sub-questions via a WebPlanner agent, then dispatches parallel WebSearcher agents to retrieve
-and summarize information from 300+ web pages in under 3 minutes -- work equivalent to ~3 hours of
-human effort. Human evaluators prefer MindSearch responses (even with the 7B InternLM2.5 backbone)
-over ChatGPT-Web and Perplexity.ai Pro on depth, breadth, and factuality metrics.
+MindSearch 是一个用于深度网络信息搜索的多智能体框架，模仿人类认知搜索过程。它通过 WebPlanner 智能体将复杂查询分解为动态有向无环图（DAG）的原子子问题，然后调度并行的 WebSearcher 智能体在 3 分钟内从 300 多个网页中检索和总结信息——相当于人类约 3 小时的工作量。人类评估者在深度、广度和事实性指标上更偏好 MindSearch 的回答（即使使用 7B InternLM2.5 骨干网络），优于 ChatGPT-Web 和 Perplexity.ai Pro。
 
-## Motivation & Problem
+## 动机与问题
 
-Existing AI search engines (e.g., Perplexity.ai, ChatGPT with browsing) suffer from several
-fundamental limitations when handling complex, multi-hop queries:
+现有的 AI 搜索引擎（如 Perplexity.ai、带有浏览功能的 ChatGPT）在处理复杂的多跳查询时存在几个根本性局限：
 
-1. **Shallow retrieval**: Single-round search queries retrieve surface-level results, missing the
-   iterative deepening that human researchers naturally perform when investigating complex topics.
-2. **Limited information scope**: Conventional systems process only a handful of web pages per
-   query, whereas humans conducting deep research naturally browse dozens to hundreds of sources.
-3. **No cognitive decomposition**: Complex questions require breaking down into atomic sub-problems,
-   but existing search-augmented LLMs attempt to answer everything in a single retrieval pass.
-4. **Sequential bottleneck**: When systems do attempt multi-step search, they proceed sequentially,
-   making deep research prohibitively slow.
+1. **浅层检索**：单轮搜索查询检索到的是表面结果，缺少人类研究者在调查复杂主题时自然进行的迭代深化。
+2. **信息范围有限**：传统系统每次查询仅处理少量网页，而进行深度研究的人类自然会浏览数十到数百个来源。
+3. **缺乏认知分解**：复杂问题需要分解为原子子问题，但现有的搜索增强 LLM 试图在单次检索中回答所有内容。
+4. **顺序处理瓶颈**：当系统确实尝试多步搜索时，它们按顺序进行，使得深度研究的速度变得极慢。
 
-MindSearch's core insight: **Human information-seeking follows a cognitive graph structure** -- we
-decompose complex questions, pursue parallel investigation threads, and progressively synthesize
-findings. Encoding this cognitive process into a multi-agent framework enables deep, broad search.
+MindSearch 的核心洞察：**人类信息搜寻遵循认知图结构**——我们分解复杂问题、追踪并行调查线索、逐步综合发现。将这种认知过程编码为多智能体框架可以实现深度、广泛的搜索。
 
-## Method
+## 方法
 
-### Architecture Overview
+### 架构概览
 
-MindSearch consists of two types of agents in a hierarchical multi-agent framework:
+MindSearch 由分层多智能体框架中的两类智能体组成：
 
 ```
 User Query
@@ -72,10 +60,9 @@ User Query
     +--------------------------------------------------+
 ```
 
-### WebPlanner: Dynamic Graph Construction
+### WebPlanner：动态图构建
 
-The WebPlanner models multi-step information seeking as a dynamic directed acyclic graph (DAG)
-construction process. The algorithm proceeds as follows:
+WebPlanner 将多步信息搜寻建模为动态有向无环图（DAG）的构建过程。算法如下：
 
 ```
 Algorithm: WebPlanner Dynamic Graph Construction
@@ -109,15 +96,15 @@ Output: Comprehensive answer A
 24: return A
 ```
 
-Key properties of the DAG:
-- **Nodes** represent atomic sub-questions derived from the original complex query
-- **Edges** encode dependency relationships between sub-questions
-- **Dynamic extension**: The graph grows as search results reveal new information gaps
-- **Parallel execution**: Independent sub-questions are searched concurrently
+DAG 的关键属性：
+- **节点** 代表从原始复杂查询派生的原子子问题
+- **边** 编码子问题之间的依赖关系
+- **动态扩展**：图会随着搜索结果揭示新的信息缺口而增长
+- **并行执行**：独立的子问题被并发搜索
 
-### WebSearcher: Hierarchical Information Retrieval
+### WebSearcher：分层信息检索
 
-Each WebSearcher agent handles a single atomic sub-question through a hierarchical search process:
+每个 WebSearcher 智能体通过分层搜索过程处理单个原子子问题：
 
 ```
 Algorithm: WebSearcher Hierarchical Retrieval
@@ -139,104 +126,78 @@ Output: Summarized answer with citations
 12: return summary
 ```
 
-The WebSearcher performs multiple rounds of search refinement, generating diverse query
-formulations to maximize coverage and filtering results by relevance scoring.
+WebSearcher 执行多轮搜索优化，生成多样化的查询表述以最大化覆盖范围，并通过相关性评分过滤结果。
 
-### Multi-Agent Parallelism
+### 多智能体并行性
 
-A critical design advantage: multiple WebSearcher agents execute concurrently on independent
-sub-questions. This enables processing 300+ web pages in ~3 minutes, compared to:
-- Sequential processing: would require 30+ minutes
-- Human researcher: approximately 3 hours for equivalent depth
+一个关键的设计优势：多个 WebSearcher 智能体在独立子问题上并发执行。这使得在约 3 分钟内处理 300 多个网页成为可能，相比之下：
+- 顺序处理：需要 30 分钟以上
+- 人类研究者：相同深度大约需要 3 小时
 
-## Key Innovations
+## 关键创新
 
-1. **Cognitive graph construction**: First framework to model information-seeking as dynamic DAG
-   construction, directly mimicking how humans decompose and investigate complex questions.
-2. **Hierarchical multi-agent search**: Two-tier architecture (planner + parallel searchers)
-   separates strategic reasoning from tactical retrieval, enabling both depth and efficiency.
-3. **Dynamic graph extension**: The search graph grows adaptively based on discovered information
-   gaps, unlike static query decomposition that commits to a fixed plan upfront.
-4. **Scale of retrieval**: Processing 300+ web pages per query is an order of magnitude beyond
-   typical RAG systems that retrieve 5-20 documents.
-5. **Open-source competitive performance**: A 7B-parameter model (InternLM2.5-7B) with MindSearch
-   achieves human preference ratings competitive with GPT-4o-based proprietary search engines.
+1. **认知图构建**：首个将信息搜寻建模为动态 DAG 构建的框架，直接模仿人类分解和调查复杂问题的方式。
+2. **分层多智能体搜索**：两层架构（规划者+并行搜索者）将战略推理与战术检索分离，同时实现深度和效率。
+3. **动态图扩展**：搜索图基于发现的信息缺口自适应增长，不同于静态查询分解一开始就固定计划。
+4. **检索规模**：每次查询处理 300 多个网页，比通常检索 5-20 个文档的典型 RAG 系统高出一个数量级。
+5. **开源竞争性能**：7B 参数模型（InternLM2.5-7B）配合 MindSearch 在人类偏好评分上与基于 GPT-4o 的专有搜索引擎具有竞争力。
 
-## Experimental Setup
+## 实验设置
 
-- **Backbone LLMs**: InternLM2.5-7B-Chat, GPT-4o
-- **Search engine**: Integration with web search APIs for real-time retrieval
-- **Evaluation benchmarks**:
-  - Closed-set QA: Factual questions with verifiable answers
-  - Open-set QA: Open-ended questions requiring comprehensive, multi-faceted responses
-- **Baselines**: ChatGPT-Web (GPT-4o with browsing), Perplexity.ai Pro, vanilla LLMs without search
-- **Human evaluation**: 100 real-world queries evaluated by 5 human experts on three dimensions
-- **Evaluation dimensions**: Depth, Breadth, and Factuality
+- **骨干 LLM**：InternLM2.5-7B-Chat、GPT-4o
+- **搜索引擎**：与网络搜索 API 集成进行实时检索
+- **评估基准测试**：
+  - 封闭式问答：具有可验证答案的事实性问题
+  - 开放式问答：需要全面、多方面回答的开放性问题
+- **基线**：ChatGPT-Web（带浏览功能的 GPT-4o）、Perplexity.ai Pro、无搜索的原始 LLM
+- **人类评估**：100 个真实世界查询由 5 位人类专家在三个维度上评估
+- **评估维度**：深度、广度和事实性
 
-## Results
+## 结果
 
-### Closed-Set and Open-Set QA Performance
+### 封闭式和开放式问答性能
 
-MindSearch significantly outperforms vanilla baselines:
-- GPT-4o + MindSearch: **+4.7%** improvement over vanilla GPT-4o on combined QA metrics
-- InternLM2.5-7B + MindSearch: **+6.3%** improvement over vanilla InternLM2.5-7B
+MindSearch 显著优于原始基线：
+- GPT-4o + MindSearch：在综合问答指标上比原始 GPT-4o **提升 +4.7%**
+- InternLM2.5-7B + MindSearch：比原始 InternLM2.5-7B **提升 +6.3%**
 
-### Human Preference Evaluation (100 queries, 5 expert evaluators)
+### 人类偏好评估（100 个查询，5 位专家评估者）
 
-Evaluation across three dimensions (depth, breadth, factuality):
+在三个维度（深度、广度、事实性）上的评估：
 
-| System                          | Preferred over ChatGPT-Web | Preferred over Perplexity Pro |
+| 系统                          | 优于 ChatGPT-Web | 优于 Perplexity Pro |
 |---------------------------------|:--------------------------:|:-----------------------------:|
-| MindSearch (GPT-4o)             | Win                        | Win                           |
-| MindSearch (InternLM2.5-7B)     | Win                        | Win                           |
+| MindSearch（GPT-4o）             | 胜出                        | 胜出                           |
+| MindSearch（InternLM2.5-7B）     | 胜出                        | 胜出                           |
 
-Key finding: **MindSearch with InternLM2.5-7B (a 7B open-source model) produces responses preferred
-by human evaluators over ChatGPT-Web (GPT-4o) and Perplexity.ai Pro**, demonstrating that the
-multi-agent framework architecture matters more than raw model scale for deep search tasks.
+关键发现：**使用 InternLM2.5-7B（7B 开源模型）的 MindSearch 产生的回答在人类评估者中优于 ChatGPT-Web（GPT-4o）和 Perplexity.ai Pro**，证明了对于深度搜索任务，多智能体框架架构比原始模型规模更重要。
 
-### Efficiency Metrics
+### 效率指标
 
-| Metric                     | MindSearch    | Single-agent search |
+| 指标                     | MindSearch    | 单智能体搜索 |
 |----------------------------|---------------|---------------------|
-| Web pages processed        | 300+          | 10-20               |
-| Time per complex query     | ~3 minutes    | 10-30 minutes       |
-| Equivalent human effort    | ~3 hours      | --                  |
+| 处理的网页数        | 300+          | 10-20               |
+| 每个复杂查询的时间     | 约 3 分钟    | 10-30 分钟       |
+| 等效人类工作量    | 约 3 小时      | --                  |
 
-### Depth and Breadth Analysis
+### 深度和广度分析
 
-Responses from MindSearch show substantially greater depth (thorough, detailed analysis with
-supporting evidence) and breadth (covering multiple perspectives and related aspects) compared
-to single-round retrieval baselines, as validated by human expert evaluation.
+经人类专家评估验证，MindSearch 的回答比单轮检索基线展现出显著更高的深度（具有支持证据的全面、详细分析）和广度（涵盖多个视角和相关方面）。
 
-## Limitations
+## 局限性
 
-1. **Latency for simple queries**: The multi-agent graph construction process adds overhead that
-   is unnecessary for straightforward factual questions where single-round retrieval suffices.
-2. **Search API dependency**: Performance is tightly coupled with the quality and availability of
-   the underlying web search API; API rate limits constrain parallelism in practice.
-3. **Graph construction errors**: The WebPlanner may decompose queries suboptimally, creating
-   irrelevant sub-questions or missing important aspects, with errors propagating to final answers.
-4. **Cost scaling**: Parallel WebSearcher invocations multiply API costs proportionally to graph
-   complexity; highly complex queries can become expensive.
-5. **Real-time information currency**: Results depend on search engine indexing freshness; very
-   recent events may not be well-covered.
-6. **Limited evaluation scale**: Human evaluation on 100 queries, while informative, is a
-   relatively small sample for definitive conclusions about general performance.
-7. **No factual verification**: While factuality is evaluated, the framework lacks explicit
-   fact-checking or cross-source verification mechanisms.
+1. **简单查询的延迟**：多智能体图构建过程增加了额外开销，对于单轮检索即可的简单事实性问题而言是不必要的。
+2. **搜索 API 依赖**：性能与底层网络搜索 API 的质量和可用性紧密相关；API 速率限制在实际中制约了并行性。
+3. **图构建错误**：WebPlanner 可能会次优地分解查询，创建无关的子问题或遗漏重要方面，错误会传播到最终答案。
+4. **成本扩展**：并行的 WebSearcher 调用使 API 成本与图的复杂度成比例增长；高度复杂的查询可能变得昂贵。
+5. **实时信息时效性**：结果依赖于搜索引擎索引的新鲜度；最新事件可能覆盖不佳。
+6. **评估规模有限**：对 100 个查询进行的人类评估虽然有信息价值，但对于关于一般性能的确定性结论来说样本量相对较小。
+7. **缺乏事实验证**：虽然评估了事实性，但框架缺乏显式的事实核查或跨来源验证机制。
 
-## Key Takeaways
+## 核心要点
 
-1. **Cognitive process modeling works**: Mimicking how humans actually conduct deep research --
-   decompose, search in parallel, synthesize -- yields better results than brute-force retrieval.
-2. **Framework > model scale for search**: A 7B model with the right multi-agent framework
-   outperforms GPT-4o with naive search integration, suggesting architectural innovation is
-   more impactful than scaling model parameters for search-heavy tasks.
-3. **Dynamic graph construction enables adaptive depth**: Unlike static query decomposition, the
-   DAG grows based on discovered gaps, allowing the system to deepen investigation only where
-   needed.
-4. **Parallelism is essential for scale**: Processing 300+ pages in 3 minutes is only feasible
-   through parallel agent execution; sequential approaches hit fundamental time constraints.
-5. **Pioneer of the deep search paradigm**: MindSearch established the multi-agent deep search
-   pattern later adopted and extended by systems like WebThinker, Search-o1, and Tongyi
-   DeepResearch, making it a foundational reference in the deep research agent space.
+1. **认知过程建模有效**：模仿人类实际进行深度研究的方式——分解、并行搜索、综合——比暴力检索产生更好的结果。
+2. **搜索任务中框架优于模型规模**：带有正确多智能体框架的 7B 模型优于使用简单搜索集成的 GPT-4o，表明对于搜索密集型任务，架构创新比扩展模型参数更有影响力。
+3. **动态图构建实现自适应深度**：与静态查询分解不同，DAG 基于发现的缺口增长，使系统仅在需要的地方深化调查。
+4. **并行性对规模至关重要**：在 3 分钟内处理 300 多个页面只有通过并行智能体执行才可行；顺序方法面临根本性的时间约束。
+5. **深度搜索范式的先驱**：MindSearch 建立了多智能体深度搜索模式，后来被 WebThinker、Search-o1 和 Tongyi DeepResearch 等系统采用和扩展，使其成为深度研究智能体领域的基础性参考。

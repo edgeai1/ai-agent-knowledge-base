@@ -9,32 +9,32 @@ tags: [coding, swe-bench, agent-computer-interface, tool-design, software-engine
 status: done
 ---
 
-## TL;DR
+## 摘要
 
-Introduces the Agent-Computer Interface (ACI) concept -- custom-designed terminal interfaces that reshape how LLM agents interact with code repositories, achieving 12.47% on SWE-bench (3x prior SOTA) and demonstrating that interface design is as critical as model capability.
+引入了智能体-计算机接口（ACI）概念——定制设计的终端接口，重塑 LLM 智能体与代码仓库的交互方式，在 SWE-bench 上达到 12.47%（3 倍于之前的 SOTA），证明了接口设计与模型能力同等重要。
 
-## Motivation & Problem
+## 研究动机与问题
 
-Prior approaches to automated software engineering gave LLM agents raw shell access to code repositories. This created several fundamental problems:
-- **Information overload**: `cat` on a large file dumps thousands of lines, exceeding context windows
-- **Error-prone editing**: raw `sed`/`echo` commands lead to syntax errors and malformed patches
-- **No guardrails**: agents could corrupt files without any feedback, compounding errors
-- **Poor navigation**: `find` and `grep` produce unstructured output difficult for LLMs to parse
+此前的自动化软件工程方法让 LLM 智能体直接访问原始 shell 来操作代码仓库。这造成了几个根本性问题：
+- **信息过载**：对大文件执行 `cat` 会输出数千行，超出上下文窗口
+- **编辑易出错**：原始 `sed`/`echo` 命令导致语法错误和格式错误的补丁
+- **无防护措施**：智能体可能在没有任何反馈的情况下损坏文件，导致错误累积
+- **导航困难**：`find` 和 `grep` 产生非结构化输出，LLM 难以解析
 
-The core insight is that LLMs are a new class of "end users" with distinct cognitive limitations (finite context window, sensitivity to output formatting, tendency toward cascading errors) and strengths (ability to understand natural language documentation, flexible reasoning). Just as GUIs were designed for human cognition, ACIs should be designed for LLM cognition.
+核心洞察：LLM 是一类新的"终端用户"，具有独特的认知限制（有限上下文窗口、对输出格式敏感、容易出现级联错误）和优势（理解自然语言文档的能力、灵活推理）。正如 GUI 为人类认知而设计，ACI 应该为 LLM 认知而设计。
 
-## Method
+## 方法
 
-### The Agent-Computer Interface (ACI)
+### 智能体-计算机接口 (ACI)
 
-The ACI is a principled set of custom commands that replace raw shell interactions. The design philosophy follows four principles:
+ACI 是一组有原则的自定义命令，替代原始 shell 交互。设计理念遵循四个原则：
 
-1. **Actions should be simple and composable**: each command does one thing well
-2. **Actions should mirror existing conventions**: similar to familiar CLI tools
-3. **Feedback should be informative and concise**: structured, bounded output
-4. **Error recovery should be built-in**: guardrails prevent irreversible mistakes
+1. **动作应简单且可组合**：每个命令只做一件事
+2. **动作应遵循现有惯例**：类似于常见的 CLI 工具
+3. **反馈应信息丰富且简洁**：结构化、有界的输出
+4. **应内置错误恢复**：防护措施防止不可逆的错误
 
-### Core ACI Components
+### 核心 ACI 组件
 
 ```
 +--------------------------------------------------+
@@ -42,7 +42,7 @@ The ACI is a principled set of custom commands that replace raw shell interactio
 +--------------------------------------------------+
 |                                                   |
 |  +-------------+  +------------+  +------------+  |
-|  | File Viewer |  |  Search    |  |   Editor   |  |
+|  | 文件查看器  |  |  搜索      |  |   编辑器   |  |
 |  +-------------+  +------------+  +------------+  |
 |  | open <file> |  | find_file  |  | edit n:m   |  |
 |  | goto <line> |  | search_file|  | (+ linter) |  |
@@ -51,60 +51,60 @@ The ACI is a principled set of custom commands that replace raw shell interactio
 |  +-------------+  +------------+  +------------+  |
 |                                                   |
 |  +-------------+  +---------------------------+   |
-|  |  Context    |  |    Error Recovery          |   |
+|  |  上下文     |  |    错误恢复               |   |
 |  +-------------+  +---------------------------+   |
-|  | 100-line    |  | Syntax lint on every edit  |   |
-|  | window      |  | Malformed cmd retry loop   |   |
-|  | line nums   |  | History compaction         |   |
+|  | 100 行      |  | 每次编辑自动语法检查      |   |
+|  | 窗口        |  | 格式错误命令重试循环      |   |
+|  | 行号        |  | 历史压缩                  |   |
 |  +-------------+  +---------------------------+   |
 +--------------------------------------------------+
 ```
 
-#### File Viewer
-- `open <path>`: opens file at line 1, displays a **100-line window** with line numbers
-- `goto <line>`: jumps to a specific line number
-- `scroll_up` / `scroll_down`: moves the window by the configured number of lines
-- Window size is fixed at 100 lines -- small enough to fit in context, large enough for meaningful code blocks
-- Line numbers shown in every display, enabling precise edit references
+#### 文件查看器
+- `open <path>`：在第 1 行打开文件，显示带行号的 **100 行窗口**
+- `goto <line>`：跳转到指定行号
+- `scroll_up` / `scroll_down`：按配置的行数移动窗口
+- 窗口大小固定为 100 行——小到能放入上下文，大到能看到有意义的代码块
+- 每次显示都带行号，支持精确的编辑引用
 
-#### Search Tools
-- `find_file <name> [dir]`: locates files by name pattern, returns a summary list
-- `search_file <pattern> [file]`: searches within the currently open file or a specified file
-- `search_dir <pattern> [dir]`: searches across a directory, outputs grouped results with file paths and line numbers
-- Results are **summarized** (not raw grep output) to prevent context overflow
-- Critical design choice: search returns summary counts and locations, not full content
+#### 搜索工具
+- `find_file <name> [dir]`：按名称模式定位文件，返回摘要列表
+- `search_file <pattern> [file]`：在当前打开的文件或指定文件中搜索
+- `search_dir <pattern> [dir]`：跨目录搜索，输出按文件路径和行号分组的结果
+- 结果被**摘要**（非原始 grep 输出）以防止上下文溢出
+- 关键设计选择：搜索返回摘要计数和位置，而非完整内容
 
-#### File Editor
-- `edit <start_line>:<end_line>\n<replacement_text>\nend_of_edit`: replaces lines start through end with new text
-- Every edit triggers an **automatic linter** that checks syntax
-- If the linter detects errors, the edit is **rejected** and the agent receives an error message with the specific syntax issue
-- This prevents cascading corruption -- a single malformed edit cannot break the file
+#### 文件编辑器
+- `edit <start_line>:<end_line>\n<replacement_text>\nend_of_edit`：用新文本替换起始行到结束行
+- 每次编辑触发**自动语法检查器**检查语法
+- 如果检查器检测到错误，编辑被**拒绝**，智能体收到包含具体语法问题的错误消息
+- 这防止了级联损坏——单次格式错误的编辑不会破坏文件
 
-#### Error Recovery Mechanisms
-- **Syntax linting**: every `edit` command runs a language-appropriate linter; edits producing syntax errors are rolled back
-- **Malformed command retry**: if the agent generates an unparseable command, it receives an error and is asked to retry; all intermediate error messages except the first are removed from history to conserve context
-- **Context window management**: the 100-line viewer prevents context overflow; search results are summarized
+#### 错误恢复机制
+- **语法检查**：每次 `edit` 命令运行语言相关的检查器；产生语法错误的编辑被回滚
+- **格式错误命令重试**：如果智能体生成无法解析的命令，它收到错误并被要求重试；除第一条外所有中间错误消息从历史中移除以节省上下文
+- **上下文窗口管理**：100 行查看器防止上下文溢出；搜索结果被摘要
 
-### ACI vs. Raw Terminal Access
+### ACI vs. 原始终端访问
 
 ```
 +------------------+-------------------+---------------------+
-| Aspect           | Raw Terminal      | SWE-agent ACI       |
+| 方面             | 原始终端           | SWE-agent ACI       |
 +------------------+-------------------+---------------------+
-| File viewing     | cat (full dump)   | 100-line window     |
-| Searching        | grep (raw output) | Summarized results  |
-| Editing          | sed/echo (fragile)| Structured edit+lint|
-| Error handling   | None              | Auto-rollback+retry |
-| Navigation       | cd + ls           | find_file + open    |
-| Output format    | Unstructured      | Formatted + bounded |
+| 文件查看         | cat（完整输出）    | 100 行窗口          |
+| 搜索             | grep（原始输出）   | 摘要结果            |
+| 编辑             | sed/echo（脆弱）   | 结构化编辑+检查     |
+| 错误处理         | 无                 | 自动回滚+重试       |
+| 导航             | cd + ls            | find_file + open    |
+| 输出格式         | 非结构化           | 格式化 + 有界       |
 +------------------+-------------------+---------------------+
 ```
 
-### Agent Loop
+### 智能体循环
 
 ```
-Input: GitHub issue description, repository snapshot
-Output: patch file
+输入: GitHub issue 描述, 仓库快照
+输出: 补丁文件
 
 while budget_remaining:
     observation = format_window(current_file, current_line, window_size=100)
@@ -113,9 +113,9 @@ while budget_remaining:
 
     if action is malformed:
         history.append(error_message)
-        continue  # retry with error feedback
+        continue  # 带错误反馈重试
 
-    result = execute(action)  # runs command in container
+    result = execute(action)  # 在容器中运行命令
 
     if action.type == "edit":
         lint_result = run_linter(edited_file)
@@ -134,85 +134,85 @@ while budget_remaining:
 
 ### mini-SWE-agent
 
-A minimal reimplementation of the core ACI concept in approximately 100 lines of Python. Despite its simplicity, mini-SWE-agent demonstrates the power of good interface design by achieving >74% on SWE-bench Verified when paired with strong models. It includes the essential components: file viewer with windowed display, basic edit with linting, and summarized search.
+核心 ACI 概念的最小重实现，约 100 行 Python。尽管简单，mini-SWE-agent 通过良好的接口设计展示了其威力，与强模型配合在 SWE-bench Verified 上达到 >74%。它包含基本组件：带窗口显示的文件查看器、带检查的基础编辑和摘要搜索。
 
-## Key Innovations
+## 关键创新
 
-1. **ACI as a first-class concept**: formalizing that agent-environment interface design is a research problem distinct from model training
-2. **Linting as a guardrail**: preventing error cascading through automatic syntax validation
-3. **Bounded observation windows**: the 100-line viewer as a principled solution to context overflow
-4. **Summarized search**: transforming verbose tool output into LLM-digestible summaries
-5. **Error recovery protocol**: structured retry with history compaction
+1. **ACI 作为一等概念**：形式化智能体-环境接口设计是一个独立于模型训练的研究问题
+2. **语法检查作为防护措施**：通过自动语法验证防止错误级联
+3. **有界观察窗口**：100 行查看器作为上下文溢出的有原则解决方案
+4. **摘要搜索**：将冗长的工具输出转化为 LLM 可消化的摘要
+5. **错误恢复协议**：带历史压缩的结构化重试
 
-## Experimental Setup
+## 实验设置
 
-- **Benchmark**: SWE-bench (2,294 task instances from 12 Python repos) and HumanEvalFix
-- **Base models**: GPT-4 Turbo (primary), Claude 3 Opus
-- **Ablation subset**: SWE-bench Lite (300 instances) for component analysis
-- **Baselines**: RAG-based approach (previous SOTA at 3.8%), raw shell agent (no ACI)
-- **Evaluation**: pass@1 -- does the generated patch pass all relevant unit tests?
-- **Compute**: each instance runs in an isolated Docker container
+- **基准**：SWE-bench（来自 12 个 Python 仓库的 2,294 个任务实例）和 HumanEvalFix
+- **基础模型**：GPT-4 Turbo（主要）、Claude 3 Opus
+- **消融子集**：SWE-bench Lite（300 个实例）用于组件分析
+- **基线**：基于 RAG 的方法（之前 SOTA 为 3.8%）、原始 shell 智能体（无 ACI）
+- **评估**：pass@1——生成的补丁是否通过所有相关单元测试？
+- **计算**：每个实例在隔离的 Docker 容器中运行
 
-## Results
+## 结果
 
-### Main Results
+### 主要结果
 
-| System                    | SWE-bench (%) | HumanEvalFix (%) |
+| 系统                      | SWE-bench (%) | HumanEvalFix (%) |
 |---------------------------|---------------|-------------------|
-| RAG (prior SOTA)          | 3.80          | --                |
-| Shell-only Agent (GPT-4)  | ~1.8          | --                |
-| SWE-agent (GPT-4 Turbo)  | **12.47**     | **87.7**          |
+| RAG（之前 SOTA）           | 3.80          | --                |
+| 仅 Shell 智能体 (GPT-4)   | ~1.8          | --                |
+| SWE-agent (GPT-4 Turbo)   | **12.47**     | **87.7**          |
 
-### Ablation Study (SWE-bench Lite, 300 instances)
+### 消融研究（SWE-bench Lite, 300 个实例）
 
-| Configuration                    | Resolve Rate (%) | Delta     |
-|----------------------------------|------------------|-----------|
-| Full SWE-agent                   | 18.0             | --        |
-| No search tools                  | 15.7             | -2.3      |
-| Iterative search (not summarized)| 12.0             | -6.0      |
-| No linting guardrail             | ~15.0            | -3.0      |
-| Raw shell only (no ACI)          | 7.3              | -10.7     |
+| 配置                         | 解决率 (%)     | 差异      |
+|------------------------------|---------------|-----------|
+| 完整 SWE-agent                | 18.0          | --        |
+| 无搜索工具                    | 15.7          | -2.3      |
+| 迭代搜索（非摘要式）          | 12.0          | -6.0      |
+| 无语法检查防护                | ~15.0         | -3.0      |
+| 仅原始 shell（无 ACI）        | 7.3           | -10.7     |
 
-Key ablation findings:
-- ACI provides a **10.7 percentage point improvement** over raw shell
-- Iterative search (showing each match one by one) is **worse** than no search at all, because agents exhaust budget/context cycling through results
-- Summarized search is critical: the format of results matters more than their availability
-- Linting prevents ~3% of instances from entering unrecoverable error states
+关键消融发现：
+- ACI 相比原始 shell 提供了 **10.7 个百分点的改进**
+- 迭代搜索（逐一显示每个匹配）**比没有搜索更差**，因为智能体在循环浏览结果时耗尽预算/上下文
+- 摘要搜索至关重要：结果的格式比其可用性更重要
+- 语法检查防止了约 3% 的实例进入不可恢复的错误状态
 
-### Performance by Repository (SWE-bench Lite)
+### 按仓库的性能（SWE-bench Lite）
 
-Harder repositories (e.g., matplotlib, sympy) have lower resolve rates due to complex multi-file dependencies. Simpler bug-fix repos show higher success rates.
+更难的仓库（如 matplotlib、sympy）由于复杂的多文件依赖关系，解决率较低。简单的缺陷修复仓库显示更高的成功率。
 
-## Analysis & Insights
+## 分析与洞察
 
-- **Interface design >> model size**: a well-designed ACI with GPT-4 dramatically outperforms poorly-interfaced stronger systems
-- **Search design is subtle**: naive "give the agent grep" can hurt performance by encouraging exhaustive, budget-consuming searches
-- **Linting as training signal**: error messages from the linter provide implicit feedback that guides the agent toward correct edits
-- **Cost-performance tradeoff**: most budget is spent on exploration (search and navigation), not on the final edit
-- **Common failure modes**: (1) agent cannot locate the relevant code, (2) agent finds the code but generates an incorrect fix, (3) agent runs out of budget during exploration
+- **接口设计 >> 模型大小**：设计良好的 ACI 配合 GPT-4 大幅超越接口设计差的更强系统
+- **搜索设计是微妙的**：简单地"给智能体 grep"可能损害性能，因为会鼓励穷尽式的、消耗预算的搜索
+- **语法检查作为训练信号**：检查器的错误消息提供隐式反馈，引导智能体走向正确的编辑
+- **成本-性能权衡**：大部分预算花在探索（搜索和导航）上，而非最终编辑
+- **常见故障模式**：(1) 智能体无法定位相关代码，(2) 智能体找到代码但生成不正确的修复，(3) 智能体在探索中耗尽预算
 
-## Limitations & Critiques
+## 局限性与批评
 
-- Results evaluated only on Python repositories; generalization to other languages untested at time of publication
-- The 12.47% resolve rate, while 3x SOTA, still means 87.5% of issues remain unsolved
-- ACI design was hand-crafted through iteration; no formal search over the design space
-- Evaluation on SWE-bench may overestimate real-world performance due to benchmark-specific patterns
-- Single-turn patch generation; no iterative debugging with test feedback in the original system
-- On truly novel issues (not in curated benchmarks), agent performance drops to ~18-20%
+- 结果仅在 Python 仓库上评估；发表时未测试对其他语言的泛化性
+- 12.47% 的解决率虽是 3 倍 SOTA，但仍意味着 87.5% 的问题未被解决
+- ACI 设计是通过迭代手工制作的；没有对设计空间进行形式化搜索
+- 在 SWE-bench 上的评估可能因基准特定模式而高估真实世界性能
+- 单轮补丁生成；原始系统中没有带测试反馈的迭代调试
+- 在真正新颖的问题（非精选基准中的）上，智能体性能下降到约 18-20%
 
-## Follow-up Work
+## 后续工作
 
-- **SWE-agent 2.0**: extended with more sophisticated search and multi-file editing
-- **mini-SWE-agent**: 100-line distillation achieving >74% on SWE-bench Verified with frontier models
-- **OpenHands/CodeAct**: adopted ACI principles with code-based action spaces
-- **Agentless**: showed that simpler localize-then-patch pipelines can be competitive
-- **SWE-bench Verified**: curated 500-instance subset for more reliable evaluation
-- Leaderboard progression (as of early 2026): top systems exceed 80% on SWE-bench Verified
+- **SWE-agent 2.0**：扩展了更复杂的搜索和多文件编辑
+- **mini-SWE-agent**：100 行精简版，配合前沿模型在 SWE-bench Verified 上达到 >74%
+- **OpenHands/CodeAct**：采用了 ACI 原则，使用基于代码的动作空间
+- **Agentless**：表明更简单的定位-然后-修补流水线也可以有竞争力
+- **SWE-bench Verified**：精选的 500 实例子集，用于更可靠的评估
+- 排行榜进展（截至 2026 年初）：顶级系统在 SWE-bench Verified 上超过 80%
 
-## Key Takeaways
+## 核心要点
 
-1. The interface between an agent and its environment deserves as much research attention as the agent's underlying model
-2. Less is more: bounded, summarized outputs outperform raw, verbose tool responses
-3. Guardrails (linting) are not just safety features -- they are performance features that prevent error cascading
-4. Search tool design requires careful thought; naive implementations can actively hurt performance
-5. The ACI concept generalizes beyond coding to any domain where agents interact with complex software environments
+1. 智能体与环境之间的接口值得像底层模型一样多的研究关注
+2. 少即是多：有界、摘要的输出优于原始、冗长的工具响应
+3. 防护措施（语法检查）不仅是安全特性——它们是防止错误级联的性能特性
+4. 搜索工具设计需要仔细思考；朴素实现可能主动损害性能
+5. ACI 概念可推广到编码之外的任何智能体与复杂软件环境交互的领域

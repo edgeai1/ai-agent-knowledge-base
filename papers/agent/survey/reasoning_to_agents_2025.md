@@ -20,191 +20,191 @@ tags:
 status: done
 ---
 
-# From LLM Reasoning to Autonomous AI Agents: A Comprehensive Review
+# 从 LLM 推理到自主 AI 智能体：全面综述
 
-## TL;DR
+## 简要总结
 
-This 2025 comprehensive review bridges the gap between LLM reasoning capabilities and autonomous agent systems, presenting a unified taxonomy of approximately 60 evaluation benchmarks (2019-2025), a systematic comparison of agent frameworks (2023-2025), a survey of real-world applications across 12+ domains, and the first detailed analysis of emerging inter-agent communication protocols (MCP, ACP, A2A). It captures the 2025 state-of-the-art where the field has matured from proof-of-concept demos to deployable systems with standardized interfaces.
-
----
-
-## Motivation & Problem
-
-By early 2025, the LLM agent landscape had become deeply fragmented:
-
-1. **Benchmark proliferation**: Dozens of benchmarks evaluate different aspects (reasoning, coding, tool use, embodied tasks) with incompatible metrics and methodologies, making cross-system comparison unreliable.
-2. **Framework explosion**: AutoGen, CrewAI, LangGraph, MetaGPT, OpenDevin, and many others each introduced different abstractions for agent construction, with no unified comparison.
-3. **Protocol standardization gap**: As agents began interacting with each other in production systems, the need for standardized communication protocols became acute -- but no survey had mapped the emerging protocol landscape.
-4. **Reasoning-to-agent continuum**: The boundary between "LLM reasoning" (CoT, ToT, self-consistency) and "autonomous agent" (tool use, environment interaction, multi-step execution) was blurred, lacking a clear evolutionary narrative.
-
-The authors set out to provide the first unified view spanning all four dimensions.
+这篇 2025 年的全面综述弥合了 LLM 推理能力与自主智能体系统之间的差距，呈现了约 60 个评估基准测试（2019-2025）的统一分类体系、智能体框架的系统比较（2023-2025）、跨 12+ 领域的真实应用综述，以及新兴的智能体间通信协议（MCP、ACP、A2A）的首次详细分析。它捕捉了 2025 年该领域从概念验证演示成熟为具有标准化接口的可部署系统的最新状态。
 
 ---
 
-## Method / Framework
+## 动机与问题
 
-### Evolution from Reasoning to Agents
+到 2025 年初，LLM 智能体版图已变得深度碎片化：
 
-The paper traces a clear evolutionary arc:
+1. **基准测试激增**：数十个基准测试评估不同方面（推理、编码、工具使用、具身任务），使用不兼容的指标和方法，使跨系统比较不可靠。
+2. **框架爆炸**：AutoGen、CrewAI、LangGraph、MetaGPT、OpenDevin 等各自引入了不同的智能体构建抽象，没有统一的比较。
+3. **协议标准化差距**：随着智能体开始在生产系统中相互交互，标准化通信协议的需求变得迫切 -- 但没有综述映射过新兴的协议格局。
+4. **推理到智能体的连续体**：从"LLM 推理"（CoT、ToT、自一致性）到"自主智能体"（工具使用、环境交互、多步执行）的边界模糊，缺乏清晰的演化叙事。
 
-**Stage 1 -- Prompting for Reasoning (2022-2023):**
-- Chain-of-Thought (CoT): Wei et al. demonstrate that prompting LLMs to show reasoning steps dramatically improves performance on math and logic tasks.
-- Zero-shot CoT: Kojima et al. show "Let's think step by step" elicits reasoning without few-shot examples.
-- Self-Consistency: Wang et al. sample multiple reasoning paths and take majority vote, improving reliability.
-- Tree-of-Thoughts: Yao et al. enable branching exploration of solution spaces with search algorithms.
-
-**Stage 2 -- Tool-Augmented Reasoning (2023):**
-- ToolFormer: LLMs learn to call external tools (calculators, search engines, APIs) within reasoning chains.
-- ReAct: Interleaving reasoning traces with tool-calling actions, creating the reasoning-acting loop.
-- HuggingGPT: LLM as controller, dispatching tasks to specialized models via Hugging Face API.
-
-**Stage 3 -- Autonomous Agents (2023-2024):**
-- AutoGPT/BabyAGI: Recursive task decomposition with autonomous execution and self-correction.
-- Voyager: Lifelong learning in open-world environments with skill library accumulation.
-- MetaGPT/ChatDev: Multi-agent software development with role-based collaboration.
-- SWE-Agent: Autonomous software engineering with repository-level code understanding.
-
-**Stage 4 -- Production Agent Systems (2024-2025):**
-- Standardized frameworks (AutoGen, CrewAI, LangGraph) enabling industrial deployment.
-- Inter-agent protocols (MCP, ACP, A2A) enabling agent interoperability.
-- Domain-specialized agents in healthcare, finance, science, and engineering entering real-world use.
-
-### Benchmark Taxonomy (~60 benchmarks, 2019-2025)
-
-The paper organizes benchmarks into eight categories:
-
-**1. General & Academic Knowledge Reasoning:**
-- MMLU (57 subjects, 15K+ questions), MMLU-Pro (harder variant with 10 answer choices).
-- ARC (science questions), HellaSwag (commonsense completion), WinoGrande (coreference resolution).
-- BigBench and BigBench-Hard for diverse reasoning capabilities.
-
-**2. Mathematical Problem Solving:**
-- GSM8K (grade-school math), MATH (competition-level), MathBench, OlympiadBench.
-- Evaluation of step-by-step mathematical reasoning vs. direct answer generation.
-
-**3. Code Generation & Software Engineering:**
-- HumanEval, MBPP (function-level code generation).
-- SWE-bench (repository-level bug fixing from GitHub issues), SWE-bench Verified.
-- LiveCodeBench (contamination-free, continuously updated from competitive programming).
-- DevBench, BigCodeBench for more realistic software engineering tasks.
-
-**4. Factual Grounding & Retrieval:**
-- TriviaQA, Natural Questions, HotPotQA (multi-hop retrieval).
-- Benchmarks testing the ability to ground responses in retrieved documents and avoid hallucination.
-
-**5. Domain-Specific Evaluations:**
-- MedQA, LegalBench, FinanceBench -- specialized professional knowledge.
-- ScienceAgentBench, ChemBench -- scientific reasoning and lab automation.
-
-**6. Multimodal & Embodied Tasks:**
-- MMMU (multimodal multi-discipline understanding).
-- ALFWorld (text-based household tasks), VirtualHome (embodied household activities).
-- Minecraft-based benchmarks (MineDojo, DEPS) for open-world exploration.
-
-**7. Task Orchestration:**
-- ToolBench, API-Bank -- evaluating tool selection and API calling.
-- AgentBench (multi-environment agent evaluation across 8 distinct environments).
-- GAIA (General AI Assistants benchmark requiring multi-step web research).
-
-**8. Interactive Assessments:**
-- Chatbot Arena (human preference-based ELO ranking).
-- MT-Bench (multi-turn conversation quality).
-- WildBench (real-world user queries from the wild).
-
-### Agent Framework Comparison (2023-2025)
-
-The paper systematically compares major frameworks:
-
-**LangChain/LangGraph:**
-- Modular chain-based architecture with graph-based workflows in LangGraph.
-- Strengths: extensive integrations, large community, production-ready tooling.
-- Weaknesses: abstraction overhead, complex debugging, API instability across versions.
-
-**AutoGen (Microsoft):**
-- Multi-agent conversation framework with customizable agent roles.
-- Strengths: flexible conversation patterns, support for code execution, human-in-the-loop.
-- Weaknesses: complexity for simple tasks, limited built-in tool support.
-
-**CrewAI:**
-- Role-based multi-agent orchestration with simplified configuration.
-- Strengths: ease of use, clear role assignment, process-oriented design.
-- Weaknesses: less flexible than AutoGen for complex interaction patterns.
-
-**MetaGPT:**
-- Software-development-focused multi-agent framework using Standard Operating Procedures.
-- Strengths: structured workflows, artifact-driven communication, good for code generation.
-- Weaknesses: narrow focus on software development paradigm.
-
-**OpenDevin/OpenHands:**
-- Open-source software development agent platform.
-- Strengths: sandboxed execution, strong SWE-bench performance, active community.
-
-### Inter-Agent Communication Protocols
-
-**Model Context Protocol (MCP) -- Anthropic, 2024:**
-- Standardizes how LLMs connect to external data sources and tools.
-- Client-server architecture: the LLM (client) connects to MCP servers that expose tools, resources, and prompts.
-- Enables plug-and-play tool integration without custom API wrappers.
-- Rapidly adopted: supported by Claude, Cursor, Windsurf, and many IDE integrations.
-
-**Agent Communication Protocol (ACP):**
-- Designed for coordinating open-source AI agents.
-- Focus on standardized message passing between heterogeneous agent systems.
-- Supports both synchronous and asynchronous communication patterns.
-
-**Agent-to-Agent Protocol (A2A) -- Google, 2025:**
-- Enables collaboration between agents from different providers and platforms.
-- Key concepts: Agent Cards (capability advertisements), Task objects (unit of work), streaming support.
-- Designed for enterprise-scale multi-agent deployments where agents may use different LLM backends.
+作者着手提供横跨所有四个维度的首个统一视角。
 
 ---
 
-## Key Contributions
+## 方法 / 框架
 
-1. **Unified evolutionary narrative** from prompting techniques through tool-augmented reasoning to fully autonomous agents, providing a clear intellectual progression.
-2. **Most comprehensive benchmark taxonomy** in the literature, covering ~60 benchmarks with systematic categorization and side-by-side comparison.
-3. **First survey-level analysis of inter-agent protocols** (MCP, ACP, A2A), documenting an emerging standardization layer critical for production deployment.
-4. **Framework comparison** providing practitioners with guidance for selecting agent development tools.
-5. **Cross-domain application survey** spanning 12+ domains with concrete examples of deployed systems.
+### 从推理到智能体的演化
+
+论文追溯了一条清晰的演化弧线：
+
+**阶段 1 -- 推理提示（2022-2023）：**
+- 思维链 (CoT)：Wei et al. 证明提示 LLM 展示推理步骤可以大幅提高数学和逻辑任务的性能。
+- 零样本 CoT：Kojima et al. 证明"让我们一步步思考"无需少样本示例即可引发推理。
+- 自一致性：Wang et al. 采样多个推理路径并取多数投票，提高可靠性。
+- 思维树：Yao et al. 实现解决方案空间的分支探索和搜索算法。
+
+**阶段 2 -- 工具增强推理（2023）：**
+- ToolFormer：LLM 学习在推理链中调用外部工具（计算器、搜索引擎、API）。
+- ReAct：推理轨迹与工具调用动作交错，创建推理-行动循环。
+- HuggingGPT：LLM 作为控制器，通过 Hugging Face API 将任务分派给专用模型。
+
+**阶段 3 -- 自主智能体（2023-2024）：**
+- AutoGPT/BabyAGI：递归任务分解，自主执行和自我纠正。
+- Voyager：在开放世界环境中终身学习并积累技能库。
+- MetaGPT/ChatDev：基于角色协作的多智能体软件开发。
+- SWE-Agent：具有仓库级代码理解能力的自主软件工程。
+
+**阶段 4 -- 生产智能体系统（2024-2025）：**
+- 标准化框架（AutoGen、CrewAI、LangGraph）支持工业部署。
+- 智能体间协议（MCP、ACP、A2A）实现智能体互操作性。
+- 医疗、金融、科学和工程领域的专用智能体进入真实使用。
+
+### 基准测试分类体系（约 60 个基准测试，2019-2025）
+
+论文将基准测试组织为八个类别：
+
+**1. 通用与学术知识推理：**
+- MMLU（57 个学科，15K+ 题目）、MMLU-Pro（更难的变体，10 个答案选项）。
+- ARC（科学题目）、HellaSwag（常识补全）、WinoGrande（指代消解）。
+- BigBench 和 BigBench-Hard，用于多样化推理能力。
+
+**2. 数学问题求解：**
+- GSM8K（小学数学）、MATH（竞赛级别）、MathBench、OlympiadBench。
+- 逐步数学推理 vs. 直接答案生成的评估。
+
+**3. 代码生成与软件工程：**
+- HumanEval、MBPP（函数级代码生成）。
+- SWE-bench（从 GitHub Issues 进行仓库级 Bug 修复）、SWE-bench Verified。
+- LiveCodeBench（无污染、持续更新的竞赛编程）。
+- DevBench、BigCodeBench，用于更真实的软件工程任务。
+
+**4. 事实基础与检索：**
+- TriviaQA、Natural Questions、HotPotQA（多跳检索）。
+- 测试将回答基于检索文档并避免幻觉的能力的基准。
+
+**5. 领域专属评估：**
+- MedQA、LegalBench、FinanceBench -- 专业知识。
+- ScienceAgentBench、ChemBench -- 科学推理和实验室自动化。
+
+**6. 多模态与具身任务：**
+- MMMU（多模态多学科理解）。
+- ALFWorld（基于文本的家务任务）、VirtualHome（具身家务活动）。
+- 基于 Minecraft 的基准（MineDojo、DEPS），用于开放世界探索。
+
+**7. 任务编排：**
+- ToolBench、API-Bank -- 评估工具选择和 API 调用。
+- AgentBench（跨 8 个不同环境的多环境智能体评估）。
+- GAIA（通用 AI 助手基准测试，要求多步骤网络研究）。
+
+**8. 交互式评估：**
+- Chatbot Arena（基于人类偏好的 ELO 排名）。
+- MT-Bench（多轮对话质量）。
+- WildBench（来自真实世界的用户查询）。
+
+### 智能体框架比较（2023-2025）
+
+论文系统比较了主要框架：
+
+**LangChain/LangGraph：**
+- 模块化的基于链的架构，LangGraph 中采用基于图的工作流。
+- 优势：广泛的集成、大型社区、生产就绪的工具。
+- 劣势：抽象开销、复杂调试、跨版本的 API 不稳定性。
+
+**AutoGen (Microsoft)：**
+- 具有可自定义智能体角色的多智能体对话框架。
+- 优势：灵活的对话模式、支持代码执行、人在回路中。
+- 劣势：简单任务的复杂性、有限的内置工具支持。
+
+**CrewAI：**
+- 基于角色的多智能体编排，简化配置。
+- 优势：易用性、清晰的角色分配、面向流程的设计。
+- 劣势：对于复杂交互模式不如 AutoGen 灵活。
+
+**MetaGPT：**
+- 以软件开发为重点的多智能体框架，使用标准操作流程。
+- 优势：结构化工作流、工件驱动的通信、适合代码生成。
+- 劣势：聚焦于软件开发范式较为狭窄。
+
+**OpenDevin/OpenHands：**
+- 开源软件开发智能体平台。
+- 优势：沙盒化执行、强大的 SWE-bench 性能、活跃的社区。
+
+### 智能体间通信协议
+
+**模型上下文协议 (MCP) -- Anthropic，2024：**
+- 标准化 LLM 连接外部数据源和工具的方式。
+- 客户端-服务器架构：LLM（客户端）连接到暴露工具、资源和提示的 MCP 服务器。
+- 实现即插即用的工具集成，无需自定义 API 包装器。
+- 快速被采用：支持 Claude、Cursor、Windsurf 和许多 IDE 集成。
+
+**智能体通信协议 (ACP)：**
+- 为协调开源 AI 智能体设计。
+- 专注于异构智能体系统之间的标准化消息传递。
+- 支持同步和异步通信模式。
+
+**智能体对智能体协议 (A2A) -- Google，2025：**
+- 使来自不同提供者和平台的智能体之间能够协作。
+- 核心概念：Agent Cards（能力广告）、Task 对象（工作单元）、流式支持。
+- 为使用不同 LLM 后端的企业级多智能体部署设计。
 
 ---
 
-## Coverage / Scope
+## 关键贡献
 
-### Real-World Applications (12+ domains)
-
-- **Software engineering**: SWE-Agent, Devin, OpenHands -- autonomous bug fixing and feature implementation.
-- **Materials science**: agents autonomously searching literature, designing experiments, analyzing results.
-- **Biomedical research**: drug discovery pipelines, protein structure prediction, clinical trial analysis.
-- **Academic ideation**: automated research proposal generation and literature review.
-- **Chemical reasoning**: synthesis planning, reaction prediction, safety assessment.
-- **Mathematical problem solving**: competition-level theorem proving and problem solving.
-- **Geographic information systems**: spatial analysis, map generation, geospatial querying.
-- **Multimedia**: video understanding, image editing, multimodal content creation.
-- **Healthcare**: diagnostic assistance, treatment planning, medical record analysis.
-- **Finance**: automated trading strategy development, risk assessment, regulatory compliance.
-- **Education**: personalized tutoring, curriculum design, assessment generation.
-- **Synthetic data generation**: creating training data for specialized domains.
+1. **统一的演化叙事**，从提示技术到工具增强推理再到完全自主智能体，提供了清晰的知识进程。
+2. **文献中最全面的基准测试分类体系**，涵盖约 60 个基准测试，并提供系统分类和并排比较。
+3. **首个综述级别的智能体间协议分析**（MCP、ACP、A2A），记录了对生产部署至关重要的新兴标准化层。
+4. **框架比较**，为从业者选择智能体开发工具提供指导。
+5. **跨领域应用综述**，涵盖 12+ 领域的已部署系统的具体示例。
 
 ---
 
-## Limitations
+## 覆盖范围 / 范畴
 
-1. **Breadth over depth**: Covering ~60 benchmarks and 12+ domains necessarily sacrifices detailed analysis of any single area. Individual benchmark papers provide much richer methodology discussion.
-2. **Protocol landscape still evolving**: The MCP/ACP/A2A analysis captures a snapshot of a rapidly changing standardization effort; some protocols may not survive or may merge.
-3. **Missing safety/security dimension**: Unlike AgentDojo-style work, this survey does not deeply address adversarial robustness, prompt injection, or agent safety. Security is acknowledged but not systematically treated.
-4. **Limited empirical validation**: The paper surveys and categorizes but does not run its own experiments. Cross-benchmark comparisons rely on published numbers that may use different evaluation setups.
-5. **Open-source bias**: The framework comparison naturally favors open-source projects with public documentation, potentially underrepresenting proprietary agent systems in production at major companies.
-6. **Benchmark contamination**: The survey acknowledges but does not deeply address the growing problem of benchmark contamination, where LLMs may have been trained on benchmark data.
+### 真实应用（12+ 领域）
+
+- **软件工程**：SWE-Agent、Devin、OpenHands -- 自主 Bug 修复和功能实现。
+- **材料科学**：智能体自主搜索文献、设计实验、分析结果。
+- **生物医学研究**：药物发现流水线、蛋白质结构预测、临床试验分析。
+- **学术创意**：自动化研究提案生成和文献综述。
+- **化学推理**：合成规划、反应预测、安全评估。
+- **数学问题求解**：竞赛级别的定理证明和问题求解。
+- **地理信息系统**：空间分析、地图生成、地理空间查询。
+- **多媒体**：视频理解、图像编辑、多模态内容创作。
+- **医疗**：诊断辅助、治疗规划、病历分析。
+- **金融**：自动化交易策略开发、风险评估、合规监管。
+- **教育**：个性化辅导、课程设计、评估生成。
+- **合成数据生成**：为专用领域创建训练数据。
 
 ---
 
-## Key Takeaways
+## 局限性
 
-1. **The reasoning-to-agent evolution is a genuine intellectual progression**, not just feature accumulation: each stage builds fundamentally on the previous one, with tool augmentation being the key bridge from reasoning to agency.
-2. **Benchmark fragmentation is the field's meta-problem**: with ~60 benchmarks and no universal evaluation protocol, it remains difficult to make definitive claims about which agent architectures are superior.
-3. **Inter-agent protocols (MCP, ACP, A2A) represent a maturation milestone**: the field is transitioning from "how to build one agent" to "how to make agents interoperate," mirroring the evolution from standalone software to networked services.
-4. **MCP has emerged as the de facto standard** for tool integration, with broad industry adoption. A2A is the leading contender for agent-to-agent communication.
-5. **Production deployment is real but narrow**: agents are deployed in software engineering, coding assistance, and data analysis, but most other domains (healthcare, science, finance) remain in prototype or pilot stages.
-6. **The gap between benchmark performance and real-world reliability remains large**: agents that score well on benchmarks often fail on edge cases, long-horizon tasks, and adversarial conditions in production.
-7. **This survey is best used as a reference map**: its primary value is as a navigational aid through the 2023-2025 landscape, pointing researchers to the right benchmarks, frameworks, and protocols for their specific needs.
+1. **广度优先于深度**：覆盖约 60 个基准测试和 12+ 领域必然牺牲了对任何单一领域的详细分析。各个基准测试论文提供了更丰富的方法论讨论。
+2. **协议格局仍在演化**：MCP/ACP/A2A 分析捕捉的是快速变化的标准化努力的快照；一些协议可能不会存活或可能合并。
+3. **缺少安全/安保维度**：与 AgentDojo 风格的工作不同，本综述未深入探讨对抗鲁棒性、提示注入或智能体安全。安全性被认可但未被系统处理。
+4. **有限的实证验证**：论文进行综述和分类但没有运行自己的实验。跨基准测试比较依赖于可能使用不同评估设置的已发表数据。
+5. **开源偏差**：框架比较自然倾向于有公开文档的开源项目，可能低估了主要公司生产中的专有智能体系统。
+6. **基准测试污染**：综述认可但未深入探讨基准测试污染这一日益增长的问题，即 LLM 可能已在基准测试数据上训练过。
+
+---
+
+## 核心要点
+
+1. **推理到智能体的演化是真正的知识进程**，而非简单的功能堆积：每个阶段从根本上建立在前一个阶段之上，工具增强是从推理到智能性的关键桥梁。
+2. **基准测试碎片化是该领域的元问题**：有约 60 个基准测试却没有通用的评估协议，使得对哪种智能体架构更优越的结论性判断仍然困难。
+3. **智能体间协议（MCP、ACP、A2A）代表了成熟的里程碑**：该领域正从"如何建造一个智能体"转向"如何让智能体互操作"，这映射了从独立软件到联网服务的演化。
+4. **MCP 已成为工具集成的事实标准**，被行业广泛采用。A2A 是智能体对智能体通信的领先竞争者。
+5. **生产部署是真实但狭窄的**：智能体已部署在软件工程、编码辅助和数据分析中，但大多数其他领域（医疗、科学、金融）仍处于原型或试点阶段。
+6. **基准测试性能与真实世界可靠性之间的差距仍然很大**：在基准测试上表现良好的智能体往往在边缘情况、长期任务和生产中的对抗条件下失败。
+7. **本综述最适合用作参考地图**：其主要价值在于作为 2023-2025 年版图的导航辅助，为研究者指向其特定需求的正确基准测试、框架和协议。

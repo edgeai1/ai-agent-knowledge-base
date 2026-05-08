@@ -1,5 +1,5 @@
 ---
-title: "Chain-of-Thought Prompting Elicits Reasoning in Large Language Models"
+title: "Chain-of-Thought Prompting Elicits Reasoning in Large Language Models (思维链提示激发大语言模型的推理能力)"
 authors:
   - Jason Wei
   - Xuezhi Wang
@@ -27,71 +27,64 @@ tags:
 status: done
 ---
 
-# Chain-of-Thought Prompting Elicits Reasoning in Large Language Models
+# 思维链提示激发大语言模型的推理能力
 
-## TL;DR
+## 简述
 
-Chain-of-thought (CoT) prompting augments few-shot exemplars with intermediate
-reasoning steps, dramatically improving large language model performance on
-arithmetic, commonsense, and symbolic reasoning tasks. This capability is an
-**emergent property of scale** -- it only materializes in models with roughly
-100B+ parameters. With just 8 CoT exemplars, PaLM-540B achieves state-of-the-art
-on GSM8K (56.9%), surpassing fine-tuned GPT-3 175B with a trained verifier (55%),
-and sets new SOTA on multiple other benchmarks without any fine-tuning.
+思维链（CoT）提示通过在少样本示例中添加中间推理步骤，显著提升了大语言模型在
+算术、常识和符号推理任务上的表现。这种能力是**规模涌现特性**——仅在大约 100B+
+参数的模型中才显现。仅使用 8 个 CoT 示例，PaLM-540B 在 GSM8K 上达到了最先进
+水平（56.9%），超越了使用训练验证器微调的 GPT-3 175B（55%），并在多个其他
+基准测试上刷新了 SOTA 记录，且无需任何微调。
 
 ---
 
-## Motivation & Problem
+## 动机与问题
 
-### The Reasoning Gap
+### 推理差距
 
-Despite remarkable capabilities in language understanding and generation, LLMs
-at the time of this paper struggled with tasks requiring multi-step reasoning:
+尽管在语言理解和生成方面具有卓越能力，该论文发表时的大语言模型在需要多步推理
+的任务上仍然力不从心：
 
-- **Arithmetic word problems** require parsing natural language, identifying
-  relevant quantities, and executing a sequence of mathematical operations.
-- **Commonsense reasoning** requires chaining together multiple pieces of
-  world knowledge that are not explicitly stated.
-- **Symbolic manipulation** requires applying abstract rules consistently
-  over multiple steps.
+- **算术应用题**需要解析自然语言、识别相关数量，并执行一系列数学运算。
+- **常识推理**需要将多条未明确陈述的世界知识串联起来。
+- **符号操作**需要在多个步骤中一致地应用抽象规则。
 
-Standard few-shot prompting (exemplars with input-output pairs) was ineffective
-for these tasks, with performance often near random even at large scale.
+标准少样本提示（仅包含输入-输出对的示例）在这些任务上效果不佳，即使在大规模
+模型上表现也常常接近随机水平。
 
-### The Hypothesis
+### 假设
 
-If the few-shot exemplars include not just the final answer but also the
-**intermediate reasoning steps** (the "chain of thought"), the model will
-learn to generate its own reasoning chains at inference time, decomposing
-complex problems into manageable steps.
+如果少样本示例不仅包含最终答案，还包含**中间推理步骤**（即"思维链"），
+模型将在推理时学会生成自己的推理链，将复杂问题分解为可管理的步骤。
 
-### Formal Definition
+### 形式定义
 
 ```
-Standard Prompting:
-  Exemplar format: (input, output)
-  Model generates:  input -> output
+标准提示:
+  示例格式: (输入, 输出)
+  模型生成:  输入 -> 输出
 
-Chain-of-Thought Prompting:
-  Exemplar format: (input, chain-of-thought, output)
-  Model generates:  input -> chain-of-thought -> output
+思维链提示:
+  示例格式: (输入, 思维链, 输出)
+  模型生成:  输入 -> 思维链 -> 输出
 
-Where chain-of-thought = [step_1, step_2, ..., step_n]
-  Each step_i is a natural language sentence expressing
-  an intermediate reasoning step toward the answer.
+其中 思维链 = [步骤_1, 步骤_2, ..., 步骤_n]
+  每个步骤_i 是一个自然语言句子，表达
+  通向答案的一个中间推理步骤。
 ```
 
-### Example: Standard vs. CoT Prompting
+### 示例：标准提示 vs. CoT 提示
 
 ```
-STANDARD PROMPTING:
+标准提示:
 ====================
 Q: Roger has 5 tennis balls. He buys 2 more cans of
    tennis balls. Each can has 3 tennis balls. How many
    tennis balls does he have now?
 A: The answer is 11.
 
-CHAIN-OF-THOUGHT PROMPTING:
+思维链提示:
 ============================
 Q: Roger has 5 tennis balls. He buys 2 more cans of
    tennis balls. Each can has 3 tennis balls. How many
@@ -100,26 +93,22 @@ A: Roger started with 5 balls. 2 cans of 3 tennis balls
    each is 6 tennis balls. 5 + 6 = 11. The answer is 11.
 ```
 
-The key difference: CoT exemplars show _how_ to arrive at the answer, not just
-_what_ the answer is.
+关键区别：CoT 示例展示了_如何_得出答案，而不仅仅是答案_是什么_。
 
 ---
 
-## Method
+## 方法
 
-### The CoT Prompting Approach
+### CoT 提示方法
 
-The method is remarkably simple -- no architectural changes, no fine-tuning,
-no reinforcement learning:
+该方法极为简单——无需架构更改、无需微调、无需强化学习：
 
-1. **Manually write** a small set of (question, chain-of-thought, answer)
-   exemplars for the target task (typically 8 exemplars).
-2. **Prepend** these exemplars to the test question as a few-shot prompt.
-3. **Generate** the model's response, which will include a reasoning chain
-   followed by a final answer.
-4. **Extract** the final answer from the generated text.
+1. **手动编写**目标任务的一小组（问题、思维链、答案）示例（通常 8 个示例）。
+2. **前置**这些示例作为少样本提示添加到测试问题前。
+3. **生成**模型的响应，其中将包含推理链和最终答案。
+4. **提取**生成文本中的最终答案。
 
-### Pseudocode
+### 伪代码
 
 ```
 Algorithm: Chain-of-Thought Prompting
@@ -145,75 +134,68 @@ answer <- extract_final_answer(response)
 return answer
 ```
 
-### Diagram: Standard vs. CoT Information Flow
+### 图示：标准 vs. CoT 信息流
 
 ```
-STANDARD FEW-SHOT PROMPTING:
+标准少样本提示:
 +----------+          +-------+
-| Question |--------->| Model |-------> Answer
+| 问题     |--------->| 模型  |-------> 答案
 +----------+          +-------+
-   Direct mapping, no intermediate computation
+   直接映射，无中间计算
 
-CHAIN-OF-THOUGHT PROMPTING:
+思维链提示:
 +----------+     +--------+     +--------+           +--------+     +--------+
-| Question |---->| Step 1 |---->| Step 2 |---> ... ->| Step n |---->| Answer |
+| 问题     |---->| 步骤 1 |---->| 步骤 2 |---> ... ->| 步骤 n |---->| 答案   |
 +----------+     +--------+     +--------+           +--------+     +--------+
-   Decomposed reasoning, each step conditions on previous steps
+   分解推理，每个步骤以前一步骤为条件
 
-EMERGENT ABILITY SCALING:
+涌现能力的规模效应:
                                     CoT
-Performance                        /
+性能                               /
     ^                             /
     |                            /
-    |         Standard          /
+    |         标准               /
     |        ----------        /
     |       /                 /
     |      /         -------/
     |     /         /
     |    /         /
     |---/---------/--
-    +--+----+----+----+----+---> Model Size
+    +--+----+----+----+----+---> 模型规模
       1B   10B  100B  500B
            ^
            |
-      Emergence threshold (~100B)
+      涌现阈值 (~100B)
 ```
 
 ---
 
-## Key Innovations
+## 关键创新
 
-1. **Simplicity of the Approach**: No model architecture changes, no training
-   procedure modifications, no learned verifiers -- just a change in the
-   prompting format. This makes CoT immediately applicable to any LLM.
+1. **方法的简洁性**：无需更改模型架构、无需修改训练流程、无需学习验证器——
+   仅改变提示格式。这使得 CoT 可以立即应用于任何大语言模型。
 
-2. **Emergent Ability Discovery**: The finding that CoT reasoning is an emergent
-   property of model scale (only appearing at ~100B+ parameters) was a landmark
-   result in understanding LLM capabilities and limitations.
+2. **涌现能力的发现**：CoT 推理是模型规模的涌现特性（仅在约 100B+ 参数时
+   出现）这一发现，是理解大语言模型能力和局限性的里程碑式成果。
 
-3. **Natural Language as Computation**: CoT showed that natural language reasoning
-   steps can serve as a form of "intermediate computation" that extends the
-   effective reasoning depth of a transformer, which is otherwise limited by
-   its fixed depth.
+3. **自然语言作为计算**：CoT 表明自然语言推理步骤可以作为一种"中间计算"形式，
+   扩展了 Transformer 的有效推理深度，而 Transformer 本身受限于其固定深度。
 
-4. **Bridging Prompting and Fine-tuning**: CoT prompting with PaLM-540B
-   surpassed fine-tuned SOTA on GSM8K, demonstrating that prompting at
-   sufficient scale can be competitive with or superior to task-specific
-   fine-tuning.
+4. **桥接提示与微调**：PaLM-540B 的 CoT 提示超越了 GSM8K 上微调的 SOTA，
+   证明在足够规模下，提示可以与任务特定微调相媲美甚至更优。
 
-5. **Decomposition Principle**: The implicit principle that complex reasoning
-   should be decomposed into sequential sub-steps became foundational for
-   all subsequent prompting research (Tree of Thoughts, ReAct, etc.).
+5. **分解原则**：复杂推理应分解为顺序子步骤的隐含原则，成为所有后续提示
+   研究（Tree of Thoughts、ReAct 等）的基础。
 
 ---
 
-## Experimental Setup
+## 实验设置
 
-### Models Evaluated
+### 评估的模型
 
 ```
 +-------------------+----------------------------------+
-| Model Family      | Sizes Tested                     |
+| 模型系列          | 测试的规模                       |
 +-------------------+----------------------------------+
 | GPT-3             | 350M, 1.3B, 6.7B, 175B          |
 |                   | (ada, babbage, curie, davinci)   |
@@ -228,50 +210,50 @@ Performance                        /
 +-------------------+----------------------------------+
 ```
 
-### Benchmarks
+### 基准测试
 
-**Arithmetic Reasoning (5 benchmarks)**:
+**算术推理（5 个基准）**：
 
-| Benchmark | Task Description | # Test | Answer Type |
+| 基准测试 | 任务描述 | 测试数量 | 答案类型 |
 |-----------|-----------------|--------|-------------|
-| GSM8K | Grade school math word problems | 1,319 | Numeric |
-| SVAMP | Math word problems with structural variation | 1,000 | Numeric |
-| ASDiv | Diverse math word problems | 2,096 | Numeric |
-| AQuA | Algebraic word problems (multiple choice) | 254 | Choice (A-E) |
-| MAWPS | Math word problems (SingleEq+AddSub+MultiArith) | ~2,000 | Numeric |
+| GSM8K | 小学数学应用题 | 1,319 | 数值 |
+| SVAMP | 具有结构变化的数学应用题 | 1,000 | 数值 |
+| ASDiv | 多样化数学应用题 | 2,096 | 数值 |
+| AQuA | 代数应用题（多项选择） | 254 | 选项 (A-E) |
+| MAWPS | 数学应用题 (SingleEq+AddSub+MultiArith) | ~2,000 | 数值 |
 
-**Commonsense Reasoning (2 benchmarks)**:
+**常识推理（2 个基准）**：
 
-| Benchmark | Task Description | # Test | Answer Type |
+| 基准测试 | 任务描述 | 测试数量 | 答案类型 |
 |-----------|-----------------|--------|-------------|
-| CommonsenseQA (CSQA) | 5-way multiple choice commonsense | 1,221 | Choice (A-E) |
-| StrategyQA | Yes/no questions requiring multi-hop strategy | 2,290 | Yes/No |
+| CommonsenseQA (CSQA) | 5 选 1 常识多项选择 | 1,221 | 选项 (A-E) |
+| StrategyQA | 需要多跳策略的是/否问题 | 2,290 | 是/否 |
 
-**Symbolic Reasoning (2 benchmarks)**:
+**符号推理（2 个基准）**：
 
-| Benchmark | Task Description | Example |
+| 基准测试 | 任务描述 | 示例 |
 |-----------|-----------------|---------|
-| Last Letter Concatenation | Concatenate last letters of words | "Amy Brown" -> "yn" |
-| Coin Flip | Track coin state after sequence of flips/no-flips | heads -> flip -> no flip -> ? |
+| Last Letter Concatenation | 拼接单词的最后一个字母 | "Amy Brown" -> "yn" |
+| Coin Flip | 在一系列翻转/不翻转后追踪硬币状态 | heads -> flip -> no flip -> ? |
 
-### Prompting Details
+### 提示细节
 
-- **Number of exemplars**: 8 for all arithmetic and commonsense tasks
-- **Exemplar selection**: Manually written by the authors
-- **CoT style**: Natural language reasoning steps (not equations or code)
-- **Decoding**: Greedy decoding (temperature=0) for main results
-- **Answer extraction**: Parse final numeric/choice answer after "The answer is"
+- **示例数量**：所有算术和常识任务均使用 8 个
+- **示例选择**：由作者手动编写
+- **CoT 风格**：自然语言推理步骤（非方程或代码）
+- **解码**：主要结果使用贪心解码（temperature=0）
+- **答案提取**：在"The answer is"之后解析最终的数值/选项答案
 
 ---
 
-## Results
+## 结果
 
-### Main Results: Arithmetic Reasoning (Accuracy %)
+### 主要结果：算术推理（准确率 %）
 
 ```
 +----------+-----------+-----------+-----------+-----------+-----------+
 |          |   GSM8K   |   SVAMP   |   ASDiv   |   AQuA    |   MAWPS   |
-| Method   | Std | CoT | Std | CoT | Std | CoT | Std | CoT | Std | CoT |
+| 方法     | Std | CoT | Std | CoT | Std | CoT | Std | CoT | Std | CoT |
 +----------+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
 | LaMDA    |     |     |     |     |     |     |     |     |     |     |
 |  137B    | 17.1| 27.6| 39.9| 53.0|  --  | --  |  --  | --  | --  | --  |
@@ -285,28 +267,28 @@ Performance                        /
 | PaLM     |     |     |     |     |     |     |     |     |     |     |
 |  540B    | 17.9| 56.9| 69.3| 79.0| 74.0| 78.7| 25.2| 35.8| 84.7| 93.3|
 +----------+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
-| Prior    |     |     |     |     |     |     |     |     |     |     |
+| 此前     |     |     |     |     |     |     |     |     |     |     |
 | SOTA     |   55.0*   |   57.4    |   75.3    |   37.9    |   --      |
-| (FT)     |  (ft+ver) | (ft)      | (ft)      | (ft)      |           |
+| (微调)   | (微调+验证)|  (微调)   |  (微调)   |  (微调)   |           |
 +----------+-----------+-----------+-----------+-----------+-----------+
 
-* Fine-tuned GPT-3 175B + learned verifier (Cobbe et al. 2021)
+* 微调的 GPT-3 175B + 学习验证器 (Cobbe et al. 2021)
 ```
 
-**Key findings**:
-- PaLM 540B + CoT (56.9%) surpasses the prior fine-tuned SOTA on GSM8K (55.0%)
-  that used GPT-3 175B fine-tuning + a specially trained solution verifier
-- CoT provides the largest absolute gains on the hardest benchmarks (GSM8K:
-  +39.0 for PaLM, SVAMP: +16.9 for Codex)
-- GPT-3 175B + CoT on MAWPS (93.0%) approaches near-perfect accuracy
-- PaLM 540B + CoT achieves new SOTA on GSM8K, SVAMP, and MAWPS
+**关键发现**：
+- PaLM 540B + CoT（56.9%）超越了 GSM8K 上此前微调的 SOTA（55.0%），
+  后者使用了 GPT-3 175B 微调 + 专门训练的解答验证器
+- CoT 在最困难的基准测试上提供了最大的绝对增益（GSM8K：PaLM +39.0，
+  SVAMP：Codex +16.9）
+- GPT-3 175B + CoT 在 MAWPS 上（93.0%）接近完美准确率
+- PaLM 540B + CoT 在 GSM8K、SVAMP 和 MAWPS 上达到新 SOTA
 
-### Commonsense Reasoning Results (Accuracy %)
+### 常识推理结果（准确率 %）
 
 ```
 +----------+---------------------+--------------------+
 |          |   CommonsenseQA     |    StrategyQA      |
-| Method   | Standard |   CoT   | Standard |   CoT   |
+| 方法     | 标准     |   CoT   | 标准     |   CoT   |
 +----------+----------+---------+----------+---------+
 | LaMDA    |          |         |          |         |
 |  137B    |   58.1   |  63.3   |   60.5   |  65.4   |
@@ -317,43 +299,41 @@ Performance                        /
 | PaLM     |          |         |          |         |
 |  540B    |   65.5   |  74.4   |   68.6   |  75.6   |
 +----------+----------+---------+----------+---------+
-| Prior    |          |         |          |         |
-| SOTA     |     79.0 (ft)     |     69.4 (ft)     |
+| 此前     |          |         |          |         |
+| SOTA     |     79.0 (微调)   |     69.4 (微调)    |
 +----------+---------------------+--------------------+
 ```
 
-**Key findings**:
-- PaLM 540B + CoT (75.6%) surpasses the prior fine-tuned SOTA on
-  StrategyQA (69.4%) by a significant margin
-- CommonsenseQA improvements are more modest, suggesting CoT has larger
-  benefits for tasks requiring multi-hop strategic reasoning
+**关键发现**：
+- PaLM 540B + CoT（75.6%）显著超越了 StrategyQA 上此前微调的 SOTA
+  （69.4%）
+- CommonsenseQA 上的改进较为温和，表明 CoT 对需要多跳战略推理的
+  任务收益更大
 
-### Additional Benchmark Results (PaLM 540B)
+### 额外基准测试结果（PaLM 540B）
 
 ```
 +---------------------------+----------+---------+
-| Benchmark                 | Standard |   CoT   |
+| 基准测试                  | 标准     |   CoT   |
 +---------------------------+----------+---------+
-| Date Understanding        |   62.8   |  67.5   |
-| Sports Understanding      |   91.4   |  95.4   |
-| Last Letter (in-domain)   |   ~0     |  ~67    |
-| Coin Flip (in-domain)     |  100.0   | 100.0   |
+| 日期理解                  |   62.8   |  67.5   |
+| 体育理解                  |   91.4   |  95.4   |
+| 最后字母（域内）          |   ~0     |  ~67    |
+| 硬币翻转（域内）          |  100.0   | 100.0   |
 +---------------------------+----------+---------+
 ```
 
-- Sports Understanding with CoT (95.4%) surpasses an unaided sports
-  enthusiast (84%)
-- Last Letter Concatenation shows CoT's ability to enable symbolic
-  reasoning that is impossible with standard prompting
+- 使用 CoT 的体育理解（95.4%）超越了无辅助的体育爱好者（84%）
+- 最后字母拼接展示了 CoT 启用标准提示无法实现的符号推理的能力
 
-### Scaling Analysis: Emergent Ability of CoT
+### 规模分析：CoT 的涌现能力
 
-Performance across model sizes demonstrates the emergence phenomenon:
+不同模型规模的表现展示了涌现现象：
 
 ```
 +------------+----------------------------+----------------------------+
-| Model Size | GSM8K                      | MAWPS                      |
-|            | Standard     | CoT         | Standard     | CoT         |
+| 模型规模   | GSM8K                      | MAWPS                      |
+|            | 标准         | CoT         | 标准         | CoT         |
 +------------+-------------+-------------+--------------+-------------+
 | ~422M      |    2.3      |    3.0      |    17.3      |    19.2     |
 | ~2B        |    3.8      |    4.1      |    33.2      |    32.4     |
@@ -364,232 +344,203 @@ Performance across model sizes demonstrates the emergence phenomenon:
 +------------+-------------+-------------+--------------+-------------+
 ```
 
-**Critical observations**:
-- Below ~100B parameters, CoT provides no benefit or even slightly hurts
-  performance (e.g., 8B PaLM: GSM8K standard 5.0 vs CoT 4.8)
-- The emergence threshold is around 10^23 training FLOPs (~100B parameters)
-- Above the threshold, CoT gains accelerate dramatically with scale
-  (PaLM 540B: standard 17.9 -> CoT 56.9 = +39.0 absolute gain on GSM8K)
-- For easier tasks (MAWPS), gains begin to appear at smaller scales (~68B)
-  because less reasoning depth is required
+**关键观察**：
+- 在约 100B 参数以下，CoT 没有带来收益甚至略微降低了表现
+  （例如 8B PaLM：GSM8K 标准 5.0 vs CoT 4.8）
+- 涌现阈值大约在 10^23 训练 FLOPs（约 100B 参数）
+- 超过阈值后，CoT 增益随规模急剧加速
+  （PaLM 540B：标准 17.9 -> CoT 56.9 = GSM8K 上 +39.0 绝对增益）
+- 对于较简单的任务（MAWPS），增益在更小规模（约 68B）开始出现，
+  因为所需的推理深度较浅
 
 ---
 
-## Ablation Studies
+## 消融实验
 
-### What Components of CoT Matter?
+### CoT 的哪些组件重要？
 
-The authors tested several ablation variants using LaMDA 137B on GSM8K:
+作者使用 LaMDA 137B 在 GSM8K 上测试了几种消融变体：
 
 ```
 +-------------------------------+----------+
-| Ablation Variant              | Accuracy |
+| 消融变体                      | 准确率   |
 +-------------------------------+----------+
-| Standard prompting (baseline) |   17.1   |
-| Chain of thought (full CoT)   |   27.6   |
+| 标准提示（基线）              |   17.1   |
+| 思维链（完整 CoT）            |   27.6   |
 +-------------------------------+----------+
-| Equation only                 |   18.1   |
-| Variable computation only     |   20.5   |
-| CoT after answer              |   18.5   |
+| 仅方程                        |   18.1   |
+| 仅变量计算                    |   20.5   |
+| 答案后 CoT                    |   18.5   |
 +-------------------------------+----------+
 ```
 
-**Findings from ablations**:
+**消融发现**：
 
-1. **Equation only**: Writing just the mathematical equation (e.g., "5 + 2*3 = 11")
-   provides minimal benefit (+1.0). The natural language reasoning steps are
-   essential -- the model cannot directly translate problem semantics into
-   equations without them.
+1. **仅方程**：仅写出数学方程（例如"5 + 2*3 = 11"）带来的收益极小（+1.0）。
+   自然语言推理步骤是必不可少的——模型无法在没有它们的情况下直接将问题
+   语义转化为方程。
 
-2. **Variable computation only**: Including variable assignments and computation
-   steps but not natural language explanations gives modest improvement (+3.4),
-   but significantly less than full CoT (+10.5).
+2. **仅变量计算**：包含变量赋值和计算步骤但不含自然语言解释，产生了适度
+   改善（+3.4），但明显低于完整 CoT（+10.5）。
 
-3. **CoT after answer**: Placing the chain of thought _after_ the answer
-   (instead of before) provides no meaningful benefit (+1.4). This demonstrates
-   that the reasoning must precede the answer to be useful -- it is not merely
-   a post-hoc rationalization but an active computation that guides the answer.
+3. **答案后 CoT**：将思维链放在答案_之后_（而非之前）没有带来有意义的
+   收益（+1.4）。这证明推理必须在答案之前才有用——它不仅仅是事后合理化，
+   而是指导答案的主动计算。
 
-### Robustness Analyses
+### 鲁棒性分析
 
-**Exemplar ordering**: Performance is robust to different orderings of the
-few-shot exemplars. Standard deviation across 5 random orderings is small.
+**示例排序**：性能对少样本示例的不同排序具有鲁棒性。5 种随机排序的
+标准差很小。
 
-**Number of exemplars**: Performance improves with more exemplars but shows
-diminishing returns. Even 1-2 exemplars provide substantial benefits at scale.
+**示例数量**：性能随示例增多而提高，但呈递减趋势。即使 1-2 个示例
+在大规模下也能带来显著收益。
 
-**Annotator variation**: Different annotators writing different chain-of-thought
-exemplars yield similar performance, suggesting the method is not overly
-sensitive to the specific writing style.
+**标注者差异**：不同标注者编写不同的思维链示例产生了相似的性能，
+表明该方法对特定写作风格不过度敏感。
 
-### Correctness of Generated Chains
+### 生成链的正确性
 
-Manual analysis of 50 randomly sampled CoT traces from LaMDA 137B on GSM8K:
+对 LaMDA 137B 在 GSM8K 上随机抽样的 50 条 CoT 轨迹的人工分析：
 
 ```
 +----------------------------------+----------+
-| Category                         | % of 50  |
+| 类别                             | 占 50 %  |
 +----------------------------------+----------+
-| Correct reasoning, correct ans.  |   ~50    |
-| Correct reasoning, wrong answer  |    2     |
-|   (arithmetic/extraction error)  |          |
-| Wrong reasoning, correct answer  |    8     |
-|   (lucky guess / right for wrong |          |
-|    reasons)                      |          |
-| Wrong reasoning, wrong answer    |   ~40    |
+| 推理正确，答案正确               |   ~50    |
+| 推理正确，答案错误               |    2     |
+|   （算术/提取错误）              |          |
+| 推理错误，答案正确               |    8     |
+|   （侥幸猜对/错误原因正确）     |          |
+| 推理错误，答案错误               |   ~40    |
 +----------------------------------+----------+
 ```
 
-Key insight: most correct answers come from correct reasoning chains, not
-lucky guesses. Only 8% of cases had correct answers with flawed reasoning.
+关键洞察：大多数正确答案来自正确的推理链，而非侥幸猜测。仅 8% 的案例
+在推理有缺陷的情况下得到了正确答案。
 
 ---
 
-## Analysis & Insights
+## 分析与洞察
 
-### Why Does CoT Work?
+### 为什么 CoT 有效？
 
-The paper offers several explanations for CoT's effectiveness:
+论文提供了几种关于 CoT 有效性的解释：
 
-1. **Decomposition**: Multi-step problems are broken into manageable sub-steps,
-   each within the model's capability even if the full problem is not.
+1. **分解**：多步问题被分解为可管理的子步骤，每个步骤都在模型能力范围内，
+   即使完整问题超出能力范围。
 
-2. **Intermediate variable binding**: Each step creates named intermediate
-   results (e.g., "Roger has 5 balls") that the model can reference in
-   subsequent steps, effectively extending working memory.
+2. **中间变量绑定**：每个步骤创建命名的中间结果（例如"Roger 有 5 个球"），
+   模型可以在后续步骤中引用，有效地扩展了工作记忆。
 
-3. **Error localization**: When the model makes a mistake, it is often
-   localized to one step rather than causing a cascade of errors.
+3. **错误定位**：当模型犯错时，错误通常局限于一个步骤，而不是引发一连串错误。
 
-4. **Allocation of computation**: The chain of thought effectively gives the
-   model more "compute time" (more tokens to generate) before committing to
-   an answer, similar to System 2 thinking in dual-process theory.
+4. **计算分配**：思维链有效地给予模型更多"计算时间"（生成更多 token）
+   才做出答案承诺，类似于双过程理论中的系统 2 思维。
 
-### Why Only at Scale?
+### 为什么仅在大规模下有效？
 
-The authors hypothesize that:
+作者假设：
 
-- Small models lack the **language modeling capability** to generate coherent
-  multi-step reasoning chains, even when shown examples
-- Small models may **copy the surface format** of CoT (generating text that
-  looks like reasoning) without actually performing logical reasoning
-- The emergence threshold corresponds to the point where models develop
-  sufficient **compositional generalization** ability
+- 小模型缺乏**语言建模能力**来生成连贯的多步推理链，即使展示了示例
+- 小模型可能**复制 CoT 的表面格式**（生成看起来像推理的文本），
+  但实际上并未执行逻辑推理
+- 涌现阈值对应于模型发展出足够**组合泛化**能力的时刻
 
-### Comparison with Fine-tuning
+### 与微调的比较
 
 ```
 +-----------------------------------+----------+-------------+
-| Approach                          | GSM8K    | Training    |
-|                                   | Accuracy | Data Needed |
+| 方法                              | GSM8K    | 所需训练    |
+|                                   | 准确率   | 数据量      |
 +-----------------------------------+----------+-------------+
-| GPT-3 175B (fine-tuned)           |   ~33    |  7,473      |
-| GPT-3 175B (FT + verifier)       |   55.0   |  7,473+     |
-| PaLM 540B (8-shot CoT prompting) |   56.9   |  0 (8 ex.)  |
+| GPT-3 175B（微调）                |   ~33    |  7,473      |
+| GPT-3 175B（微调+验证器）         |   55.0   |  7,473+     |
+| PaLM 540B（8-shot CoT 提示）     |   56.9   |  0 (8 个)   |
 +-----------------------------------+----------+-------------+
 ```
 
-CoT prompting achieves SOTA on GSM8K with zero training data -- just 8
-hand-written exemplars -- compared to fine-tuning on thousands of examples
-plus training a separate verifier model.
+CoT 提示在零训练数据下达到了 GSM8K 的 SOTA——仅需 8 个手写示例——
+相比之下微调需要数千个样本加上训练单独的验证器模型。
 
 ---
 
-## Limitations & Critiques
+## 局限性与批评
 
-1. **Scale Dependency**: CoT only works at ~100B+ parameters, making it
-   inaccessible for smaller, more deployable models. This limits practical
-   applicability to organizations with access to the largest models.
+1. **规模依赖性**：CoT 仅在约 100B+ 参数时有效，这使其对更小、更易部署的
+   模型不可用。这将实际适用性限制在能够访问最大模型的组织。
 
-2. **No Guarantee of Correct Reasoning**: The model can generate plausible-
-   sounding but logically flawed reasoning chains. Correct final answers
-   can result from incorrect reasoning (~8% of cases).
+2. **不保证推理正确性**：模型可以生成听起来合理但逻辑上有缺陷的推理链。
+   正确的最终答案可能源于不正确的推理（约 8% 的案例）。
 
-3. **Cost of Generation**: CoT requires generating many more tokens per
-   query than standard prompting, increasing latency and cost proportionally
-   to the length of the reasoning chain.
+3. **生成成本**：CoT 需要每次查询生成比标准提示多得多的 token，延迟和
+   成本与推理链的长度成正比增加。
 
-4. **Prompt Engineering Burden**: The quality of the few-shot exemplars
-   matters significantly. Writing good chain-of-thought exemplars requires
-   human effort and task understanding.
+4. **提示工程负担**：少样本示例的质量至关重要。编写好的思维链示例需要
+   人力和对任务的理解。
 
-5. **Evaluation Difficulty**: It is hard to automatically evaluate whether
-   a reasoning chain is correct vs. merely arriving at the right answer
-   for the wrong reasons.
+5. **评估困难**：很难自动评估推理链是否正确，还是仅仅因为错误的原因
+   得到了正确答案。
 
-6. **Limited to Sequential Reasoning**: CoT generates a single linear chain.
-   Problems requiring exploration, backtracking, or parallel reasoning
-   paths are not well served (addressed by later work like Tree of Thoughts
-   and Self-Consistency).
+6. **仅限顺序推理**：CoT 生成单一线性链。需要探索、回溯或并行推理路径
+   的问题无法很好地处理（后续工作如 Tree of Thoughts 和 Self-Consistency
+   加以解决）。
 
-7. **Benchmark Saturation Concerns**: Some benchmarks (MAWPS at 93.3%)
-   approach ceiling, making it hard to assess the true reasoning capability
-   vs. pattern matching on these specific datasets.
+7. **基准饱和顾虑**：某些基准测试（MAWPS 达 93.3%）接近上限，难以评估
+   在这些特定数据集上的真实推理能力与模式匹配。
 
-8. **Hallucination in Chains**: While CoT reduces final-answer errors, the
-   intermediate steps themselves can contain fabricated facts or flawed
-   logic that happen to produce correct answers.
+8. **链中的幻觉**：虽然 CoT 减少了最终答案的错误，但中间步骤本身可能
+   包含编造的事实或有缺陷的逻辑，却碰巧产生了正确答案。
 
 ---
 
-## Follow-up Work
+## 后续工作
 
-- **Self-Consistency** (Wang et al., 2022): Sample multiple CoT paths and
-  take majority vote on the answer. Achieves 74.4% on GSM8K with PaLM-540B
-  (vs. 56.9% with greedy CoT).
-- **Zero-shot CoT** (Kojima et al., 2022): Simply appending "Let's think
-  step by step" to the prompt enables CoT without exemplars.
-- **Least-to-Most Prompting** (Zhou et al., 2022): Decompose complex problems
-  into simpler sub-problems, solve sequentially.
-- **Tree of Thoughts** (Yao et al., 2023): Extend CoT to tree-structured
-  exploration with backtracking.
-- **ReAct** (Yao et al., 2022): Interleave CoT reasoning with grounded
-  actions (tool use), addressing hallucination.
-- **PAL** (Gao et al., 2022): Use code (not natural language) as the
-  intermediate reasoning format.
-- **Scratchpad** (Nye et al., 2021): Concurrent work on intermediate
-  computation steps via fine-tuning (not prompting).
-- **STaR** (Zelikman et al., 2022): Self-taught Reasoner -- bootstrap
-  CoT capability through iterative self-training.
-- **Faithful CoT** (Lyu et al., 2023): Ensure reasoning chains are
-  logically faithful to the final answer.
+- **Self-Consistency** (Wang et al., 2022)：采样多条 CoT 路径并对答案
+  进行多数投票。PaLM-540B 在 GSM8K 上达到 74.4%（vs. 贪心 CoT 的 56.9%）。
+- **Zero-shot CoT** (Kojima et al., 2022)：仅在提示后添加"Let's think
+  step by step"即可无需示例启用 CoT。
+- **Least-to-Most Prompting** (Zhou et al., 2022)：将复杂问题分解为
+  更简单的子问题，依次求解。
+- **Tree of Thoughts** (Yao et al., 2023)：将 CoT 扩展为带回溯的
+  树状结构探索。
+- **ReAct** (Yao et al., 2022)：将 CoT 推理与基于实际的行动（工具使用）
+  交替进行，解决幻觉问题。
+- **PAL** (Gao et al., 2022)：使用代码（而非自然语言）作为中间推理格式。
+- **Scratchpad** (Nye et al., 2021)：关于通过微调（而非提示）实现中间
+  计算步骤的并行工作。
+- **STaR** (Zelikman et al., 2022)：自学推理者——通过迭代自训练
+  引导 CoT 能力。
+- **Faithful CoT** (Lyu et al., 2023)：确保推理链在逻辑上忠实于
+  最终答案。
 
 ---
 
-## Key Takeaways
+## 核心要点
 
-1. **Chain-of-thought prompting is a simple but transformative technique.**
-   Adding intermediate reasoning steps to few-shot exemplars unlocks
-   dramatic improvements in LLM reasoning (e.g., +39 points on GSM8K).
+1. **思维链提示是一种简单但变革性的技术。** 在少样本示例中添加中间推理
+   步骤可以解锁大语言模型推理的显著改进（例如 GSM8K 上 +39 分）。
 
-2. **CoT is an emergent ability of scale.** Below ~100B parameters, CoT
-   provides no benefit. This is one of the clearest demonstrations of
-   emergent capabilities in large language models.
+2. **CoT 是规模的涌现能力。** 在约 100B 参数以下，CoT 没有收益。这是
+   大语言模型中涌现能力最清晰的演示之一。
 
-3. **Natural language reasoning outperforms pure symbolic computation.**
-   Equation-only and variable-only ablations show significantly less
-   benefit than full natural language chains, suggesting the semantic
-   content of the reasoning steps matters.
+3. **自然语言推理优于纯符号计算。** 仅方程和仅变量的消融显示的收益
+   明显低于完整的自然语言链，表明推理步骤的语义内容至关重要。
 
-4. **Prompting can match fine-tuning.** PaLM 540B + 8-shot CoT surpasses
-   GPT-3 175B fine-tuned on 7,473 examples + verifier on GSM8K, a
-   striking result for the efficiency of prompting approaches.
+4. **提示可以匹敌微调。** PaLM 540B + 8-shot CoT 在 GSM8K 上超越了
+   在 7,473 个样本上微调的 GPT-3 175B + 验证器，这对提示方法的效率
+   来说是一个令人瞩目的结果。
 
-5. **The reasoning must precede the answer.** The ablation showing CoT-after-
-   answer fails confirms that the chain of thought serves as genuine
-   intermediate computation, not post-hoc rationalization.
+5. **推理必须先于答案。** 答案后 CoT 失败的消融证实，思维链是真正的
+   中间计算，而非事后合理化。
 
-6. **CoT became the intellectual foundation for LLM agents.** Every modern
-   agent framework (ReAct, Reflexion, AutoGPT) relies on some form of
-   chain-of-thought reasoning for planning and decision-making. CoT
-   established that LLMs can "think before they act."
+6. **CoT 成为大语言模型智能体的智力基础。** 每个现代智能体框架
+   （ReAct、Reflexion、AutoGPT）都依赖某种形式的思维链推理进行
+   规划和决策。CoT 确立了大语言模型可以"先思考后行动"。
 
-7. **The quality of reasoning chains matters more than quantity.** Manual
-   analysis shows most correct answers come from correct reasoning (~50%)
-   rather than lucky guesses (~8%), validating that CoT genuinely elicits
-   reasoning rather than exploiting superficial patterns.
+7. **推理链的质量比数量更重要。** 人工分析表明，大多数正确答案来自
+   正确的推理（约 50%）而非侥幸猜测（约 8%），验证了 CoT 确实是在
+   激发推理而非利用表面模式。
 
-8. **CoT's limitations directly motivated subsequent work.** The linearity
-   limitation led to Tree of Thoughts; the hallucination problem led to
-   ReAct's grounded actions; the single-path limitation led to Self-
-   Consistency's multi-path voting.
+8. **CoT 的局限性直接推动了后续工作。** 线性局限导致了 Tree of Thoughts；
+   幻觉问题导致了 ReAct 的基于实际的行动；单路径局限导致了
+   Self-Consistency 的多路径投票。

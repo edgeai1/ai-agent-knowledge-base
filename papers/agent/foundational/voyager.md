@@ -1,5 +1,5 @@
 ---
-title: "Voyager: An Open-Ended Embodied Agent with Large Language Models"
+title: "Voyager: An Open-Ended Embodied Agent with Large Language Models (Voyager：基于大语言模型的开放式具身智能体)"
 authors: Guanzhi Wang, Yuqi Xie, Yunfan Jiang, Ajay Mandlekar, Chaowei Xiao, Yuke Zhu, Linxi Fan, Anima Anandkumar
 venue: NeurIPS 2023 (Spotlight)
 year: 2023
@@ -8,96 +8,96 @@ tags: [embodied, lifelong-learning, skill-library, minecraft, code-generation, f
 status: done
 ---
 
-## TL;DR
+## 简述
 
-Voyager is the first LLM-powered lifelong learning agent in Minecraft that continuously explores, acquires diverse skills, and makes novel discoveries without human intervention, using an automatic curriculum, a skill library of executable code, and an iterative prompting mechanism for self-verified code generation.
+Voyager 是第一个在 Minecraft 中由大语言模型驱动的终身学习智能体，能够持续探索、获取多样化技能并做出新发现，无需人工干预，使用自动课程、可执行代码的技能库和用于自验证代码生成的迭代提示机制。
 
-## Motivation & Problem
+## 动机与问题
 
-Existing approaches to building agents in open-ended environments face fundamental limitations:
+现有的在开放式环境中构建智能体的方法面临根本性局限：
 
-1. **Reinforcement learning agents** (e.g., DreamerV3, DEPS) require extensive environment interaction, reward shaping, and struggle to generalize across the vast skill space of open-ended worlds like Minecraft.
-2. **LLM-based agents** at the time (e.g., ReAct, Inner Monologue) operated in a "one-shot" fashion -- they could plan and act but did not retain skills across episodes or build upon past successes.
-3. **No lifelong learning**: No prior system demonstrated an agent that could continuously expand its capabilities over time, composing earlier skills into more complex behaviors.
+1. **强化学习智能体**（例如 DreamerV3、DEPS）需要大量环境交互、奖励塑形，且难以在 Minecraft 等开放式世界的广阔技能空间中泛化。
+2. **基于大语言模型的智能体**在当时（例如 ReAct、Inner Monologue）以"单次"方式运作——它们可以规划和行动但不会在回合间保留技能或在过去成功的基础上构建。
+3. **无终身学习**：此前没有系统展示过一个能够随时间持续扩展其能力、将早期技能组合成更复杂行为的智能体。
 
-The key insight is that LLMs possess vast world knowledge (including knowledge about Minecraft) but lack the ability to: (a) systematically explore an environment, (b) convert experiences into reusable skills, and (c) compose skills hierarchically. Voyager addresses all three gaps.
+关键洞察是大语言模型拥有大量世界知识（包括关于 Minecraft 的知识），但缺乏以下能力：(a) 系统地探索环境，(b) 将经验转化为可重用技能，(c) 层级化地组合技能。Voyager 解决了这三个差距。
 
-## Method
+## 方法
 
-### System Architecture
+### 系统架构
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
 │                        VOYAGER                                │
 │                                                               │
 │  ┌─────────────────┐    ┌──────────────────────────────────┐ │
-│  │   Automatic      │    │    Iterative Prompting           │ │
-│  │   Curriculum     │    │    Mechanism                     │ │
+│  │   自动课程       │    │    迭代提示                      │ │
+│  │                  │    │    机制                          │ │
 │  │                  │    │                                  │ │
-│  │  Current state ──┼───►│  1. Generate code (GPT-4)       │ │
-│  │  Exploration     │    │  2. Execute in Minecraft         │ │
-│  │  progress        │    │  3. Get environment feedback     │ │
-│  │  Skill inventory │    │  4. Self-verify success          │ │
-│  │       │          │    │  5. Retry if failed (up to 4x)   │ │
-│  │       ▼          │    │         │                        │ │
-│  │  Propose next    │    │         ▼                        │ │
-│  │  task/goal       │    │  Success?                        │ │
-│  └─────────────────┘    │  ├─ Yes: Add to Skill Library    │ │
-│                          │  └─ No:  Refine or skip          │ │
+│  │  当前状态 ──────┼───►│  1. 生成代码 (GPT-4)             │ │
+│  │  探索进度       │    │  2. 在 Minecraft 中执行           │ │
+│  │  技能清单       │    │  3. 获取环境反馈                  │ │
+│  │       │          │    │  4. 自验证成功                   │ │
+│  │       ▼          │    │  5. 失败时重试（最多 4 次）      │ │
+│  │  提出下一个     │    │         │                        │ │
+│  │  任务/目标      │    │         ▼                        │ │
+│  └─────────────────┘    │  成功？                          │ │
+│                          │  ├─ 是: 加入技能库               │ │
+│                          │  └─ 否: 改进或跳过               │ │
 │                          └──────────────────────────────────┘ │
 │                                                               │
 │  ┌──────────────────────────────────────────────────────────┐ │
-│  │                   Skill Library                           │ │
+│  │                   技能库                                  │ │
 │  │                                                           │ │
 │  │  ┌────────┐  ┌────────┐  ┌────────┐  ┌────────┐         │ │
-│  │  │ mine   │  │ craft  │  │ build  │  │ combat │         │ │
-│  │  │ Wood   │  │ Planks │  │ House  │  │ Spider │  ...    │ │
+│  │  │ 采矿   │  │ 制作   │  │ 建造   │  │ 战斗   │         │ │
+│  │  │ 木头   │  │ 木板   │  │ 房屋   │  │ 蜘蛛   │  ...    │ │
 │  │  │ (JS)   │  │ (JS)   │  │ (JS)   │  │ (JS)   │         │ │
 │  │  └────────┘  └────────┘  └────────┘  └────────┘         │ │
 │  │                                                           │ │
-│  │  Indexed by: description embeddings (text-embedding-ada) │ │
-│  │  Retrieved via: cosine similarity to current task         │ │
+│  │  索引方式: 描述嵌入 (text-embedding-ada)                  │ │
+│  │  检索方式: 与当前任务的余弦相似度                         │ │
 │  └──────────────────────────────────────────────────────────┘ │
 └──────────────────────────────────────────────────────────────┘
 ```
 
-### Component 1: Automatic Curriculum
+### 组件 1：自动课程
 
-The curriculum module proposes tasks of appropriate difficulty based on the agent's current state. It uses GPT-4 with a prompt that includes:
+课程模块根据智能体的当前状态提出适当难度的任务。它使用 GPT-4 并在提示中包含：
 
-- **Current inventory**: Items the agent currently holds
-- **Current equipment**: What the agent is wearing/wielding
-- **Nearby blocks and entities**: Environmental context
-- **Current biome**: Desert, forest, ocean, etc.
-- **Completed tasks**: History of successfully completed tasks
-- **Failed tasks**: Tasks that were attempted but failed
+- **当前物品栏**：智能体当前持有的物品
+- **当前装备**：智能体正在穿戴/使用的物品
+- **附近方块和实体**：环境上下文
+- **当前生态群系**：沙漠、森林、海洋等
+- **已完成任务**：成功完成的任务历史
+- **失败任务**：尝试但失败的任务
 
-The LLM generates the next task to attempt, following principles:
-1. Tasks should be achievable given current resources and skill level
-2. Tasks should promote exploration and discovery of new items/areas
-3. Difficulty should gradually increase (curriculum learning)
-4. Tasks should be diverse -- not repeating the same type endlessly
+大语言模型生成下一个要尝试的任务，遵循以下原则：
+1. 任务应在给定当前资源和技能水平的情况下可实现
+2. 任务应促进探索和发现新物品/区域
+3. 难度应逐渐增加（课程学习）
+4. 任务应多样化——不要无尽重复同一类型
 
-Example curriculum progression:
+示例课程进展：
 ```
-1. "Mine 1 wood log"           (basic resource gathering)
-2. "Craft wooden planks"       (basic crafting)
-3. "Craft a crafting table"    (tool prerequisite)
-4. "Craft a wooden pickaxe"    (tool creation)
-5. "Mine 8 cobblestone"        (using new tool)
-6. "Craft a stone pickaxe"     (tool upgrade)
-7. "Mine iron ore"             (deeper mining)
-8. "Smelt iron ingot"          (processing)
-9. "Craft iron sword"          (combat preparation)
-10. "Defeat a zombie"          (combat)
+1. "采集 1 个木头原木"         （基本资源采集）
+2. "制作木板"                  （基本制作）
+3. "制作工作台"                （工具前置条件）
+4. "制作木镐"                  （工具创建）
+5. "采集 8 个圆石"             （使用新工具）
+6. "制作石镐"                  （工具升级）
+7. "采集铁矿石"               （深层采矿）
+8. "冶炼铁锭"                  （加工处理）
+9. "制作铁剑"                  （战斗准备）
+10. "击败一只僵尸"             （战斗）
 ...
 ```
 
-### Component 2: Skill Library
+### 组件 2：技能库
 
-The skill library is a persistent, growing collection of verified executable programs (JavaScript functions using the Mineflayer API for Minecraft).
+技能库是经过验证的可执行程序（使用 Minecraft 的 Mineflayer API 的 JavaScript 函数）的持久、不断增长的集合。
 
-**Skill structure**:
+**技能结构**：
 ```javascript
 // Skill: mineWoodLog
 // Description: Mine 1 wood log from a nearby tree
@@ -116,22 +116,22 @@ async function mineWoodLog(bot) {
 }
 ```
 
-**Storage and indexing**:
-- Each skill is stored as: `{code: string, description: string, embedding: vector}`
-- Descriptions are embedded using OpenAI text-embedding-ada-002
-- Skills are indexed in a vector database for retrieval
+**存储和索引**：
+- 每个技能存储为：`{code: string, description: string, embedding: vector}`
+- 描述使用 OpenAI text-embedding-ada-002 嵌入
+- 技能在向量数据库中索引以供检索
 
-**Retrieval process**:
-1. Given a new task, embed the task description
-2. Compute cosine similarity with all skill description embeddings
-3. Retrieve top-5 most relevant skills
-4. Include retrieved skill code in the prompt as examples/building blocks
+**检索过程**：
+1. 给定新任务，嵌入任务描述
+2. 计算与所有技能描述嵌入的余弦相似度
+3. 检索最相关的 top-5 技能
+4. 在提示中包含检索到的技能代码作为示例/构建块
 
-**Skill composition**: Later skills can call earlier skills. For example, `craftIronSword` might call `mineIronOre`, `smeltIronIngot`, and `craftOnCraftingTable` as sub-routines. This compositionality enables exponential growth in capability.
+**技能组合**：后来的技能可以调用早期技能。例如，`craftIronSword` 可能调用 `mineIronOre`、`smeltIronIngot` 和 `craftOnCraftingTable` 作为子程序。这种组合性使能力指数级增长。
 
-### Component 3: Iterative Prompting Mechanism
+### 组件 3：迭代提示机制
 
-The code generation and refinement loop is the core execution engine:
+代码生成和改进循环是核心执行引擎：
 
 ```
 Algorithm: Iterative Prompting for Skill Acquisition
@@ -160,171 +160,171 @@ Output: verified skill code or failure
 4. Return failure
 ```
 
-**Self-verification**: Rather than relying solely on hard-coded success criteria, Voyager uses GPT-4 to judge whether the task was completed. The LLM receives the task description, the execution feedback (inventory changes, errors, etc.), and decides if the goal was met. This allows flexible success criteria for open-ended tasks.
+**自验证**：Voyager 不仅依赖硬编码的成功标准，而是使用 GPT-4 判断任务是否完成。大语言模型接收任务描述、执行反馈（物品栏变化、错误等），并决定目标是否达成。这允许对开放式任务使用灵活的成功标准。
 
-**Environment feedback includes**:
-- JavaScript execution errors and stack traces
-- Changes in inventory (before vs. after)
-- Changes in nearby blocks/entities
-- Bot chat messages and health/hunger status
-- Minecraft game event logs
+**环境反馈包括**：
+- JavaScript 执行错误和堆栈跟踪
+- 物品栏变化（之前 vs. 之后）
+- 附近方块/实体的变化
+- 机器人聊天消息和生命值/饥饿值状态
+- Minecraft 游戏事件日志
 
-### Prompt Design
+### 提示设计
 
-The prompts are carefully structured with several sections:
+提示经过精心构建，包含几个部分：
 
-1. **System prompt**: Defines the agent as a Minecraft bot programmer
-2. **Code generation guidelines**: Formatting rules, API usage patterns, error handling requirements
-3. **Environment context**: Current game state
-4. **Retrieved skills**: Code examples from the skill library
-5. **Task specification**: What to accomplish
-6. **Previous feedback** (if retrying): Error messages and observations from failed attempts
+1. **系统提示**：将智能体定义为 Minecraft 机器人程序员
+2. **代码生成指南**：格式规则、API 使用模式、错误处理要求
+3. **环境上下文**：当前游戏状态
+4. **检索到的技能**：来自技能库的代码示例
+5. **任务规范**：要完成的目标
+6. **先前反馈**（如果重试）：来自失败尝试的错误消息和观察
 
-The Mineflayer API documentation is curated to include ~60 commonly used functions rather than the full API, reducing prompt length while covering most use cases.
+Mineflayer API 文档经过精选，包含约 60 个常用函数而非完整 API，在覆盖大多数用例的同时减少提示长度。
 
-## Key Innovations
+## 关键创新
 
-1. **Lifelong learning through code**: Skills are stored as executable code, enabling perfect recall and zero-cost reuse. Unlike neural skill policies that degrade, code-based skills are deterministic and composable.
-2. **Automatic curriculum with LLM world knowledge**: The curriculum leverages GPT-4's knowledge of Minecraft's tech tree and progression mechanics, eliminating the need for hand-designed reward functions.
-3. **Self-verification**: Using the LLM to judge task completion enables handling of open-ended, hard-to-specify goals.
-4. **Compositional skill growth**: Skills build on each other, enabling exponential capability expansion -- a key property missing from prior LLM agent work.
+1. **通过代码实现终身学习**：技能存储为可执行代码，实现完美回忆和零成本重用。与会退化的神经技能策略不同，基于代码的技能是确定性的且可组合的。
+2. **利用大语言模型世界知识的自动课程**：课程利用 GPT-4 对 Minecraft 技术树和进度机制的知识，消除了手工设计奖励函数的需要。
+3. **自验证**：使用大语言模型判断任务完成，使其能够处理开放式、难以明确指定的目标。
+4. **组合性技能增长**：技能相互构建，实现能力的指数级扩展——此前大语言模型智能体工作中缺失的关键属性。
 
-## Experimental Setup
+## 实验设置
 
-### Environment
-- **Minecraft** (Java Edition) via Mineflayer JavaScript API
-- Agents spawned in random survival worlds
-- No initial inventory, no creative mode advantages
-- Continuous open-ended play (no episode resets)
+### 环境
+- **Minecraft**（Java 版）通过 Mineflayer JavaScript API
+- 智能体在随机生存世界中生成
+- 无初始物品栏，无创造模式优势
+- 持续开放式游戏（无回合重置）
 
-### Baselines
-1. **ReAct** (Yao et al., 2023): Reasoning + acting framework, adapted for Minecraft
-2. **Reflexion** (Shinn et al., 2023): Self-reflection after failure, adapted for Minecraft
-3. **Auto-GPT**: General-purpose autonomous GPT agent, adapted for Minecraft
-4. **DEPS** (Wang et al., 2023): "Describe, Explain, Plan, Select" -- LLM-based planner with RL executor
-5. **Voyager w/o skill library**: Ablation without persistent skill storage
-6. **Voyager w/o curriculum**: Ablation with random task selection
-7. **Voyager w/o self-verification**: Ablation using only hard-coded success checks
+### 基线
+1. **ReAct** (Yao et al., 2023)：推理+行动框架，适配到 Minecraft
+2. **Reflexion** (Shinn et al., 2023)：失败后自反思，适配到 Minecraft
+3. **Auto-GPT**：通用自主 GPT 智能体，适配到 Minecraft
+4. **DEPS** (Wang et al., 2023)："描述、解释、规划、选择"——基于大语言模型的规划器配合强化学习执行器
+5. **Voyager 无技能库**：无持久技能存储的消融
+6. **Voyager 无课程**：使用随机任务选择的消融
+7. **Voyager 无自验证**：仅使用硬编码成功检查的消融
 
-### Evaluation Metrics
-1. **Unique items obtained**: Number of distinct items the agent obtains (out of ~400 in Minecraft)
-2. **Distance traveled**: Total blocks traversed (exploration metric)
-3. **Tech tree milestones**: Obtaining wooden tools, stone tools, iron tools, diamond tools
-4. **Milestone completion time**: How quickly key milestones are reached
-5. **Zero-shot generalization**: Performance on unseen tasks after skill accumulation
+### 评估指标
+1. **获取的唯一物品**：智能体获取的不同物品数量（Minecraft 中约 400 种）
+2. **旅行距离**：总共穿越的方块数（探索指标）
+3. **技术树里程碑**：获取木制工具、石制工具、铁制工具、钻石工具
+4. **里程碑完成时间**：达到关键里程碑的速度
+5. **零样本泛化**：技能积累后在未见任务上的表现
 
-### Model
-- **GPT-4** (gpt-4-0314) as the backbone LLM for all components
-- **text-embedding-ada-002** for skill library indexing
+### 模型
+- **GPT-4** (gpt-4-0314) 作为所有组件的骨干大语言模型
+- **text-embedding-ada-002** 用于技能库索引
 
-## Results
+## 结果
 
-### Unique Items Obtained (after 160 iterations)
+### 获取的唯一物品（160 次迭代后）
 
-| Method          | Unique Items | Relative to Voyager |
-|----------------|-------------|-------------------|
-| Voyager         | ~63         | 1.0x              |
-| Auto-GPT        | ~19         | 0.30x             |
-| ReAct           | ~18         | 0.29x             |
-| Reflexion        | ~20         | 0.32x             |
-| DEPS            | ~16         | 0.25x             |
+| 方法            | 唯一物品 | 相对 Voyager  |
+|----------------|---------|---------------|
+| Voyager         | ~63     | 1.0x          |
+| Auto-GPT        | ~19     | 0.30x         |
+| ReAct           | ~18     | 0.29x         |
+| Reflexion        | ~20     | 0.32x         |
+| DEPS            | ~16     | 0.25x         |
 
-Voyager obtains **3.3x more unique items** than the strongest baseline.
+Voyager 获取的唯一物品比最强基线**多 3.3 倍**。
 
-### Tech Tree Progression
+### 技术树进展
 
-| Milestone        | Voyager | ReAct | Reflexion | Auto-GPT |
-|-----------------|---------|-------|-----------|----------|
-| Wooden tools     | ~2 iter | ~5    | ~4        | ~6       |
-| Stone tools      | ~5 iter | ~20   | ~18       | ~25      |
-| Iron tools       | ~15 iter| ~50+  | ~50+      | ~50+     |
-| Diamond tools    | ~40 iter| Fail  | Fail      | Fail     |
+| 里程碑         | Voyager | ReAct | Reflexion | Auto-GPT |
+|---------------|---------|-------|-----------|----------|
+| 木制工具       | ~2 次   | ~5    | ~4        | ~6       |
+| 石制工具       | ~5 次   | ~20   | ~18       | ~25      |
+| 铁制工具       | ~15 次  | ~50+  | ~50+      | ~50+     |
+| 钻石工具       | ~40 次  | 失败  | 失败      | 失败     |
 
-Key finding: **Only Voyager unlocks diamond-level tools**. All baselines plateau at iron level or earlier.
+关键发现：**只有 Voyager 解锁了钻石级工具**。所有基线在铁级或更早阶段就停滞了。
 
-### Exploration (Distance Traveled)
+### 探索（旅行距离）
 
-Voyager traverses **2.3x longer distances** than baselines, demonstrating more effective exploration driven by the curriculum.
+Voyager 穿越的距离比基线**多 2.3 倍**，展示了由课程驱动的更有效探索。
 
-### Ablation Studies
+### 消融研究
 
-| Variant                  | Unique Items (160 iter) | Notes                           |
-|--------------------------|------------------------|---------------------------------|
-| Full Voyager             | ~63                    | All components                  |
-| w/o Skill Library        | ~42                    | 33% reduction; cannot reuse     |
-| w/o Automatic Curriculum | ~35                    | 44% reduction; random goals     |
-| w/o Self-Verification    | ~50                    | 20% reduction; noisy storage    |
+| 变体                     | 唯一物品（160 次迭代）| 备注                          |
+|--------------------------|----------------------|-------------------------------|
+| 完整 Voyager              | ~63                  | 所有组件                      |
+| 无技能库                  | ~42                  | 减少 33%；无法重用            |
+| 无自动课程                | ~35                  | 减少 44%；随机目标            |
+| 无自验证                  | ~50                  | 减少 20%；存储噪声大          |
 
-All three components contribute meaningfully, with the **automatic curriculum** having the largest impact and the **skill library** close behind.
+三个组件都有重要贡献，其中**自动课程**影响最大，**技能库**紧随其后。
 
-### Zero-Shot Generalization
+### 零样本泛化
 
-After pre-training with Voyager's accumulated skill library, the agent was tested on unseen tasks:
-- **Novel crafting tasks**: 80%+ success rate on crafting items not explicitly trained on
-- **Combat tasks**: Successfully defeated unseen mobs by composing combat + crafting skills
-- **Construction tasks**: Could build simple structures by composing block-placement skills
+使用 Voyager 积累的技能库预训练后，智能体在未见任务上进行了测试：
+- **新制作任务**：在未明确训练的物品制作上达到 80%+ 成功率
+- **战斗任务**：通过组合战斗+制作技能成功击败未见过的怪物
+- **建造任务**：通过组合方块放置技能建造简单结构
 
-Baselines without skill libraries achieved near-zero performance on these generalization tasks.
+没有技能库的基线在这些泛化任务上几乎为零表现。
 
-### Skill Library Growth
+### 技能库增长
 
-The skill library grows roughly linearly with iterations:
-- After 50 iterations: ~30 skills
-- After 100 iterations: ~55 skills
-- After 160 iterations: ~75 skills
+技能库随迭代近似线性增长：
+- 50 次迭代后：约 30 个技能
+- 100 次迭代后：约 55 个技能
+- 160 次迭代后：约 75 个技能
 
-Average skill length: ~15 lines of JavaScript code. Skills range from simple (3 lines for mining a single block) to complex (40+ lines for smelting workflows).
+平均技能长度：约 15 行 JavaScript 代码。技能范围从简单（3 行用于采集单个方块）到复杂（40+ 行用于冶炼工作流）。
 
-## Analysis & Insights
+## 分析与洞察
 
-1. **Code as memory**: The skill library is a form of procedural memory that is perfectly faithful, deterministic, and composable. This is a significant advantage over neural memory systems that suffer from catastrophic forgetting.
+1. **代码作为记忆**：技能库是一种完全忠实、确定性且可组合的程序记忆形式。相比遭受灾难性遗忘的神经记忆系统，这是一个重要优势。
 
-2. **World knowledge bootstrapping**: The automatic curriculum works because GPT-4 already knows the Minecraft tech tree, item dependencies, and gameplay progression. This is effectively transferring commonsense and domain knowledge from pre-training into an exploration policy.
+2. **世界知识引导**：自动课程有效是因为 GPT-4 已经知道 Minecraft 的技术树、物品依赖关系和游戏进度。这实际上是将预训练中的常识和领域知识转移到探索策略中。
 
-3. **Self-verification robustness**: The LLM-based self-verification is surprisingly accurate. It correctly identifies both successes and failures in ~90% of cases, handling nuanced situations like "I mined iron ore but it fell into lava" (failure despite mining action succeeding).
+3. **自验证的鲁棒性**：基于大语言模型的自验证出人意料地准确。它在约 90% 的情况下正确识别成功和失败，处理了诸如"我挖到了铁矿石但它掉进了岩浆"（尽管采矿动作成功但实际失败）的细微情况。
 
-4. **Error feedback is critical**: The iterative refinement loop converges faster when execution errors (stack traces, type errors) are included in the feedback. Most successful skills are generated within 2-3 iterations.
+4. **错误反馈至关重要**：当执行错误（堆栈跟踪、类型错误）包含在反馈中时，迭代改进循环收敛更快。大多数成功的技能在 2-3 次迭代内生成。
 
-5. **Emergent abstraction**: Without explicit instruction, the agent naturally creates utility functions that are reused across skills. For example, a `findAndGoTo(blockType)` helper emerges and is called by mining, crafting, and exploration skills.
+5. **涌现的抽象**：在没有明确指令的情况下，智能体自然创建了跨技能重用的实用函数。例如，一个 `findAndGoTo(blockType)` 助手出现并被采矿、制作和探索技能调用。
 
-6. **API knowledge matters**: The curated API documentation in the prompt is essential. Without it, GPT-4 generates plausible but incorrect Mineflayer API calls. This highlights the importance of grounding LLM code generation in actual API specifications.
+6. **API 知识至关重要**：提示中精选的 API 文档是必不可少的。没有它，GPT-4 会生成看似合理但不正确的 Mineflayer API 调用。这突出了将大语言模型代码生成接地到实际 API 规范的重要性。
 
-## Limitations & Critiques
+## 局限性与批评
 
-1. **GPT-4 dependency**: The entire system relies on GPT-4's world knowledge of Minecraft. For domains where the LLM has less pre-training exposure, the automatic curriculum and code generation quality would likely degrade significantly.
+1. **GPT-4 依赖**：整个系统依赖 GPT-4 对 Minecraft 的世界知识。对于大语言模型预训练暴露较少的领域，自动课程和代码生成质量可能会显著退化。
 
-2. **Cost**: Each iteration involves multiple GPT-4 calls (curriculum proposal, code generation, self-verification, potential retries). A 160-iteration run costs hundreds of dollars in API fees.
+2. **成本**：每次迭代涉及多次 GPT-4 调用（课程提议、代码生成、自验证、潜在重试）。160 次迭代的运行花费数百美元的 API 费用。
 
-3. **JavaScript-specific**: The skill library is tied to the Mineflayer JavaScript API. Transferring this approach to other environments requires a well-documented programmatic API, which many environments lack.
+3. **JavaScript 特定**：技能库与 Mineflayer JavaScript API 绑定。将此方法转移到其他环境需要有良好文档的编程 API，而许多环境缺乏此类 API。
 
-4. **No spatial reasoning**: The agent struggles with tasks requiring precise 3D spatial reasoning (e.g., building complex structures) because GPT-4 has limited spatial capabilities.
+4. **无空间推理**：智能体在需要精确 3D 空间推理的任务上挣扎（例如建造复杂结构），因为 GPT-4 的空间能力有限。
 
-5. **No multi-agent interaction**: Voyager operates as a single agent. It cannot cooperate with other agents or players, limiting its applicability to multiplayer scenarios.
+5. **无多智能体交互**：Voyager 作为单一智能体运作。无法与其他智能体或玩家合作，限制了其在多人场景中的适用性。
 
-6. **Fragile skill composition**: When composed skills fail due to environmental changes (e.g., a needed resource is no longer nearby), the error recovery is limited. The agent may retry the same failing approach rather than adapting.
+6. **脆弱的技能组合**：当组合技能因环境变化而失败时（例如所需资源不再在附近），错误恢复有限。智能体可能重试相同的失败方法而非适应。
 
-7. **Evaluation fairness**: Baselines like ReAct and Reflexion were designed for different settings (text games, QA) and adapted for Minecraft, potentially underrepresenting their capabilities. DEPS uses RL components that may need more training time.
+7. **评估公平性**：ReAct 和 Reflexion 等基线是为不同场景（文字游戏、问答）设计并适配到 Minecraft，可能低估了它们的能力。DEPS 使用的强化学习组件可能需要更多训练时间。
 
-8. **No continual model improvement**: The LLM itself does not learn from the agent's experiences. All improvement comes from the skill library accumulation, not from updating model weights.
+8. **无持续模型改进**：大语言模型本身不会从智能体的经验中学习。所有改进来自技能库积累，而非更新模型权重。
 
-## Follow-up Work
+## 后续工作
 
-- **GITM** (Zhu et al., 2023): "Ghost in the Minecraft" -- similar LLM-based Minecraft agent with hierarchical goal decomposition and text-based knowledge base.
-- **STEVE-1** (Lifshitz et al., 2023): Instruction-following agent in Minecraft using video pre-training, complementary approach (neural policy vs. code generation).
-- **Creative Agents** (Zhang et al., 2023): Extended code-as-skill to creative tasks beyond Minecraft.
-- **DEPS** (follow-up): Improved RL+LLM hybrid approaches citing Voyager's curriculum design.
-- **Skill library concept adopted by**: JARVIS-1 (Wang et al., 2023), CodeAct (Wang et al., 2024), and numerous agent frameworks that store executable procedures.
+- **GITM** (Zhu et al., 2023)："Ghost in the Minecraft"——类似的基于大语言模型的 Minecraft 智能体，具有层级目标分解和基于文本的知识库。
+- **STEVE-1** (Lifshitz et al., 2023)：使用视频预训练的 Minecraft 指令跟随智能体，互补方法（神经策略 vs. 代码生成）。
+- **Creative Agents** (Zhang et al., 2023)：将代码作为技能扩展到 Minecraft 之外的创意任务。
+- **DEPS**（后续）：改进的 RL+LLM 混合方法，引用了 Voyager 的课程设计。
+- **技能库概念被采用**：JARVIS-1 (Wang et al., 2023)、CodeAct (Wang et al., 2024) 以及众多存储可执行过程的智能体框架。
 
-## Key Takeaways
+## 核心要点
 
-1. **Code is the ideal skill representation** for LLM agents: it is executable, verifiable, composable, and perfectly reproducible. This insight has influenced the entire field of agent design.
-2. **LLM world knowledge can drive exploration**: The automatic curriculum demonstrates that pre-trained knowledge can substitute for reward engineering in open-ended environments.
-3. **Iterative refinement with environment feedback** is essential -- single-pass code generation is insufficient for complex tasks. The retry mechanism with error feedback dramatically improves success rates.
-4. **Lifelong learning is achievable** with LLM agents through persistent skill storage and retrieval, opening up possibilities for agents that grow more capable over time without retraining.
-5. The **skill library pattern** (write, verify, store, retrieve, compose) has become a standard component in modern agent architectures.
+1. **代码是大语言模型智能体的理想技能表示**：可执行、可验证、可组合且完全可重现。这一洞察影响了整个智能体设计领域。
+2. **大语言模型世界知识可以驱动探索**：自动课程展示了预训练知识可以替代开放式环境中的奖励工程。
+3. **带环境反馈的迭代改进**是必不可少的——单次代码生成不足以应对复杂任务。带错误反馈的重试机制显著提高了成功率。
+4. **终身学习**通过持久技能存储和检索在大语言模型智能体中是可实现的，为智能体随时间变得更强大而无需重新训练开辟了可能。
+5. **技能库模式**（编写、验证、存储、检索、组合）已成为现代智能体架构的标准组件。
 
-## Related
+## 相关
 
-- Skill library concept extends to: coding agents, tool creation
-- See: `concepts/agent_memory.md` (procedural memory)
-- See: `concepts/tool_use.md` (code as tools)
+- 技能库概念扩展到：编码智能体、工具创建
+- 参见：`concepts/agent_memory.md`（程序记忆）
+- 参见：`concepts/tool_use.md`（代码作为工具）

@@ -10,69 +10,54 @@ category: agent/multi_agent
 date_read: 2026-05-08
 ---
 
-# MetaGPT: Meta Programming for A Multi-Agent Collaborative Framework
+# MetaGPT：面向多智能体协作框架的元编程
 
-## TL;DR
+## 摘要
 
-MetaGPT encodes real-world Standardized Operating Procedures (SOPs) from software companies into a
-multi-agent framework where five specialized agents (Product Manager, Architect, Project Manager,
-Engineer, QA) collaborate through structured document artifacts via publish-subscribe communication.
-An executable feedback mechanism enables runtime debugging. Achieves 85.9%/87.7% Pass@1 on
-HumanEval/MBPP, and 3.75/4.00 executability on SoftwareDev (vs. ChatDev's 2.1 and AutoGPT's 1.0).
+MetaGPT 将软件公司中真实的标准化操作流程（SOP）编码到一个多智能体框架中，其中五个专业化智能体（产品经理、架构师、项目经理、工程师、质量保证）通过发布-订阅通信机制协作，传递结构化文档工件。可执行反馈机制支持运行时调试。在 HumanEval/MBPP 上分别达到 85.9%/87.7% 的 Pass@1，在 SoftwareDev 上的可执行性得分为 3.75/4.00（对比 ChatDev 的 2.1 和 AutoGPT 的 1.0）。
 
-## Motivation & Problem
+## 研究动机与问题
 
-1. **Cascading hallucination**: In unstructured multi-agent dialogue, errors propagate and amplify
-   across pipeline stages -- Agent A hallucinates, B builds on it, C implements the hallucination.
-2. **Role confusion**: Without clear responsibilities, agents duplicate work or produce misaligned outputs.
-3. **No quality gates**: Most frameworks lack intermediate verification before downstream propagation.
-4. **Inefficient communication**: Free-form chat wastes tokens with low-information-density text.
+1. **幻觉级联**：在非结构化多智能体对话中，错误在流水线各阶段间传播和放大——智能体 A 产生幻觉，B 在此基础上构建，C 将幻觉实现为代码。
+2. **角色混淆**：缺乏明确的职责分工时，智能体会重复工作或产出不一致的结果。
+3. **缺少质量门控**：大多数框架在向下游传播之前缺乏中间验证环节。
+4. **低效通信**：自由形式的聊天浪费大量 token，文本信息密度低。
 
-Core insight: **Human software teams communicate through structured artifacts (PRDs, design docs,
-API specs), not free-form chat. Encoding these SOPs constrains and focuses agent interactions.**
+核心洞察：**人类软件团队通过结构化工件（PRD、设计文档、API 规范）进行沟通，而非自由聊天。将这些 SOP 编码后，可以约束和聚焦智能体之间的交互。**
 
-## Method
+## 方法
 
-### SOP Encoding Mechanism
+### SOP 编码机制
 
 ```
-User Requirement --> Product Manager --> Architect --> Project Manager --> Engineer --> QA
-                      (PRD)             (System       (Task List)        (Code)       (Tests)
-                                         Design)
+用户需求 --> 产品经理 --> 架构师 --> 项目经理 --> 工程师 --> 质量保证
+              (PRD)       (系统       (任务列表)    (代码)     (测试)
+                           设计)
 ```
 
-Each role is encoded with: profile (name, role, goal, constraints), actions (specific operations),
-subscriptions (message types it listens to), and output schema (format requirements).
+每个角色的编码包含：个人资料（名称、角色、目标、约束）、动作（具体操作）、订阅（监听的消息类型）以及输出模式（格式要求）。
 
-### Role Definitions and Prompt Templates
+### 角色定义与提示模板
 
-**Product Manager**: Receives raw user requirements. Produces structured PRD containing:
-Original Requirements, Product Goals (3), User Stories, Competitive Analysis table,
-Requirements Analysis, Requirement Pool (P0/P1/P2 priority), UI Design Draft.
-Prompt: "Act as a professional product manager. Produce a structured PRD following template exactly."
+**产品经理**：接收原始用户需求。产出结构化 PRD，包含：原始需求、产品目标（3 个）、用户故事、竞品分析表、需求分析、需求池（P0/P1/P2 优先级）、UI 设计草案。
+提示："扮演专业产品经理。严格按照模板生成结构化 PRD。"
 
-**Architect**: Receives PRD. Produces system design with implementation approach (tech choices),
-file list with descriptions, data structures and interface definitions, program call flow
-(Mermaid sequence diagrams), class diagrams, and API specifications.
+**架构师**：接收 PRD。产出系统设计，包含实现方案（技术选型）、文件列表及说明、数据结构和接口定义、程序调用流程（Mermaid 序列图）、类图和 API 规范。
 
-**Project Manager**: Receives system design. Produces task list with required packages, file
-dependencies, full API spec per file, logic analysis per file, and task ordering with dependency graph.
+**项目经理**：接收系统设计。产出任务列表，包含所需依赖包、文件依赖关系、每个文件的完整 API 规范、逻辑分析以及带依赖图的任务排序。
 
-**Engineer**: Receives task list + design + PRD (all upstream artifacts). Generates code
-file-by-file in dependency order. Actions include WriteCode, WriteCodeReview, FixBug.
-Must conform to API specs from Architect. Prompt enforces PEP8, modularity, type hints.
+**工程师**：接收任务列表 + 设计 + PRD（所有上游工件）。按依赖顺序逐文件生成代码。动作包括 WriteCode、WriteCodeReview、FixBug。必须符合架构师的 API 规范。提示要求遵循 PEP8、模块化、类型标注。
 
-**QA Engineer**: Receives code + design + PRD. Writes comprehensive tests, runs them,
-reports bugs and inconsistencies with design document.
+**质量保证工程师**：接收代码 + 设计 + PRD。编写全面测试、运行测试、报告与设计文档不一致的缺陷。
 
-### Communication Protocol: Publish-Subscribe
+### 通信协议：发布-订阅
 
 ```
 +---------------------------------------------------------------+
-|                    SHARED MESSAGE POOL                         |
+|                    共享消息池                                    |
 | Message { sender, role, content, cause_by, sent_to }          |
 |                                                               |
-| Subscriptions:                                                |
+| 订阅关系:                                                      |
 |   ProductManager  <-- UserRequirement                         |
 |   Architect       <-- WritePRD output                         |
 |   ProjectManager  <-- WriteDesign output                      |
@@ -83,127 +68,118 @@ reports bugs and inconsistencies with design document.
 Algorithm:
   for each role R in topological_order(SOP_graph):
       inputs <- message_pool.get(R.subscriptions)
-      output <- R.act(inputs)              // LLM generates artifact
-      validate(output, R.output_schema)    // schema validation
-      message_pool.publish(output)         // add to shared pool
+      output <- R.act(inputs)              // LLM 生成工件
+      validate(output, R.output_schema)    // 模式验证
+      message_pool.publish(output)         // 添加到共享池
 ```
 
-Key properties: no direct agent-to-agent calls; role-based filtering reduces noise;
-document-centric (not conversational); schema validation before publishing; transparent audit trail.
+关键特性：无智能体间直接调用；基于角色的过滤降低噪声；以文档为中心（非对话式）；发布前进行模式验证；透明的审计追踪。
 
-### Executable Feedback Mechanism
+### 可执行反馈机制
 
 ```
 +--------+    code    +----------+   execute   +---------+
-|Engineer|----------->|Code Files|------------>| Runtime |
+|工程师  |----------->|代码文件  |------------>| 运行时  |
 +--------+            +----------+             +---------+
     ^                                              |
-    |         error messages (stderr)              |
+    |         错误信息 (stderr)                     |
     +----------------------------------------------+
-    (revision cycle until pass or max_retries)
+    (修订循环直到通过或达到最大重试次数)
 ```
 
-Runs generated code, catches runtime errors, provides actual error traces back to Engineer
-with full upstream context (PRD, design, task spec) for debugging. Contributes +4.2% on
-HumanEval and +5.4% on MBPP over the no-feedback version.
+运行生成的代码，捕获运行时错误，将实际错误追踪信息连同完整上游上下文（PRD、设计、任务规范）反馈给工程师进行调试。相比无反馈版本，在 HumanEval 上提升 +4.2%，在 MBPP 上提升 +5.4%。
 
-## Key Innovations
+## 关键创新
 
-1. **SOP-as-code**: First framework encoding human organizational SOPs into multi-agent pipelines.
-2. **Document-centric communication**: Structured artifacts replace dialogue, reducing hallucination.
-3. **Publish-subscribe architecture**: Decoupled, extensible communication model.
-4. **Executable feedback**: Runtime execution provides ground-truth error signals vs. LLM self-eval.
-5. **Meta-programming paradigm**: "Programming" the LLM with organizational knowledge.
+1. **SOP 即代码**：首个将人类组织 SOP 编码到多智能体流水线的框架。
+2. **以文档为中心的通信**：结构化工件取代对话，减少幻觉。
+3. **发布-订阅架构**：解耦、可扩展的通信模型。
+4. **可执行反馈**：运行时执行提供真实的错误信号，优于 LLM 自我评估。
+5. **元编程范式**：用组织知识对 LLM 进行"编程"。
 
-## Experimental Setup
+## 实验设置
 
-- **Models**: GPT-4 (primary), GPT-3.5-Turbo (ablation)
-- **Benchmarks**: HumanEval (164 problems), MBPP (427 problems), SoftwareDev (7 complex projects)
-- **Baselines**: ChatDev, AutoGPT, LangChain+REPL, AgentVerse, GPT-Engineer, raw GPT-4
+- **模型**：GPT-4（主要）、GPT-3.5-Turbo（消融实验）
+- **基准测试**：HumanEval（164 题）、MBPP（427 题）、SoftwareDev（7 个复杂项目）
+- **基线方法**：ChatDev、AutoGPT、LangChain+REPL、AgentVerse、GPT-Engineer、原始 GPT-4
 
-## Results
+## 结果
 
-### HumanEval and MBPP (Pass@1 %)
+### HumanEval 和 MBPP（Pass@1 %）
 
-| Method                | HumanEval | MBPP  |
+| 方法                  | HumanEval | MBPP  |
 |----------------------|-----------|-------|
-| GPT-4 (direct)       | 67.0      | --    |
+| GPT-4（直接）         | 67.0      | --    |
 | AutoGPT              | ~64.0     | --    |
 | ChatDev (GPT-3.5)    | 61.8      | 67.3  |
 | MetaGPT (GPT-3.5)    | 82.3      | 82.0  |
-| MetaGPT (no feedback)| 81.7      | 82.3  |
+| MetaGPT（无反馈）     | 81.7      | 82.3  |
 | **MetaGPT (GPT-4)**  | **85.9**  |**87.7**|
 
-GPT-3.5 with MetaGPT (82.3%) outperforms raw GPT-4 (67.0%) -- framework compensates for model gap.
+GPT-3.5 配合 MetaGPT（82.3%）超越原始 GPT-4（67.0%）——框架弥补了模型能力差距。
 
-### SoftwareDev Benchmark
+### SoftwareDev 基准测试
 
-| Metric                | AutoGPT | ChatDev | MetaGPT  |
+| 指标                  | AutoGPT | ChatDev | MetaGPT  |
 |------------------------|---------|---------|----------|
-| Executability (1-4)    | 1.0     | 2.1     | **3.75** |
-| Average Score (1-4)    | 1.0     | 2.1     | **3.9**  |
-| Lines of Code (avg)    | --      | ~80     | ~179     |
-| Running Time (sec)     | --      | ~600+   | ~503     |
+| 可执行性 (1-4)         | 1.0     | 2.1     | **3.75** |
+| 平均得分 (1-4)         | 1.0     | 2.1     | **3.9**  |
+| 代码行数（平均）       | --      | ~80     | ~179     |
+| 运行时间（秒）         | --      | ~600+   | ~503     |
 
-### Cost Analysis
+### 成本分析
 
-| Metric                     | MetaGPT  | ChatDev  | AgentCoder |
+| 指标                       | MetaGPT  | ChatDev  | AgentCoder |
 |----------------------------|----------|----------|------------|
-| Tokens per HumanEval task  | ~138.2K  | ~183.7K  | ~56.9K     |
-| Tokens per MBPP task       | ~206.5K  | ~259.3K  | ~66.3K     |
-| Tokens per line of code    | 50% fewer than ChatDev | baseline | -- |
+| 每个 HumanEval 任务的 token | ~138.2K  | ~183.7K  | ~56.9K     |
+| 每个 MBPP 任务的 token      | ~206.5K  | ~259.3K  | ~66.3K     |
+| 每行代码的 token            | 比 ChatDev 少 50% | 基线 | -- |
 
-MetaGPT generates 2.24x more code with fewer tokens per line, but per-task cost exceeds leaner
-approaches like AgentCoder (56.9K vs 138.2K).
+MetaGPT 生成 2.24 倍的代码量且每行 token 更少，但单任务成本高于 AgentCoder 等轻量级方法（56.9K vs 138.2K）。
 
-### Ablation: Impact of SOP Components
+### 消融实验：SOP 组件的影响
 
-| Configuration              | Executability (%) | Human Rating |
-|----------------------------|:-----------------:|:------------:|
-| Full MetaGPT               | 82                | 3.9          |
-| Without PRD stage          | 71                | 3.4          |
-| Without design doc stage   | 65                | 3.1          |
-| Without QA stage           | 76                | 3.6          |
-| Without schema validation  | 73                | 3.3          |
-| Free-form chat (no SOP)    | 52                | 2.6          |
+| 配置                       | 可执行性 (%) | 人工评分 |
+|----------------------------|:-----------:|:--------:|
+| 完整 MetaGPT               | 82          | 3.9      |
+| 移除 PRD 阶段              | 71          | 3.4      |
+| 移除设计文档阶段            | 65          | 3.1      |
+| 移除质量保证阶段            | 76          | 3.6      |
+| 移除模式验证               | 73          | 3.3      |
+| 自由聊天（无 SOP）          | 52          | 2.6      |
 
-Design doc removal causes largest drop (-17%), making architectural planning the highest-leverage
-intervention. Removing all structure drops below ChatDev levels.
+移除设计文档导致最大降幅（-17%），使架构规划成为杠杆效应最高的干预。移除所有结构后性能降至 ChatDev 以下。
 
-## Analysis & Insights
+## 分析与洞察
 
-1. **Structure prevents hallucination cascades**: Structured artifacts act as checkpoints;
-   hallucinations become explicit and catchable rather than implicit in conversation.
-2. **Document > dialogue**: Quality of intermediate artifacts (PRD, design) directly predicts
-   final code quality more than number of conversation turns.
-3. **Role specialization reduces cognitive load**: Decomposing into subtasks fits LLM reasoning
-   capacity better than one monolithic prompt.
-4. **Frameworks compensate for weaker models**: GPT-3.5 + MetaGPT > raw GPT-4 on HumanEval.
-5. **Cost-effectiveness of structure**: 25-30% token reduction vs. dialogue approaches despite
-   more comprehensive outputs.
+1. **结构防止幻觉级联**：结构化工件充当检查点；幻觉变得显式且可捕获，而非隐含在对话中。
+2. **文档优于对话**：中间工件（PRD、设计）的质量比对话轮次数更能预测最终代码质量。
+3. **角色专业化降低认知负担**：分解为子任务比单一庞大提示更适合 LLM 的推理能力。
+4. **框架弥补弱模型不足**：GPT-3.5 + MetaGPT > 原始 GPT-4（在 HumanEval 上）。
+5. **结构的性价比**：相比对话方式减少 25-30% 的 token 消耗，同时输出更全面。
 
-## Limitations & Critiques
+## 局限性与批评
 
-1. **Waterfall rigidity**: No support for iterative development or backtracking to earlier stages.
-2. **GPT-4 dependency**: Performance degrades significantly with weaker base models.
-3. **Limited project complexity**: SoftwareDev projects are simple; enterprise scaling unvalidated.
-4. **High per-task token cost**: 138K tokens/task is expensive vs. single-agent approaches.
-5. **No human-in-the-loop**: No mechanism for human review at intermediate stages.
-6. **Fixed role structure**: Five-role pipeline is hard-coded; real projects need variable teams.
-7. **Domain specificity**: Framework is specific to software development SOPs.
+1. **瀑布式的刚性**：不支持迭代开发或回溯到早期阶段。
+2. **依赖 GPT-4**：使用较弱基础模型时性能显著下降。
+3. **项目复杂度有限**：SoftwareDev 项目较简单；企业级扩展未经验证。
+4. **单任务 token 成本高**：138K token/任务相比单智能体方法成本较高。
+5. **缺少人机协作**：没有在中间阶段进行人工审查的机制。
+6. **固定角色结构**：五角色流水线是硬编码的；实际项目需要可变团队。
+7. **领域特定性**：框架仅针对软件开发 SOP。
 
-## Follow-up Work
+## 后续工作
 
-- **MetaGPT v2** (2024): Added iterative refinement and human-in-the-loop review.
-- **ChatDev** (Qian et al., 2023): Concurrent dialogue-based approach; MetaGPT proved more robust.
-- **AgentCoder** (2024): Leaner multi-agent coding at 56.9K tokens (vs. 138.2K).
-- **SWE-Agent** (2024): Strong single-agent results on SWE-bench questioning multi-agent necessity.
+- **MetaGPT v2**（2024）：增加了迭代优化和人机协作审查。
+- **ChatDev**（Qian et al., 2023）：并行的基于对话的方法；MetaGPT 证明更为稳健。
+- **AgentCoder**（2024）：更轻量的多智能体编程，56.9K token（对比 138.2K）。
+- **SWE-Agent**（2024）：在 SWE-bench 上的强单智能体结果质疑了多智能体的必要性。
 
-## Key Takeaways
+## 核心要点
 
-1. **SOPs transfer organizational knowledge** into agent systems effectively.
-2. **Structured artifacts are the key insight** -- documents over dialogue for reliability.
-3. **Verify with execution**: Ground-truth feedback > LLM self-evaluation (+4-5%).
-4. **Design docs are highest-leverage**: Largest ablation impact (-17%) from architecture stage.
-5. **Frameworks > raw models**: GPT-3.5 + MetaGPT outperforms raw GPT-4.
-6. **Multi-agent overhead must be justified** by quality gains; not always worth the cost.
+1. **SOP 有效地将组织知识传递**到智能体系统中。
+2. **结构化工件是关键洞察**——在可靠性方面，文档优于对话。
+3. **用执行来验证**：真实反馈 > LLM 自我评估（+4-5%）。
+4. **设计文档杠杆效应最大**：架构阶段的消融影响最大（-17%）。
+5. **框架 > 原始模型**：GPT-3.5 + MetaGPT 超越原始 GPT-4。
+6. **多智能体开销必须以质量提升为理由**；并非总是值得付出代价。

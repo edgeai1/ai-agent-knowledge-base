@@ -10,186 +10,186 @@ tags: [coding-agent, autonomous-software-engineering, commercial, SWE-bench, pro
 status: done
 ---
 
-## TL;DR
+## 摘要
 
-Devin is the first commercially launched autonomous AI software engineering agent, developed by Cognition AI and announced March 2024. It operates as a multi-agent system with five specialized agents (planner, shell, editor, browser, verifier) within a sandboxed compute environment, executing observe-plan-act loops across multi-hour sessions. Devin's initial SWE-bench score of 13.86% (7x the prior SOTA of 1.96%) defined the product category, though subsequent competitors -- particularly OpenHands -- have far surpassed this on benchmarks. Devin 2.0 improved to 45.8% on SWE-bench Verified, while the broader field advanced to 70%+ by early 2026.
+Devin 是首个商业化发布的自主 AI 软件工程智能体，由 Cognition AI 开发，于 2024 年 3 月发布。它作为包含五个专业化智能体（规划器、Shell、编辑器、浏览器、验证器）的多智能体系统在沙箱化计算环境中运行，执行跨多小时会话的观察-规划-行动循环。Devin 初始的 SWE-bench 得分 13.86%（7 倍于之前 SOTA 的 1.96%）定义了产品品类，尽管后续竞争者——特别是 OpenHands——在基准上已大幅超越。Devin 2.0 在 SWE-bench Verified 上提升到 45.8%，而更广泛的领域在 2026 年初已进展到 70% 以上。
 
-## Motivation & Problem
+## 研究动机与问题
 
-Before Devin, AI coding tools were primarily assistive -- code completion (Copilot), chat-based code generation (ChatGPT), or IDE-integrated suggestion engines. None attempted autonomous, end-to-end software engineering: taking a natural language description of a task and independently planning, coding, debugging, testing, and deploying a solution.
+在 Devin 之前，AI 编码工具主要是辅助性的——代码补全（Copilot）、基于聊天的代码生成（ChatGPT）或 IDE 集成的建议引擎。没有一个尝试自主的、端到端的软件工程：接受任务的自然语言描述，独立地规划、编码、调试、测试和部署解决方案。
 
-The fundamental problems Devin aimed to solve:
+Devin 旨在解决的根本问题：
 
-1. **Single-step vs. multi-step**: Existing tools generated code snippets but could not execute multi-step engineering workflows (read codebase -> understand context -> plan approach -> write code -> run tests -> debug failures -> iterate)
-2. **No environment interaction**: Code generation tools operated in a text-in/text-out paradigm without access to a real development environment (shell, file system, browser for documentation)
-3. **No error recovery**: When generated code failed tests, existing tools could not autonomously diagnose and fix the issue through iterative debugging
-4. **No context gathering**: Real software engineering requires reading documentation, exploring codebases, and searching for relevant information -- capabilities no existing tool provided autonomously
+1. **单步 vs. 多步**：现有工具生成代码片段但无法执行多步工程工作流（阅读代码库 -> 理解上下文 -> 规划方法 -> 编写代码 -> 运行测试 -> 调试失败 -> 迭代）
+2. **无环境交互**：代码生成工具在文本输入/输出范式中运行，无法访问真实开发环境（shell、文件系统、用于查看文档的浏览器）
+3. **无错误恢复**：当生成的代码未通过测试时，现有工具无法自主诊断和修复问题
+4. **无上下文收集**：真实的软件工程需要阅读文档、探索代码库和搜索相关信息——没有现有工具能自主提供这些能力
 
-## Method: Architecture
+## 方法：架构
 
-### Five-Agent Multi-Agent Architecture
+### 五智能体多智能体架构
 
-Devin operates as a multi-agent orchestration framework where specialized agents handle different aspects of software engineering. The architecture decomposes software engineering into five functional roles:
+Devin 作为多智能体编排框架运行，专业化智能体处理软件工程的不同方面。该架构将软件工程分解为五个功能角色：
 
-**1. Planning Agent (the "Architectural Brain")**
-- Receives a high-level task description (GitHub issue, feature request, bug report)
-- Decomposes the task into a step-by-step execution plan
-- Maps out the development path before any code is written
-- Generates and maintains an evolving plan that adapts as execution proceeds
-- In Devin 2.0: produces an interactive preliminary plan that users can review and modify before autonomous execution begins
+**1. 规划智能体（"架构大脑"）**
+- 接收高级任务描述（GitHub issue、功能请求、缺陷报告）
+- 将任务分解为逐步执行计划
+- 在编写任何代码之前规划开发路径
+- 生成并维护随执行而调整的演进计划
+- 在 Devin 2.0 中：生成用户可在自主执行开始前审查和修改的交互式初步计划
 
-**2. Shell Agent**
-- Executes bash commands within the sandboxed Ubuntu environment
-- Handles: dependency installation, build processes, running test suites, git operations, system configuration
-- Processes stdout/stderr output and feeds results back to the planning loop
-- Can execute complex multi-command workflows (piped commands, scripts, background processes)
+**2. Shell 智能体**
+- 在沙箱化 Ubuntu 环境中执行 bash 命令
+- 处理：依赖安装、构建过程、运行测试套件、git 操作、系统配置
+- 处理 stdout/stderr 输出并将结果反馈到规划循环
+- 可执行复杂的多命令工作流（管道命令、脚本、后台进程）
 
-**3. Editor Agent**
-- Reads, writes, and modifies code files in the workspace
-- Handles both new file creation and editing existing code
-- Understands file structure and can navigate large codebases
-- Applies targeted edits rather than rewriting entire files
+**3. 编辑器智能体**
+- 在工作区中读取、写入和修改代码文件
+- 处理新文件创建和现有代码编辑
+- 理解文件结构，可导航大型代码库
+- 应用定向编辑而非重写整个文件
 
-**4. Browser Agent**
-- Searches documentation and code examples when the agent needs external information
-- Navigates official documentation sites, Stack Overflow, GitHub repositories
-- Extracts relevant information and brings it back to the coding context
-- Activated when the agent encounters unfamiliar frameworks, APIs, or error messages
+**4. 浏览器智能体**
+- 当智能体需要外部信息时搜索文档和代码示例
+- 浏览官方文档网站、Stack Overflow、GitHub 仓库
+- 提取相关信息并带回编码上下文
+- 当智能体遇到不熟悉的框架、API 或错误消息时被激活
 
-**5. Verifier Agent**
-- Runs test suites and validates that changes work correctly
-- Analyzes test failures to diagnose issues
-- Triggers re-planning when tests fail, closing the feedback loop
-- Determines when the task is complete (stopping condition)
+**5. 验证器智能体**
+- 运行测试套件并验证更改是否正确工作
+- 分析测试失败以诊断问题
+- 测试失败时触发重新规划，闭合反馈循环
+- 确定任务何时完成（停止条件）
 
-### Operational Loop: Observe-Plan-Act
+### 运行循环：观察-规划-行动
 
-Devin operates in agentic loops across potentially multi-hour sessions:
+Devin 在可能跨多小时的会话中运行智能体循环：
 
 ```
 while not task_complete:
-    1. OBSERVE: gather context (read code, check test results, examine errors)
-    2. PLAN: update the execution plan based on current state
-    3. ACT: execute the next step (edit code, run command, search docs)
-    4. VERIFY: check if the action succeeded (run tests, examine output)
-    5. ADAPT: if verification fails, diagnose the issue and re-plan
+    1. 观察: 收集上下文（阅读代码、检查测试结果、检查错误）
+    2. 规划: 根据当前状态更新执行计划
+    3. 行动: 执行下一步（编辑代码、运行命令、搜索文档）
+    4. 验证: 检查动作是否成功（运行测试、检查输出）
+    5. 适应: 如果验证失败，诊断问题并重新规划
 ```
 
-Each loop iteration involves thousands of decisions. Devin can recall relevant context at every step, learn from within-session experience, and fix its own mistakes through iterative debugging.
+每次循环迭代涉及数千个决策。Devin 可以在每一步回忆相关上下文，从会话内经验中学习，并通过迭代调试修复自己的错误。
 
-### Sandboxed Compute Environment
+### 沙箱化计算环境
 
-- Devin operates within a sandboxed Docker container providing a full Linux environment
-- Equipped with: bash shell, code editor, web browser, file system access
-- Isolated from the host system for security
-- Persistent workspace across the entire session
-- Git integration for version control operations
+- Devin 在提供完整 Linux 环境的沙箱化 Docker 容器中运行
+- 配备：bash shell、代码编辑器、网络浏览器、文件系统访问
+- 与宿主系统隔离以确保安全
+- 整个会话中的持久工作区
+- Git 集成用于版本控制操作
 
-### Underlying Models: SWE Model Family
+### 底层模型：SWE 模型家族
 
-**SWE-1 (2024)**: Cognition's first internally developed coding model. Designed specifically for the multi-step reasoning and tool use required by autonomous software engineering agents. Powers both Devin and the Windsurf IDE.
+**SWE-1（2024）**：Cognition 首个内部开发的编码模型。专为自主软件工程智能体所需的多步推理和工具使用设计。为 Devin 和 Windsurf IDE 提供动力。
 
-**SWE-1.5 (October 2025)**: Frontier-scale model with hundreds of billions of parameters. Trained on a cluster of thousands of NVIDIA GB200 NVL72 chips. Partnership with Cerebras provides wafer-scale inference hardware for high token throughput, enabling the speed necessary for real-time autonomous coding. Scored 40.08% on SWE-Bench Pro.
+**SWE-1.5（2025 年 10 月）**：拥有数千亿参数的前沿规模模型。在包含数千个 NVIDIA GB200 NVL72 芯片的集群上训练。与 Cerebras 合作提供晶圆级推理硬件以实现高 token 吞吐量，提供实时自主编码所需的速度。在 SWE-Bench Pro 上得分 40.08%。
 
-## Key Innovations
+## 关键创新
 
-1. **Product category creation**: Devin defined "AI software engineer" as a product category, distinct from code completion tools or chat assistants
-2. **Multi-agent specialization**: Instead of a single monolithic model, Devin uses specialized agents for different engineering tasks, enabling more focused and effective behavior per subtask
-3. **Interactive planning (Devin 2.0)**: Users review and modify the plan before autonomous execution, combining human judgment with AI execution
-4. **Multi-hour autonomous sessions**: Can work on complex tasks for hours without human intervention, managing state and context across extended sessions
-5. **In-session learning**: Improves within a session by learning from failures and adapting approach
+1. **产品品类创建**：Devin 将"AI 软件工程师"定义为一个产品品类，区别于代码补全工具或聊天助手
+2. **多智能体专业化**：使用专业化智能体处理不同工程任务，而非单一整体模型，使每个子任务的行为更聚焦和有效
+3. **交互式规划（Devin 2.0）**：用户在自主执行前审查和修改计划，将人类判断与 AI 执行结合
+4. **多小时自主会话**：可以在数小时内无人干预地处理复杂任务，跨扩展会话管理状态和上下文
+5. **会话内学习**：通过从失败中学习和调整方法在会话内改进
 
-## SWE-bench Evolution: 13.86% -> 45.8%
+## SWE-bench 演进：13.86% -> 45.8%
 
-### The SWE-bench Trajectory
+### SWE-bench 发展轨迹
 
-| Date         | System          | SWE-bench Score  | Notes                                        |
-|--------------|-----------------|------------------|----------------------------------------------|
-| Pre-Devin    | Best baseline   | 1.96%            | Prior unassisted SOTA                        |
-| Mar 2024     | Devin 1.0       | **13.86%**       | 7x improvement; defined the category         |
-| Mar 2024     | Devin (w/ test) | 23.0%            | With access to final unit test               |
-| Late 2024    | Devin 2.0       | **45.8%**        | SWE-bench Verified; major architecture update|
-| Oct 2025     | SWE-1.5         | 40.08%           | SWE-Bench Pro (harder benchmark)             |
+| 日期          | 系统            | SWE-bench 得分  | 备注                                        |
+|--------------|-----------------|-----------------|----------------------------------------------|
+| Devin 之前    | 最佳基线        | 1.96%           | 之前的无辅助 SOTA                            |
+| 2024 年 3 月  | Devin 1.0       | **13.86%**      | 7 倍提升；定义了品类                          |
+| 2024 年 3 月  | Devin（带测试） | 23.0%           | 可访问最终单元测试                            |
+| 2024 年末     | Devin 2.0       | **45.8%**       | SWE-bench Verified；重大架构更新              |
+| 2025 年 10 月 | SWE-1.5         | 40.08%          | SWE-Bench Pro（更难的基准）                   |
 
-### Industry Context: The SWE-bench Race
+### 行业背景：SWE-bench 竞赛
 
-Devin's 13.86% sparked an intense competition. The benchmark leaderboard evolved rapidly:
+Devin 的 13.86% 引发了激烈竞争。基准排行榜快速演进：
 
-| Date          | Leading System                    | SWE-bench Verified |
+| 日期           | 领先系统                          | SWE-bench Verified |
 |---------------|-----------------------------------|--------------------|
-| Mar 2024      | Devin                             | 13.86%             |
-| Mid 2024      | SWE-Agent, AutoCodeRover          | ~20-25%            |
-| Late 2024     | OpenHands CodeAct 2.1             | 53%                |
-| Early 2025    | Claude 3.5 Sonnet + scaffolding   | ~49%               |
-| Mid 2025      | Claude 3.7 Sonnet systems         | ~55-65%            |
-| Early 2026    | Claude 4 + OpenHands              | **72%**            |
-| Early 2026    | Leading systems                   | **75%+**           |
+| 2024 年 3 月   | Devin                             | 13.86%             |
+| 2024 年中      | SWE-Agent, AutoCodeRover          | ~20-25%            |
+| 2024 年末      | OpenHands CodeAct 2.1             | 53%                |
+| 2025 年初      | Claude 3.5 Sonnet + 脚手架        | ~49%               |
+| 2025 年中      | Claude 3.7 Sonnet 系统            | ~55-65%            |
+| 2026 年初      | Claude 4 + OpenHands              | **72%**            |
+| 2026 年初      | 领先系统                          | **75%+**           |
 
-Devin's initial 13.86% was rapidly surpassed, but it catalyzed the entire field.
+Devin 最初的 13.86% 很快被超越，但它催化了整个领域。
 
-## Comparison with OpenHands
+## 与 OpenHands 的比较
 
-### Philosophical Differences
+### 理念差异
 
-| Dimension              | Devin                                    | OpenHands                               |
-|------------------------|------------------------------------------|-----------------------------------------|
-| **Model**              | Proprietary SWE-1/1.5 models             | Model-agnostic (Claude, GPT, etc.)      |
-| **Access**             | Commercial SaaS ($20/mo + per-ACU)       | Open-source (MIT license)               |
-| **Architecture**       | Multi-agent orchestration                | Event-stream + CodeAct agent            |
-| **Planning**           | Interactive human-in-the-loop            | Autonomous with optional human feedback |
-| **SWE-bench best**     | 45.8% (Verified)                         | 72% (Verified, with Claude 4)           |
-| **Extensibility**      | Closed platform                          | Open plugin/agent architecture          |
-| **Community**          | Commercial user base                     | 68K+ GitHub stars, 188+ contributors    |
+| 维度                  | Devin                                    | OpenHands                               |
+|----------------------|------------------------------------------|-----------------------------------------|
+| **模型**              | 专有 SWE-1/1.5 模型                      | 模型无关（Claude、GPT 等）               |
+| **访问**              | 商业 SaaS ($20/月 + 按 ACU 计费)          | 开源（MIT 许可证）                       |
+| **架构**              | 多智能体编排                              | 事件流 + CodeAct 智能体                  |
+| **规划**              | 交互式人机协作                            | 自主，可选人类反馈                       |
+| **SWE-bench 最佳**    | 45.8%（Verified）                         | 72%（Verified，使用 Claude 4）           |
+| **可扩展性**          | 封闭平台                                  | 开放的插件/智能体架构                    |
+| **社区**              | 商业用户群                                | 68K+ GitHub star，188+ 贡献者            |
 
-### Benchmark vs. Real-World Performance Gap
+### 基准 vs. 真实世界性能差距
 
-A critical insight from comparing Devin and OpenHands is the gap between benchmark and real-world performance:
+比较 Devin 和 OpenHands 的一个关键洞察是基准与真实世界性能之间的差距：
 
-- **SWE-bench** tests isolated bug fixes on well-defined open-source issues with clear test suites
-- **Real-world tasks** involve ambiguous requirements, complex codebases, CI/CD pipelines, deployment, and communication
-- **SWE-EVO benchmark** (2025) revealed this gap starkly: agents achieving 65% on SWE-bench Verified score only ~21% on SWE-EVO, which requires multi-file changes across an average of 21 files per task
-- Devin has invested more in real-world usability (interactive planning, Slack integration, team workflows), while OpenHands excels on benchmarks due to its flexibility in underlying model selection
+- **SWE-bench** 测试的是在定义清晰的开源 issue 上的独立缺陷修复，有明确的测试套件
+- **真实世界任务** 涉及模糊需求、复杂代码库、CI/CD 流水线、部署和沟通
+- **SWE-EVO 基准**（2025）尖锐地揭示了这一差距：在 SWE-bench Verified 上达到 65% 的智能体在 SWE-EVO 上仅得 ~21%，后者要求跨平均 21 个文件的多文件更改
+- Devin 在真实世界可用性方面投入更多（交互式规划、Slack 集成、团队工作流），而 OpenHands 由于底层模型选择的灵活性在基准上表现更优
 
-### SWE-bench Live: The Static vs. Dynamic Gap
+### SWE-bench Live：静态 vs. 动态差距
 
-SWE-bench Live (2025) tests agents on new, unseen issues in real-time, preventing contamination:
-- OpenHands with Claude 3.7 Sonnet: ~43% on SWE-bench Verified but only ~19.25% on SWE-bench Live
-- This ~24 percentage point drop highlights concerns about data contamination and overfitting to the static benchmark
+SWE-bench Live（2025）在实时的、新的、未见过的 issue 上测试智能体，防止数据污染：
+- OpenHands + Claude 3.7 Sonnet：在 SWE-bench Verified 上约 43%，但在 SWE-bench Live 上仅 ~19.25%
+- 这约 24 个百分点的下降凸显了对数据污染和过度拟合静态基准的担忧
 
-## Experimental Setup & Benchmarks
+## 实验设置与基准
 
-### Devin's Original SWE-bench Evaluation (March 2024)
+### Devin 的原始 SWE-bench 评估（2024 年 3 月）
 
-- **Benchmark**: SWE-bench (full set) -- 2,294 real-world GitHub issues from 12 Python repositories including Django, scikit-learn, Flask, and others
-- **Task**: Given an issue description and the repository, autonomously produce a patch that resolves the issue
-- **Evaluation**: The patch must pass the issue's associated test suite
-- **Result**: 13.86% of issues resolved (318 of 2,294) compared to prior best of 1.96%
-- **With test access**: When also given the final unit test alongside the problem statement, success increases to 23% (100 sampled)
+- **基准**：SWE-bench（完整集）—— 来自 12 个 Python 仓库（包括 Django、scikit-learn、Flask 等）的 2,294 个真实 GitHub issue
+- **任务**：给定 issue 描述和仓库，自主生成解决该 issue 的补丁
+- **评估**：补丁必须通过 issue 相关的测试套件
+- **结果**：13.86% 的 issue 被解决（2,294 中的 318），对比之前最佳的 1.96%
+- **带测试访问**：当同时提供最终单元测试和问题描述时，成功率提升到 23%（100 个采样）
 
-### Devin 2.0 Pricing Model
+### Devin 2.0 定价模型
 
-- Core plan: $20/month base + $2.25 per Agent Compute Unit (ACU)
-- Team plan: $20/month base + $2.00 per ACU
-- One hour of Devin's time costs approximately $8-9 in ACUs
-- Enterprise plans available with custom pricing
+- 核心计划：每月 $20 基础 + 每 ACU $2.25
+- 团队计划：每月 $20 基础 + 每 ACU $2.00
+- Devin 一小时的费用约 $8-9 的 ACU
+- 企业计划可自定义定价
 
-## Limitations
+## 局限性
 
-- **Closed source**: No ability to inspect, modify, or understand the underlying system; makes scientific evaluation and reproducibility impossible
-- **Benchmark-reality gap**: Strong benchmark numbers may not reflect real-world engineering capability; SWE-bench tasks are well-defined, whereas real tasks are ambiguous
-- **Cost**: At $8-9 per hour of compute, Devin is expensive for extended autonomous sessions; costs accumulate rapidly for complex tasks
-- **Latency**: Multi-hour sessions with thousands of model calls are slow compared to human developers for many tasks
-- **Vendor lock-in**: Proprietary platform with no portability; users cannot switch to alternative systems without losing workflow integration
-- **Limited transparency**: No published technical paper with reproducible methodology; claims rely on blog posts and marketing materials
-- **Scaling limitations**: Performance degrades on very large codebases or tasks requiring deep domain expertise
-- **Error compounding**: In long autonomous sessions, small errors early in the process can cascade into larger failures that are difficult to recover from
+- **闭源**：无法检查、修改或理解底层系统；使科学评估和可重现性成为不可能
+- **基准-现实差距**：强劲的基准数字可能无法反映真实世界的工程能力；SWE-bench 任务定义明确，而真实任务模糊
+- **成本**：每小时 $8-9 的计算成本，对于长时间自主会话来说昂贵；复杂任务的成本快速累积
+- **延迟**：包含数千次模型调用的多小时会话相比人类开发者在许多任务上更慢
+- **供应商锁定**：专有平台，无可移植性；用户无法在不失去工作流集成的情况下切换到替代系统
+- **透明度有限**：没有发表包含可重现方法论的技术论文；声明依赖博客文章和营销材料
+- **扩展限制**：在非常大的代码库或需要深层领域专业知识的任务上性能下降
+- **错误累积**：在长时间自主会话中，过程早期的小错误可能级联成更大的故障，难以恢复
 
-## Key Takeaways
+## 核心要点
 
-1. **Devin defined the product category** of "AI software engineer" -- a fully autonomous system with its own development environment, distinct from code completion or chat-based assistants. This framing catalyzed over $175M in Cognition AI funding and inspired numerous competitors.
-2. **The multi-agent architecture with specialized roles** (planner, shell, editor, browser, verifier) has proven effective and influenced subsequent systems. The observe-plan-act loop with verification is now the standard pattern for coding agents.
-3. **The SWE-bench trajectory from 1.96% to 75%+** over two years demonstrates explosive capability improvement in autonomous coding, though the real-world impact lags behind benchmark numbers.
-4. **Interactive planning (Devin 2.0)** represents an important design evolution: rather than fully autonomous execution, combining human judgment on the plan with AI execution on the implementation yields better practical results.
-5. **The benchmark vs. real-world gap is significant**: SWE-EVO and SWE-bench Live show that static benchmark performance substantially overstates real-world capability, with drops of 24-44 percentage points in more realistic settings.
-6. **Open-source competitors (OpenHands) have surpassed Devin on benchmarks** (72% vs. 45.8% on SWE-bench Verified), demonstrating that open, model-agnostic platforms with access to frontier models can outperform proprietary, vertically integrated solutions.
-7. **Cognition AI's strategic pivot** with SWE-1.5 and Devin 2.0 emphasizes real-world usability, interactive workflows, and team integration over raw benchmark scores -- a recognition that benchmark performance alone does not drive adoption.
+1. **Devin 定义了产品品类**——"AI 软件工程师"，一个拥有自己开发环境的完全自主系统，区别于代码补全或基于聊天的助手。这一定位为 Cognition AI 催化了超过 1.75 亿美元的融资并启发了众多竞争者。
+2. **带专业化角色的多智能体架构**（规划器、Shell、编辑器、浏览器、验证器）已被证明有效并影响了后续系统。带验证的观察-规划-行动循环现在是编码智能体的标准模式。
+3. **SWE-bench 从 1.96% 到 75%+ 的发展轨迹**（两年内）展示了自主编码能力的爆炸性增长，尽管真实世界影响落后于基准数字。
+4. **交互式规划（Devin 2.0）**代表了重要的设计演进：与完全自主执行不同，将人类对计划的判断与 AI 对实现的执行相结合产生更好的实际结果。
+5. **基准 vs. 真实世界差距显著**：SWE-EVO 和 SWE-bench Live 表明静态基准性能大幅高估了真实世界能力，在更现实的环境中下降 24-44 个百分点。
+6. **开源竞争者（OpenHands）在基准上已超越 Devin**（72% vs. 45.8%，在 SWE-bench Verified 上），表明拥有前沿模型访问权加上良好脚手架的开放、模型无关平台可以胜过专有的垂直整合解决方案。
+7. **Cognition AI 的战略转型**——SWE-1.5 和 Devin 2.0 强调真实世界可用性、交互式工作流和团队集成，而非原始基准分数——这是对基准性能本身不足以驱动采用的认识。

@@ -8,42 +8,42 @@ tags: [transformer, attention, architecture]
 status: done
 ---
 
-## TL;DR
+## 简要总结
 
-Proposes the Transformer architecture, replacing recurrence entirely with self-attention for sequence modeling.
+提出了 Transformer 架构，用自注意力机制完全取代循环结构进行序列建模。
 
-## Problem
+## 问题
 
-RNNs are inherently sequential, limiting parallelization and struggling with long-range dependencies.
+RNN 本质上是顺序的，限制了并行化能力，且难以处理长距离依赖关系。
 
-## Method
+## 方法
 
-- **Self-attention**: each position attends to all positions in the previous layer
-- **Multi-head attention**: run attention in parallel with different learned projections
-- **Positional encoding**: sinusoidal functions to inject sequence order
-- **Encoder-decoder structure**: 6 layers each, with cross-attention in decoder
+- **自注意力**：每个位置关注前一层中的所有位置
+- **多头注意力**：使用不同的学习投影并行运行注意力
+- **位置编码**：使用正弦函数注入序列顺序信息
+- **编码器-解码器结构**：各 6 层，解码器中包含交叉注意力
 
-## Results
+## 结果
 
-- BLEU 28.4 on EN-DE (WMT 2014), new SOTA
-- Trains significantly faster than RNN-based models
+- 在 WMT 2014 EN-DE 上 BLEU 28.4，刷新当时最优记录
+- 训练速度显著快于基于 RNN 的模型
 
-## Strengths
+## 优势
 
-- Fully parallelizable
-- Elegant and simple architecture
-- Became the foundation for nearly all modern LLMs
+- 完全可并行化
+- 架构优雅简洁
+- 成为几乎所有现代 LLM 的基础
 
-## Limitations
+## 局限性
 
-- Quadratic complexity in sequence length (O(n^2))
-- No inherent notion of position (needs positional encoding)
+- 序列长度的二次复杂度 (O(n^2))
+- 没有固有的位置概念（需要位置编码）
 
-## Related Work
+## 相关工作
 
-- See: `concepts/self_attention.md`
-- Follow-ups: BERT, GPT series, Vision Transformer
+- 参见：`concepts/self_attention.md`
+- 后续工作：BERT、GPT 系列、Vision Transformer
 
-## Notes
+## 笔记
 
-This paper is the foundation of modern AI. Almost everything in LLM/CV/multimodal traces back here.
+这篇论文是现代 AI 的基石。LLM/CV/多模态中几乎所有工作都追溯于此。

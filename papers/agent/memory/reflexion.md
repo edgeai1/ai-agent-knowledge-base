@@ -1,6 +1,6 @@
-# Reflexion: Language Agents with Verbal Reinforcement Learning
+# Reflexion：基于语言强化学习的语言智能体
 
-## Metadata
+## 元数据
 - **Title**: Reflexion: Language Agents with Verbal Reinforcement Learning
 - **Authors**: Noah Shinn, Federico Cassano, Ashwin Gopinath, Karthik R. Narasimhan, Shunyu Yao
 - **Venue**: NeurIPS 2023
@@ -11,83 +11,83 @@
 
 ---
 
-## TL;DR
+## 摘要
 
-Reflexion enables LLM agents to learn from failures by generating verbal self-reflections stored in an episodic memory buffer, achieving substantial improvements on sequential decision-making, coding, and reasoning tasks without any weight updates.
-
----
-
-## Motivation & Problem
-
-Traditional reinforcement learning requires expensive gradient-based optimization over massive numbers of environment interactions. LLM-based agents using techniques like ReAct can perform multi-step reasoning and acting, but they lack a mechanism to **learn from mistakes across trials**. When an agent fails at a task, it simply retries with no structured memory of what went wrong.
-
-Existing approaches either:
-1. **Fine-tune models** -- expensive, requires differentiable reward signals, and changes model capabilities globally.
-2. **Simple retry** -- re-runs the agent with no accumulated knowledge, relying on sampling variance.
-3. **Self-Refine** (Madaan et al., 2023) -- iterative refinement within a single generation episode, but no persistent memory across separate trial episodes.
-
-The core question: **Can an LLM agent improve its behavior over successive trials using only natural language feedback, without any parameter updates?**
-
-This connects to cognitive science concepts of metacognition and reflective practice -- humans improve through deliberate reflection on failures, not just repeated exposure.
+Reflexion 使 LLM 智能体能够通过生成存储在情景记忆缓冲区中的语言自我反思来从失败中学习，在顺序决策、编码和推理任务上取得了显著改进，且无需任何权重更新。
 
 ---
 
-## Method
+## 研究动机与问题
 
-### Core Architecture
+传统强化学习需要在大量环境交互中进行昂贵的基于梯度的优化。使用 ReAct 等技术的基于 LLM 的智能体可以执行多步推理和行动，但缺乏**跨试验从错误中学习**的机制。当智能体在任务上失败时，它只是在没有关于哪里出错的结构化记忆的情况下简单重试。
 
-Reflexion introduces three distinct components working in a trial loop:
+现有方法要么：
+1. **微调模型** —— 成本高，需要可微的奖励信号，且会全局改变模型能力。
+2. **简单重试** —— 无累积知识地重新运行智能体，依赖采样方差。
+3. **Self-Refine**（Madaan et al., 2023）—— 单次生成过程中的迭代优化，但跨独立试验没有持久记忆。
+
+核心问题：**LLM 智能体能否仅使用自然语言反馈在连续试验中改进其行为，而无需任何参数更新？**
+
+这与元认知和反思性实践的认知科学概念相关——人类通过对失败的刻意反思来改进，而非仅仅靠重复暴露。
+
+---
+
+## 方法
+
+### 核心架构
+
+Reflexion 引入三个独立组件在试验循环中协作：
 
 ```
 +------------------+     +------------------+     +-------------------+
 |                  |     |                  |     |                   |
-|   Actor Agent    |---->|   Evaluator      |---->|  Self-Reflection  |
-|  (LLM + ReAct)  |     | (heuristic/LLM)  |     |    Generator      |
+|   执行智能体      |---->|   评估器          |---->|  自我反思          |
+|  (LLM + ReAct)  |     | (启发式/LLM)      |     |    生成器          |
 |                  |     |                  |     |                   |
 +------------------+     +------------------+     +-------------------+
         ^                                                  |
         |                                                  |
         |            +---------------------+               |
-        +------------|  Episodic Memory    |<--------------+
-                     |  (reflection buffer)|
+        +------------|  情景记忆            |<--------------+
+                     |  (反思缓冲区)        |
                      +---------------------+
 ```
 
-1. **Actor**: An LLM-based agent (e.g., ReAct-style) that generates actions and interacts with an environment. At each trial, the actor receives the task description plus the episodic memory containing reflections from prior failed attempts.
+1. **执行者**：基于 LLM 的智能体（例如 ReAct 风格），生成动作并与环境交互。每次试验时，执行者接收任务描述加上包含先前失败尝试反思的情景记忆。
 
-2. **Evaluator**: Computes a scalar or binary reward signal after a trajectory is completed. Can be a heuristic function (exact match for QA, unit test pass/fail for code, task completion for AlfWorld) or an LLM-based evaluator.
+2. **评估器**：在轨迹完成后计算标量或二元奖励信号。可以是启发式函数（QA 的精确匹配、代码的单元测试通过/失败、AlfWorld 的任务完成）或基于 LLM 的评估器。
 
-3. **Self-Reflection Model**: An LLM that takes as input the failed trajectory, the reward signal, and the current memory, producing a natural language reflection describing what went wrong and how to improve.
+3. **自我反思模型**：一个 LLM，输入失败轨迹、奖励信号和当前记忆，产出描述哪里出错以及如何改进的自然语言反思。
 
-### Reflexion Algorithm -- Pseudocode
+### Reflexion 算法 -- 伪代码
 
 ```
 Algorithm: REFLEXION
 -------------------------------------------------------
-Input:  Environment E, Actor A (LLM agent),
-        Evaluator Eval, Self-Reflector SR,
-        Max trials T
-Output: Successful trajectory or best trajectory
+输入:  环境 E, 执行者 A (LLM 智能体),
+       评估器 Eval, 自我反思器 SR,
+       最大试验次数 T
+输出: 成功轨迹或最佳轨迹
 
-1:  mem <- []                              // episodic memory buffer
+1:  mem <- []                              // 情景记忆缓冲区
 2:  for t = 1 to T do
-3:      tau_t <- A.run(E, mem)             // execute actor with memory context
-4:      r_t   <- Eval(tau_t, E.ground_truth)  // evaluate trajectory
+3:      tau_t <- A.run(E, mem)             // 带记忆上下文执行
+4:      r_t   <- Eval(tau_t, E.ground_truth)  // 评估轨迹
 5:      if r_t == SUCCESS then
-6:          return tau_t                   // task solved, exit
+6:          return tau_t                   // 任务解决，退出
 7:      end if
-8:      sr_t  <- SR.reflect(tau_t, r_t, mem)  // generate verbal reflection
-9:      mem   <- mem + [sr_t]             // append to episodic memory
-10:     if |mem| > K then                 // sliding window (K=3 typical)
-11:         mem <- mem[-K:]               // keep most recent K reflections
+8:      sr_t  <- SR.reflect(tau_t, r_t, mem)  // 生成语言反思
+9:      mem   <- mem + [sr_t]             // 追加到情景记忆
+10:     if |mem| > K then                 // 滑动窗口 (K=3 典型值)
+11:         mem <- mem[-K:]               // 保留最近 K 条反思
 12:     end if
 13: end for
-14: return argmax_{tau_t} Eval(tau_t)     // return best trajectory
+14: return argmax_{tau_t} Eval(tau_t)     // 返回最佳轨迹
 ```
 
-### Self-Reflection Prompt Design
+### 自我反思提示设计
 
-The self-reflection prompt is structured to elicit both **diagnosis** and **prescription**:
+自我反思提示的结构旨在引出**诊断**和**处方**两部分：
 
 ```
 SYSTEM: You are an advanced reasoning agent that can improve
@@ -112,175 +112,172 @@ Previous trial:
 Reflection:
 ```
 
-Key design choices in the prompt:
-- Reflections are kept **concise** (2-3 sentences) to avoid context window bloat
-- The prompt explicitly requests both **diagnosis** (what went wrong) and **prescription** (what to do differently)
-- Prior reflections are included so the new reflection builds on accumulated understanding
-- Different prompt variants are used for different task types (QA, code, embodied)
+提示设计的关键选择：
+- 反思保持**简洁**（2-3 句），以避免上下文窗口膨胀
+- 提示明确要求**诊断**（哪里出错）和**处方**（下次怎么做）
+- 包含先前反思，使新反思建立在累积理解之上
+- 不同任务类型（QA、代码、具身）使用不同提示变体
 
-### Episodic Memory Buffer Implementation
+### 情景记忆缓冲区实现
 
-The buffer `mem` is a simple ordered list of reflection strings. At each new trial, buffer contents are injected into the actor's system prompt:
+缓冲区 `mem` 是一个简单的有序反思字符串列表。在每次新试验时，缓冲区内容被注入执行者的系统提示中：
 
 ```
-You have attempted this task before. Here are your reflections
-on previous attempts:
+你之前曾尝试过此任务。以下是你对之前尝试的反思：
 
-Trial 1: I searched for "population of France" but should have
-searched for "population of Paris" specifically. I need to
-decompose the question more carefully before searching.
+试验 1: 我搜索了"法国人口"但应该搜索"巴黎人口"。
+我需要在搜索之前更仔细地分解问题。
 
-Trial 2: I found the correct population but made an arithmetic
-error when computing the percentage. I should double-check all
-calculations before submitting my final answer.
+试验 2: 我找到了正确的人口数但在计算百分比时犯了
+算术错误。我应该在提交最终答案前仔细检查所有计算。
 
-Now attempt the task again, incorporating these insights.
+现在再次尝试任务，将这些洞察融入其中。
 ```
 
-The buffer uses a **sliding window** (K=3 typically) -- older reflections are discarded FIFO. This is both a practical constraint (context length) and an empirical finding (K=3 outperforms unbounded).
+缓冲区使用**滑动窗口**（通常 K=3）——较早的反思按 FIFO 丢弃。这既是实际约束（上下文长度），也是经验发现（K=3 优于无界）。
 
-### Task-Specific Adaptations
+### 任务特定适配
 
-- **AlfWorld**: Actor uses ReAct with action space {go to, open, take, put, use, look}. Evaluator is binary task completion. Reflections focus on action sequencing errors.
-- **HotPotQA**: Actor uses ReAct with Search/Lookup tools. Evaluator is exact match. Reflections address search strategy and reasoning chain errors.
-- **HumanEval**: Actor generates Python code. Evaluator runs unit tests and returns pass/fail plus stderr. Reflections incorporate specific error messages and failing test cases.
-
----
-
-## Key Innovations
-
-1. **Verbal reinforcement learning**: Replaces scalar reward signals with rich natural language reflections, enabling nuanced credit assignment (e.g., "I failed because I searched the wrong entity" vs. reward = 0).
-2. **Persistent episodic memory**: Unlike single-episode Self-Refine, reflections accumulate across completely separate trial episodes.
-3. **Decoupled evaluation and reflection**: The evaluator provides the binary/scalar signal; the reflector provides the explanation. This allows using cheap heuristic evaluators while still generating rich feedback.
-4. **No parameter updates**: All "learning" is in-context through the memory buffer, immediately applicable to any frozen LLM without fine-tuning infrastructure.
+- **AlfWorld**：执行者使用 ReAct，动作空间为 {go to, open, take, put, use, look}。评估器为二元任务完成。反思聚焦于动作序列错误。
+- **HotPotQA**：执行者使用 ReAct 配合 Search/Lookup 工具。评估器为精确匹配。反思针对搜索策略和推理链错误。
+- **HumanEval**：执行者生成 Python 代码。评估器运行单元测试并返回通过/失败加 stderr。反思包含具体错误信息和失败的测试用例。
 
 ---
 
-## Experimental Setup
+## 关键创新
 
-### Benchmarks and Configurations
-
-| Benchmark | Task Type | # Tasks | Agent Base | Evaluator | Max Trials |
-|-----------|-----------|---------|------------|-----------|------------|
-| AlfWorld  | Embodied decision-making (6 types) | 134 | ReAct | Heuristic (task success) | 12 |
-| HotPotQA  | Multi-hop QA | 100 | ReAct (CoT + Act) | Exact match | 7 |
-| HumanEval | Code generation (Python) | 164 | Direct generation | Unit tests (pass@1) | 11 |
-
-### Models Used
-- **Primary actor/reflector**: GPT-4, GPT-3.5-turbo
-- **Baselines**: ReAct (single trial), ReAct + simple retry, Chain of Hindsight, Self-Refine
-- **Ablation models**: text-davinci-003
+1. **语言强化学习**：用丰富的自然语言反思替代标量奖励信号，实现细粒度的归因分析（例如，"我失败是因为搜索了错误的实体"vs. reward = 0）。
+2. **持久情景记忆**：与单集 Self-Refine 不同，反思跨完全独立的试验集积累。
+3. **评估与反思解耦**：评估器提供二元/标量信号；反思器提供解释。这允许使用廉价的启发式评估器同时仍生成丰富反馈。
+4. **无参数更新**：所有"学习"通过记忆缓冲区在上下文中进行，可立即应用于任何冻结的 LLM，无需微调基础设施。
 
 ---
 
-## Results
+## 实验设置
 
-### AlfWorld (Embodied Decision-Making)
+### 基准测试与配置
 
-| Method | Success Rate (%) |
-|--------|:----------------:|
-| ReAct (1 trial) | 75 |
-| ReAct (retry, no reflection) | 85 |
-| Reflexion (trial 2) | 91 |
-| Reflexion (trial 3) | 94 |
-| **Reflexion (trial 12)** | **97** |
+| 基准      | 任务类型 | 任务数 | 智能体基础 | 评估器 | 最大试验数 |
+|-----------|---------|--------|-----------|--------|-----------|
+| AlfWorld  | 具身决策（6 种类型）| 134 | ReAct | 启发式（任务成功）| 12 |
+| HotPotQA  | 多跳问答 | 100 | ReAct (CoT + Act) | 精确匹配 | 7 |
+| HumanEval | 代码生成 (Python) | 164 | 直接生成 | 单元测试 (pass@1) | 11 |
+
+### 使用的模型
+- **主要执行者/反思器**：GPT-4、GPT-3.5-turbo
+- **基线**：ReAct（单次试验）、ReAct + 简单重试、Chain of Hindsight、Self-Refine
+- **消融模型**：text-davinci-003
+
+---
+
+## 结果
+
+### AlfWorld（具身决策）
+
+| 方法 | 成功率 (%) |
+|------|:----------:|
+| ReAct（1 次试验）| 75 |
+| ReAct（重试，无反思）| 85 |
+| Reflexion（试验 2）| 91 |
+| Reflexion（试验 3）| 94 |
+| **Reflexion（试验 12）** | **97** |
 | AdaPlanner | 94 |
 
-Per-task breakdown at convergence (trial 12):
-| Task Type | Success (%) | Avg Trials to Solve |
-|-----------|:-----------:|:-------------------:|
-| Pick      | 100         | 1.3                 |
-| Clean     | 95          | 2.1                 |
-| Heat      | 100         | 1.5                 |
-| Cool      | 100         | 1.8                 |
-| Examine   | 95          | 2.4                 |
-| Pick Two  | 92          | 3.2                 |
+收敛时（试验 12）的各任务分解：
+| 任务类型 | 成功率 (%) | 平均解决试验数 |
+|---------|:---------:|:-------------:|
+| Pick    | 100       | 1.3           |
+| Clean   | 95        | 2.1           |
+| Heat    | 100       | 1.5           |
+| Cool    | 100       | 1.8           |
+| Examine | 95        | 2.4           |
+| Pick Two| 92        | 3.2           |
 
-Most tasks converge within 3-4 trials. Remaining failures involve complex multi-object interactions in "Pick Two" tasks.
+大多数任务在 3-4 次试验内收敛。剩余失败涉及 "Pick Two" 任务中的复杂多对象交互。
 
-### HotPotQA (Multi-hop Reasoning)
+### HotPotQA（多跳推理）
 
-| Method | EM (%) |
-|--------|:------:|
-| CoT (1 trial) | 29 |
-| ReAct (1 trial) | 34 |
-| CoT + Reflexion (trial 2) | 47 |
-| CoT + Reflexion (trial 3) | 54 |
-| CoT + Reflexion (trial 5) | 63 |
-| **CoT + Reflexion (trial 7)** | **68** |
+| 方法 | EM (%) |
+|------|:------:|
+| CoT（1 次试验）| 29 |
+| ReAct（1 次试验）| 34 |
+| CoT + Reflexion（试验 2）| 47 |
+| CoT + Reflexion（试验 3）| 54 |
+| CoT + Reflexion（试验 5）| 63 |
+| **CoT + Reflexion（试验 7）** | **68** |
 | Chain-of-Hindsight | 43 |
 
-Convergence: ~80% of final improvement reached by trial 3. Diminishing returns after trial 5, with only 5 additional percentage points gained in trials 5-7.
+收敛：最终改进的约 80% 在试验 3 前达到。试验 5 后收益递减，试验 5-7 仅获得额外 5 个百分点。
 
-### HumanEval (Code Generation)
+### HumanEval（代码生成）
 
-| Method | Pass@1 (%) |
-|--------|:----------:|
-| GPT-4 (baseline, zero-shot) | 80.1 |
-| GPT-4 + simple retry | 83.5 |
+| 方法 | Pass@1 (%) |
+|------|:----------:|
+| GPT-4（基线，零样本）| 80.1 |
+| GPT-4 + 简单重试 | 83.5 |
 | GPT-4 + Self-Refine | 84.1 |
 | **GPT-4 + Reflexion** | **91.0** |
-| GPT-3.5 (baseline) | 48.1 |
+| GPT-3.5（基线）| 48.1 |
 | GPT-3.5 + Reflexion | 68.1 |
 | CodeT (GPT-3.5) | 65.8 |
 
-Code tasks benefit most from Reflexion because unit test stderr provides highly informative evaluator feedback (stack traces, assertion errors, type errors).
+代码任务从 Reflexion 中受益最大，因为单元测试 stderr 提供了高信息量的评估器反馈（堆栈追踪、断言错误、类型错误）。
 
-### Ablation: Memory Buffer Size
+### 消融实验：记忆缓冲区大小
 
-| Configuration | HotPotQA EM (%) | HumanEval Pass@1 (%) |
-|---------------|:---------------:|:--------------------:|
-| Full Reflexion (K=3) | 68 | 91.0 |
-| No reflection (retry only) | 43 | 83.5 |
-| Reflection, no memory (K=0, single-trial refinement) | 51 | 86.2 |
-| K=1 (last reflection only) | 62 | 89.0 |
-| K=3 (last 3 reflections) | **68** | **91.0** |
-| Unbounded (all reflections) | 66 | 90.5 |
+| 配置 | HotPotQA EM (%) | HumanEval Pass@1 (%) |
+|------|:---------------:|:--------------------:|
+| 完整 Reflexion (K=3) | 68 | 91.0 |
+| 无反思（仅重试）| 43 | 83.5 |
+| 反思但无记忆（K=0，单次优化）| 51 | 86.2 |
+| K=1（仅最近一条反思）| 62 | 89.0 |
+| K=3（最近 3 条反思）| **68** | **91.0** |
+| 无界（所有反思）| 66 | 90.5 |
 
-K=3 is optimal. Unbounded memory causes slight degradation likely due to context pollution with stale, potentially contradictory reflections.
-
----
-
-## Analysis & Insights
-
-1. **Reflection quality > quantity**: The K=3 window outperforming unbounded memory shows that concise, relevant, recent reflections are more valuable than exhaustive history.
-
-2. **Failure mode taxonomy**: Reflections implicitly categorize failures -- search strategy errors, reasoning errors, hallucination, action sequencing -- enabling targeted corrections in subsequent trials.
-
-3. **Evaluator informativeness drives improvement**: Reflexion gains are largest for code (unit test feedback >> binary success), moderate for QA (exact match reveals wrong answers), and smallest where feedback is least informative.
-
-4. **Diminishing returns**: ~80% of total improvement is achieved in the first 2-3 trials across all benchmarks, indicating easy failures are corrected first while harder structural issues persist.
-
-5. **Not true learning**: Since no weights are updated, "learning" is bounded by context length and resets for every new task. Each task starts with an empty buffer.
+K=3 为最优。无界记忆导致轻微下降，可能由于过时的、潜在矛盾的反思造成上下文污染。
 
 ---
 
-## Limitations & Critiques
+## 分析与洞察
 
-1. **No cross-task transfer**: Reflections are task-specific. The agent cannot learn a general principle (e.g., "always decompose multi-hop questions") and carry it to new tasks.
-2. **Inference cost**: Each trial requires full actor inference + reflection generation. 7 HotPotQA trials = ~14x single-trial cost.
-3. **Evaluator dependency**: Quality of reflections is bottlenecked by evaluator informativeness. Binary signals yield vague reflections; rich error messages yield actionable ones.
-4. **Reflection hallucination**: The self-reflection model can produce plausible but incorrect diagnoses, sending the actor down wrong paths. No verification mechanism exists.
-5. **Episodic structure required**: Reflexion assumes clean trial-reset-retry structure; it does not naturally apply to open-ended, continuous agent operation.
-6. **Context window constraints**: The K=3 sliding window is a practical compromise, not necessarily optimal. Longer-context models might enable richer memory.
+1. **反思质量 > 数量**：K=3 窗口优于无界记忆，说明简洁、相关、近期的反思比穷尽历史更有价值。
 
----
+2. **失败模式分类**：反思隐式地对失败进行分类——搜索策略错误、推理错误、幻觉、动作序列错误——使后续试验能进行针对性修正。
 
-## Follow-up Work
+3. **评估器信息量驱动改进**：Reflexion 的收益与评估器反馈丰富度成正比：代码最大（单元测试反馈 >> 二元成功），QA 中等（精确匹配揭示错误答案），反馈信息最少时收益最小。
 
-- **Retroformer** (Yao et al., 2023): Fine-tunes a retrospective model to generate better reflections over time.
-- **LATS** (Zhou et al., 2023): Combines reflection with Monte Carlo Tree Search for structured exploration.
-- **ExpeL** (Zhao et al., 2023): Extracts cross-task generalizable insights from experience, addressing the no-transfer limitation.
-- **Self-Discover** (Zhou et al., 2024): Uses self-reflection to discover task-specific reasoning structures.
-- **Coding agents** (SWE-Agent, Devin, OpenHands): The reflection paradigm is widely adopted where unit test feedback provides natural evaluator signals.
-- **Reflexion + long-context**: With models supporting 128K+ tokens, the sliding window constraint may be relaxed in future work.
+4. **收益递减**：在所有基准上，约 80% 的总改进在前 2-3 次试验中实现，表明简单失败先被修正，而更难的结构性问题持续存在。
+
+5. **非真正的学习**：由于没有权重更新，"学习"受上下文长度限制，并且每个新任务都重置。每个任务以空缓冲区开始。
 
 ---
 
-## Key Takeaways
+## 局限性与批评
 
-1. Natural language self-reflection is a powerful alternative to scalar rewards for in-context agent learning -- "verbal RL."
-2. A small sliding window of recent reflections (K=3) outperforms both single-reflection and unbounded memory accumulation.
-3. The approach is most effective when evaluator feedback is rich and structured (code >> QA >> embodied).
-4. Reflexion achieves 91.0% pass@1 on HumanEval and 97% on AlfWorld, demonstrating broad applicability.
-5. The key engineering decision is **reflection prompt design** -- the quality of the self-reflection prompt directly determines the quality of accumulated experience.
+1. **无跨任务迁移**：反思是任务特定的。智能体无法学习通用原则（例如，"总是分解多跳问题"）并将其迁移到新任务。
+2. **推理成本**：每次试验需要完整的执行者推理 + 反思生成。7 次 HotPotQA 试验 = 约 14 倍单次试验成本。
+3. **评估器依赖**：反思质量受限于评估器信息量。二元信号产生模糊反思；丰富的错误信息产生可操作的反思。
+4. **反思幻觉**：自我反思模型可能产生看似合理但不正确的诊断，将执行者引向错误方向。不存在验证机制。
+5. **需要情景结构**：Reflexion 假设干净的试验-重置-重试结构；不自然适用于开放式、持续的智能体操作。
+6. **上下文窗口约束**：K=3 滑动窗口是实用妥协，未必最优。更长上下文模型可能支持更丰富的记忆。
+
+---
+
+## 后续工作
+
+- **Retroformer**（Yao et al., 2023）：微调回顾模型以随时间生成更好的反思。
+- **LATS**（Zhou et al., 2023）：将反思与蒙特卡罗树搜索结合进行结构化探索。
+- **ExpeL**（Zhao et al., 2023）：从经验中提取跨任务可泛化的洞察，解决无迁移的限制。
+- **Self-Discover**（Zhou et al., 2024）：使用自我反思发现任务特定的推理结构。
+- **编码智能体**（SWE-Agent、Devin、OpenHands）：反思范式在单元测试反馈提供自然评估器信号的场景中被广泛采用。
+- **Reflexion + 长上下文**：随着模型支持 128K+ token，滑动窗口约束在未来工作中可能被放宽。
+
+---
+
+## 核心要点
+
+1. 自然语言自我反思是标量奖励的强大替代方案，用于上下文内的智能体学习——即"语言强化学习"。
+2. 近期反思的小滑动窗口（K=3）优于单次反思和无界记忆积累。
+3. 该方法在评估器反馈丰富且结构化时最有效（代码 >> QA >> 具身）。
+4. Reflexion 在 HumanEval 上达到 91.0% pass@1，在 AlfWorld 上达到 97%，展示了广泛的适用性。
+5. 关键工程决策是**反思提示设计**——自我反思提示的质量直接决定了累积经验的质量。

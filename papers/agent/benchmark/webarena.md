@@ -11,216 +11,216 @@ tags: [benchmark, web-agent, autonomous-agents, gui, evaluation, self-hosted]
 status: done
 ---
 
-## TL;DR
+## 简要总结
 
-A realistic, self-hosted web environment comprising four fully functional web applications (e-commerce, social forum, code repository, content management) plus utility tools, with 812 long-horizon tasks and a functional correctness evaluation framework. The best GPT-4 agent achieves only 14.41% task success, compared to 78.24% for humans -- a 63.83 percentage point gap that exposes fundamental limitations in current LLM-based agents for realistic web interaction.
+一个真实的自托管网络环境，包含四个功能完整的网络应用（电商、社交论坛、代码仓库、内容管理）以及实用工具，提供 812 个长周期任务和功能正确性评估框架。最佳 GPT-4 智能体仅达到 14.41% 的任务成功率，而人类达到 78.24% -- 63.83 个百分点的差距暴露了当前基于 LLM 的智能体在真实网络交互中的根本性局限。
 
-## Motivation & Problem
+## 动机与问题
 
-Prior web agent benchmarks suffered from critical limitations that made them poor proxies for real-world web interaction:
+此前的网络智能体基准测试存在关键局限性，使其难以成为真实网络交互的有效代理：
 
-1. **Simplified environments**: MiniWoB/MiniWoB++ used toy web pages with isolated widgets (click a button, fill a form) that do not represent real web complexity. These environments lack the depth of real applications -- no multi-page flows, no user accounts, no persistent state.
-2. **Static datasets**: Pre-recorded HTML snapshots cannot capture dynamic web interactions (AJAX, state changes, multi-page flows). Agents trained on static HTML never learn to handle the interactive, stateful nature of real websites.
-3. **Narrow task scope**: Most benchmarks test single-step actions rather than multi-step, goal-directed workflows that humans routinely perform on the web.
-4. **No reproducibility**: Benchmarks relying on live websites break as sites update their UI, making longitudinal comparison impossible. Different research groups evaluating at different times get different results.
-5. **Unrealistic evaluation**: Simple action matching (did the agent click the right element?) rather than functional correctness (did the task actually get done?). An agent that clicks all the right buttons but fills in wrong data would still pass action-matching evaluation.
+1. **简化的环境**：MiniWoB/MiniWoB++ 使用带有独立组件（点击按钮、填写表单）的玩具网页，无法代表真实的网络复杂性。这些环境缺乏真实应用的深度 -- 没有多页面流程、没有用户账户、没有持久状态。
+2. **静态数据集**：预录制的 HTML 快照无法捕捉动态网络交互（AJAX、状态变化、多页面流程）。在静态 HTML 上训练的智能体永远无法学会处理真实网站的交互式、有状态特性。
+3. **狭窄的任务范围**：大多数基准测试测试单步操作，而非人类在网络上日常执行的多步骤、目标导向的工作流程。
+4. **不可复现**：依赖实时网站的基准测试会随着网站 UI 更新而失效，使纵向比较不可能。不同研究团队在不同时间评估会得到不同结果。
+5. **不真实的评估**：简单的动作匹配（智能体是否点击了正确的元素？）而非功能正确性（任务是否真正完成？）。一个点击了所有正确按钮但填入了错误数据的智能体仍然会通过动作匹配评估。
 
-Real web tasks require multi-step planning across pages, understanding complex UI layouts, managing state across interactions (login, cart, form data), adapting to dynamic content, and reasoning about when a task is complete. WebArena addresses all of these by providing a self-hosted, reproducible, realistic web environment with functional correctness evaluation.
+真实的网络任务需要跨页面的多步骤规划、理解复杂的 UI 布局、管理跨交互的状态（登录、购物车、表单数据）、适应动态内容、以及判断任务何时完成。WebArena 通过提供自托管、可复现、真实的网络环境和功能正确性评估来解决所有这些问题。
 
-## Method
+## 方法
 
-### Environment Architecture: Four Self-Hosted Web Applications
+### 环境架构：四个自托管网络应用
 
-The environment comprises four fully operational, self-hosted web applications, each representing a distinct domain prevalent on the internet. All applications run inside Docker containers, making the entire environment reproducible and self-contained.
+该环境包含四个功能完整的自托管网络应用，每个代表互联网上一个不同的常见领域。所有应用运行在 Docker 容器中，使整个环境可复现且自包含。
 
-**1. OneStopShop (E-commerce) -- built on Adobe Magento**
-- Full-featured e-commerce platform stocked with approximately 90,000 products across more than 300 categories
-- Products include realistic prices, options, descriptions, images, and customer reviews
-- Complete shopping workflows: browse, search, filter, add to cart, checkout, order management
-- User account management with order history, wishlists, and address book
-- Admin/CMS backend for store management (product catalog, orders, customers, reporting)
-- Domain analog: Amazon, eBay, or any major online retailer
+**1. OneStopShop（电商）-- 基于 Adobe Magento 构建**
+- 功能完整的电商平台，库存约 90,000 件产品，跨 300 多个类别
+- 产品包含真实的价格、选项、描述、图片和客户评论
+- 完整的购物流程：浏览、搜索、筛选、加入购物车、结账、订单管理
+- 用户账户管理，包含订单历史、愿望单和地址簿
+- 后台管理/CMS 用于商店管理（产品目录、订单、客户、报表）
+- 类比领域：Amazon、eBay 或任何主要在线零售商
 
-**2. Postmill (Reddit-like Social Forum)**
-- Open-source Reddit alternative seeded with data from the top 50 subreddits
-- 95 active communities, over 127,000 posts, and more than 661,000 user accounts
-- Full social interaction: search threads, post comments, upvote/downvote content, manage profiles
-- Community moderation features, user settings, notification management
-- Domain analog: Reddit, HackerNews, or any discussion forum
+**2. Postmill（类 Reddit 社交论坛）**
+- 开源 Reddit 替代品，使用来自前 50 个子版块的数据填充
+- 95 个活跃社区，超过 127,000 篇帖子和超过 661,000 个用户账户
+- 完整的社交交互：搜索帖子、发表评论、点赞/点踩内容、管理个人资料
+- 社区管理功能、用户设置、通知管理
+- 类比领域：Reddit、HackerNews 或任何讨论论坛
 
-**3. GitLab (Collaborative Software Development)**
-- Self-hosted GitLab Community Edition instance
-- Populated with 300 repositories and over 1,000 user accounts
-- Repositories span multiple programming languages with realistic issues and merge requests
-- Full development workflows: code browsing, issue tracking, merge request management, CI/CD pipelines, wiki pages
-- Domain analog: GitHub, GitLab, Bitbucket
+**3. GitLab（协作软件开发）**
+- 自托管的 GitLab 社区版实例
+- 填充了 300 个仓库和超过 1,000 个用户账户
+- 仓库涵盖多种编程语言，包含真实的 Issue 和合并请求
+- 完整的开发工作流程：代码浏览、Issue 跟踪、合并请求管理、CI/CD 流水线、Wiki 页面
+- 类比领域：GitHub、GitLab、Bitbucket
 
-**4. Wikipedia Map and Knowledge Tools**
-- Map service powered by OpenStreetMap covering the northeastern United States
-- Allows agents to search for points of interest (restaurants, institutions, geographic locations)
-- Wikipedia knowledge base for general information retrieval
-- Calculator for arithmetic and computational support
-- Scratchpad for persistent note-taking and intermediate results
+**4. Wikipedia 地图和知识工具**
+- 由 OpenStreetMap 驱动的地图服务，覆盖美国东北部
+- 允许智能体搜索兴趣点（餐厅、机构、地理位置）
+- Wikipedia 知识库用于通用信息检索
+- 计算器用于算术和计算支持
+- 便签本用于持久笔记和中间结果
 
-### Task Design Methodology
+### 任务设计方法
 
-**Template-based task generation:**
-1. Human experts designed 241 task templates with natural language intents
-2. Each template was instantiated with an average of 3.3 variations (different parameters, contexts, target data)
-3. Total: **812 task instances** covering realistic web interaction patterns
+**基于模板的任务生成：**
+1. 人类专家设计了 241 个带有自然语言意图的任务模板
+2. 每个模板平均实例化 3.3 个变体（不同参数、上下文、目标数据）
+3. 总计：**812 个任务实例**，覆盖真实的网络交互模式
 
-**Task categories by intent type:**
+**按意图类型分类的任务：**
 
-| Category              | Description                               | Example                                                       |
+| 类别              | 描述                                    | 示例                                                          |
 |-----------------------|-------------------------------------------|---------------------------------------------------------------|
-| Information Seeking   | Find and report specific information       | "What is the top-rated product in Electronics?"                |
-| Site Navigation       | Navigate to a specific page or state       | "Go to the merge request #42 in project X"                    |
-| Content/Config Mgmt   | Modify content or settings                | "Change the status of order #1234 to shipped"                  |
-| Multi-site Tasks      | Require information from multiple apps     | "Find Reddit posts about the cheapest laptop on OneStopShop"   |
+| 信息检索         | 查找并报告特定信息                        | "电子产品中评分最高的产品是什么？"                               |
+| 网站导航         | 导航到特定页面或状态                      | "转到项目 X 中的合并请求 #42"                                   |
+| 内容/配置管理    | 修改内容或设置                            | "将订单 #1234 的状态更改为已发货"                               |
+| 多站点任务       | 需要来自多个应用的信息                    | "在 Reddit 上找到关于 OneStopShop 最便宜笔记本电脑的帖子"        |
 
-**Task complexity:**
-- Average trajectory length: 5-15 actions per task
-- Some tasks require 20+ sequential actions
-- Multi-site tasks require switching between applications and synthesizing cross-app information
-- Natural language intents emulate abstract, high-level instructions (how humans actually describe web tasks)
+**任务复杂度：**
+- 平均轨迹长度：每个任务 5-15 个动作
+- 部分任务需要 20+ 个连续动作
+- 多站点任务需要在应用之间切换并综合跨应用信息
+- 自然语言意图模拟了抽象的、高层次的指令（人类实际描述网络任务的方式）
 
-### Observation Space
+### 观察空间
 
-Agents receive multiple observation modalities:
-1. **URL**: Current page URL providing navigation context
-2. **DOM / Accessibility Tree**: Structured representation of page elements with IDs, types, text content
-3. **Browser Screenshots**: Visual rendering of the current page state
-4. **Tab Context**: Information about open browser tabs
+智能体接收多种观察模态：
+1. **URL**：当前页面 URL，提供导航上下文
+2. **DOM / 可访问性树**：页面元素的结构化表示，包含 ID、类型、文本内容
+3. **浏览器截图**：当前页面状态的视觉渲染
+4. **标签页上下文**：关于打开的浏览器标签页的信息
 
-### Action Space
+### 动作空间
 
-Actions fall into three categories:
-- **Elemental Operations**: click(element_id), hover(element_id), type(element_id, text), press(key_combination)
-- **Tab Management**: new_tab(), close_tab(), switch_tab(tab_id)
-- **URL Navigation**: goto(url), go_back(), go_forward()
-- **Special**: stop(answer) -- terminate with answer for information-seeking tasks
+动作分为三类：
+- **基本操作**：click(element_id)、hover(element_id)、type(element_id, text)、press(key_combination)
+- **标签页管理**：new_tab()、close_tab()、switch_tab(tab_id)
+- **URL 导航**：goto(url)、go_back()、go_forward()
+- **特殊动作**：stop(answer) -- 对信息检索任务以答案终止
 
-Element selection supports two grounding modes: element ID (from accessibility tree) and coordinate-based (x, y) position.
+元素选择支持两种定位模式：元素 ID（来自可访问性树）和基于坐标的 (x, y) 位置。
 
-### Evaluation Framework: Functional Correctness
+### 评估框架：功能正确性
 
-WebArena introduces a principled evaluation framework that checks whether the task was actually completed, not just whether the agent took the right actions:
+WebArena 引入了一个原则性的评估框架，检查任务是否真正完成，而不仅仅是智能体是否采取了正确的动作：
 
-**r_info (Information-seeking tasks):**
-- Compares agent's reported answer against reference answer
-- Uses exact_match and must_include string comparison
-- Tests: did the agent extract the correct information?
+**r_info（信息检索任务）：**
+- 将智能体报告的答案与参考答案进行比较
+- 使用 exact_match 和 must_include 字符串比较
+- 测试：智能体是否提取了正确的信息？
 
-**r_prog (Programmatic state checking):**
-- Executes validation scripts that query the application state after agent execution
-- Verifies that correct state changes were made (e.g., order status changed in the database)
-- Tests: did the agent actually modify the right data?
+**r_prog（程序化状态检查）：**
+- 在智能体执行后运行验证脚本查询应用状态
+- 验证是否做出了正确的状态变更（例如，数据库中的订单状态是否已更改）
+- 测试：智能体是否真正修改了正确的数据？
 
-Both evaluations yield binary results (0 or 1) -- no partial credit. This strict evaluation ensures that only fully correct task completions count as successes.
+两种评估均产生二元结果（0 或 1）-- 没有部分评分。这种严格的评估确保只有完全正确的任务完成才算成功。
 
-## Key Innovations
+## 关键创新
 
-1. **Self-hosted, reproducible environment**: All web applications run in Docker containers, ensuring consistent evaluation across time and researchers. No dependency on live websites.
-2. **Realistic application complexity**: Full-featured web apps with hundreds of pages, realistic data populations (90K products, 127K posts, 300 repos), not toy widgets.
-3. **Functional correctness evaluation**: Programmatic state checking rather than action sequence matching -- the first web benchmark to evaluate whether tasks were actually completed.
-4. **Multi-site tasks**: Tasks that span multiple applications, requiring cross-app reasoning and information synthesis.
-5. **Template-based task generation**: Enables systematic variation while maintaining quality control through expert-designed templates.
-6. **Multiple observation modalities**: Supports both text-based (DOM/accessibility tree) and visual (screenshot) agents, enabling fair comparison across paradigms.
+1. **自托管、可复现的环境**：所有网络应用运行在 Docker 容器中，确保跨时间和研究者的一致评估。不依赖于实时网站。
+2. **真实的应用复杂性**：功能完整的网络应用，拥有数百个页面、真实的数据量（9 万件产品、12.7 万篇帖子、300 个仓库），不是玩具组件。
+3. **功能正确性评估**：程序化状态检查而非动作序列匹配 -- 首个评估任务是否真正完成的网络基准测试。
+4. **多站点任务**：跨多个应用的任务，需要跨应用推理和信息综合。
+5. **基于模板的任务生成**：通过专家设计的模板实现系统化变体，同时保持质量控制。
+6. **多种观察模态**：支持基于文本的（DOM/可访问性树）和视觉的（截图）智能体，实现跨范式的公平比较。
 
-## Experimental Setup
+## 实验设置
 
-### Agent Architectures Tested
+### 测试的智能体架构
 
-**1. Direct Agent:**
-- Receives observation, directly predicts next action with no explicit reasoning step
-- Prompt structure: instruction + observation -> action
+**1. 直接智能体：**
+- 接收观察，直接预测下一个动作，没有显式推理步骤
+- 提示结构：指令 + 观察 -> 动作
 
-**2. Reasoning Agent (CoT/ReAct):**
-- Performs chain-of-thought reasoning before each action
-- Explicitly states what it observes, what it plans, and why
-- Prompt structure: instruction + observation -> thought + action
+**2. 推理智能体（CoT/ReAct）：**
+- 在每个动作前进行思维链推理
+- 明确陈述观察到什么、计划什么、为什么
+- 提示结构：指令 + 观察 -> 思考 + 动作
 
-### Models Evaluated
-- GPT-4 (primary, strongest model at time of publication)
-- GPT-3.5-turbo (comparison baseline)
-- Text-only and multimodal configurations
-- With and without chain-of-thought prompting
+### 评估模型
+- GPT-4（主要，发表时最强模型）
+- GPT-3.5-turbo（比较基线）
+- 纯文本和多模态配置
+- 有无思维链提示
 
-## Results
+## 结果
 
-### Main Results (Task Success Rate %)
+### 主要结果（任务成功率 %）
 
-| Agent Configuration         | Success Rate (%) |
+| 智能体配置                    | 成功率 (%)  |
 |-----------------------------|-----------------|
-| Human Performance           | **78.24**       |
-| GPT-4 (CoT, best config)   | **14.41**       |
-| GPT-4 (Direct)             | 10.59           |
-| GPT-3.5 (CoT)              | 6.30            |
-| GPT-3.5 (Direct)           | 4.89            |
+| 人类表现                     | **78.24**       |
+| GPT-4（CoT，最佳配置）       | **14.41**       |
+| GPT-4（直接）                | 10.59           |
+| GPT-3.5（CoT）               | 6.30            |
+| GPT-3.5（直接）              | 4.89            |
 
-### Results by Application Domain
+### 按应用领域的结果
 
-| Domain          | GPT-4 CoT (%) | Human (%) |
+| 领域            | GPT-4 CoT (%) | 人类 (%)  |
 |-----------------|---------------|-----------|
 | OneStopShop     | ~12           | ~78       |
 | Reddit          | ~15           | ~80       |
 | GitLab          | ~16           | ~76       |
 | CMS             | ~14           | ~79       |
 
-### Results by Task Type
+### 按任务类型的结果
 
-| Task Type              | GPT-4 CoT (%) |
+| 任务类型               | GPT-4 CoT (%) |
 |------------------------|---------------|
-| Information Seeking    | ~18           |
-| Site Navigation        | ~15           |
-| Content/Config Mgmt   | ~10           |
-| Multi-site             | ~8            |
+| 信息检索               | ~18           |
+| 网站导航               | ~15           |
+| 内容/配置管理          | ~10           |
+| 多站点                 | ~8            |
 
-Multi-site tasks (requiring cross-application reasoning) are the hardest, with agents failing to synthesize information from multiple sources.
+多站点任务（需要跨应用推理）是最难的，智能体无法综合来自多个来源的信息。
 
-### Human vs. Agent Gap Analysis
+### 人类与智能体差距分析
 
-The **63.83 percentage point gap** (78.24% - 14.41%) is driven by several fundamental capability deficits:
+**63.83 个百分点的差距**（78.24% - 14.41%）由几个根本性的能力缺陷驱动：
 
-1. **Long-horizon planning**: Agents lose track of multi-step goals after 5+ actions; they lack the ability to maintain a coherent plan across many steps
-2. **Error recovery**: Agents rarely backtrack or correct mistakes; humans naturally retry failed actions and explore alternative paths
-3. **Common sense reasoning**: Agents struggle with implicit task requirements (e.g., "find the cheapest" requires comparing prices across multiple items)
-4. **UI understanding**: Agents misinterpret complex layouts (tables, nested menus, dynamic content, modal dialogs)
-5. **State tracking**: Agents forget what they have already done or seen across multiple pages, leading to repeated actions or missed steps
-6. **Active exploration**: Agents do not proactively explore the interface to discover relevant features or information
+1. **长周期规划**：智能体在 5+ 个动作后失去对多步骤目标的跟踪；它们缺乏在多个步骤中维持连贯计划的能力
+2. **错误恢复**：智能体很少回溯或纠正错误；人类自然地重试失败的动作并探索替代路径
+3. **常识推理**：智能体在隐含的任务要求上挣扎（例如，"找最便宜的"需要比较多个商品的价格）
+4. **UI 理解**：智能体误解复杂布局（表格、嵌套菜单、动态内容、模态对话框）
+5. **状态跟踪**：智能体忘记在多个页面上已经做了什么或看到了什么，导致重复动作或遗漏步骤
+6. **主动探索**：智能体不会主动探索界面以发现相关功能或信息
 
-### Key Analytical Findings
+### 关键分析发现
 
-- **CoT helps modestly**: Reasoning agents (14.41%) consistently outperform direct agents (10.59%), suggesting explicit planning is valuable but insufficient
-- **Observation modality**: Text-based (DOM) representations slightly outperform screenshots for the models tested, though this advantage may narrow with better vision models
-- **Failure cascading**: A single wrong action early in a trajectory often leads to irrecoverable states, making early-step accuracy critical
-- **The evaluation bar is high**: Binary success/fail with no partial credit means agents get zero reward for partial task completion
+- **CoT 有适度帮助**：推理智能体 (14.41%) 始终优于直接智能体 (10.59%)，表明显式规划有价值但不足以解决问题
+- **观察模态**：对于测试的模型，基于文本的（DOM）表示略优于截图，尽管这一优势可能随着更好的视觉模型而缩小
+- **失败级联**：轨迹早期的一个错误动作通常导致不可恢复的状态，使早期步骤的准确性至关重要
+- **评估标准很高**：没有部分评分的二元成功/失败意味着智能体对部分任务完成没有任何奖励
 
-## Limitations
+## 局限性
 
-- **English-only**: All tasks and web content in English; no multilingual evaluation
-- **Four domains only**: Does not cover all web interaction patterns (e.g., banking, healthcare, government services, social media like Twitter/Instagram)
-- **Static data population**: Pre-populated databases may not capture the full variability of real web data distributions
-- **No adversarial robustness**: Does not test agent behavior on malicious, deceptive, or misleading web content
-- **Binary evaluation**: No partial credit for agents that complete some steps correctly but fail at the final step
-- **Cost prohibitive**: Running the full benchmark with GPT-4 is expensive, limiting accessibility for academic researchers
-- **Template artifacts**: Templated tasks may have linguistic patterns that agents can exploit without genuine understanding
+- **仅限英语**：所有任务和网络内容均为英语；无多语言评估
+- **仅四个领域**：不涵盖所有网络交互模式（例如银行、医疗、政府服务、类 Twitter/Instagram 的社交媒体）
+- **静态数据填充**：预填充的数据库可能无法捕捉真实网络数据分布的全部变异性
+- **无对抗鲁棒性**：不测试智能体在恶意、欺骗或误导性网络内容上的行为
+- **二元评估**：对完成了部分步骤但在最后一步失败的智能体没有部分评分
+- **成本高昂**：使用 GPT-4 运行完整基准测试费用昂贵，限制了学术研究者的可及性
+- **模板痕迹**：模板化任务可能存在语言模式，智能体可以在没有真正理解的情况下利用这些模式
 
-## Follow-up Work
+## 后续工作
 
-- **VisualWebArena (2024)**: Extends WebArena to require multimodal visual reasoning
-- **WebArena-Verified**: Curated subset with higher-quality task specifications and verified evaluations
-- **WorkArena**: Extension to enterprise applications (ServiceNow)
-- **WebChoreArena**: Focuses on realistic, tedious web tasks
-- **AssistantBench**: Tests web agents on broader assistant-style tasks
-- **Mind2Web**: Complementary benchmark focused on diverse real websites with different evaluation methodology
-- Leaderboard progression: Best agents now exceed 50% on WebArena (as of 2025-2026), demonstrating significant research progress driven by this benchmark
+- **VisualWebArena (2024)**：扩展 WebArena 以要求多模态视觉推理
+- **WebArena-Verified**：经过策划的子集，具有更高质量的任务规范和经验证的评估
+- **WorkArena**：扩展到企业应用（ServiceNow）
+- **WebChoreArena**：专注于真实的、繁琐的网络任务
+- **AssistantBench**：测试网络智能体在更广泛的助手式任务上的表现
+- **Mind2Web**：互补的基准测试，专注于多样化的真实网站，采用不同的评估方法
+- 排行榜进展：截至 2025-2026 年，最佳智能体在 WebArena 上已超过 50%，展示了由该基准测试推动的重大研究进展
 
-## Key Takeaways
+## 核心要点
 
-1. Realistic web environments expose a fundamental capability gap that simplified benchmarks completely miss: agents score 14% vs. humans at 78%, a gap invisible in toy benchmarks like MiniWoB++
-2. Self-hosted, reproducible environments are essential for reliable benchmarking -- dependence on live websites makes longitudinal comparison impossible
-3. Functional correctness evaluation (checking application state) is far more meaningful than action sequence matching for measuring real task completion
-4. Long-horizon planning, error recovery, and active exploration are the primary bottlenecks for web agents, not single-step action prediction
-5. The benchmark has proven durable and discriminative, driving significant research progress and becoming the standard evaluation for web agent research
-6. The massive human-agent gap suggests that current LLMs lack fundamental capabilities for autonomous web interaction, not just better prompting or more data
+1. 真实的网络环境暴露了简化基准测试完全遗漏的根本性能力差距：智能体得分 14% 而人类为 78%，这一差距在 MiniWoB++ 等玩具基准测试中不可见
+2. 自托管、可复现的环境对于可靠的基准测试至关重要 -- 依赖实时网站使纵向比较不可能
+3. 功能正确性评估（检查应用状态）比动作序列匹配更有意义，能够衡量真正的任务完成
+4. 长周期规划、错误恢复和主动探索是网络智能体的主要瓶颈，而非单步动作预测
+5. 该基准测试已证明其持久性和区分力，推动了重大研究进展，成为网络智能体研究的标准评估
+6. 人类-智能体之间的巨大差距表明，当前 LLM 缺乏自主网络交互的基本能力，而非仅需更好的提示或更多数据

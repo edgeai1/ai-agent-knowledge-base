@@ -5,16 +5,16 @@ tags: []
 status: planned | running | done
 ---
 
-## Goal
+## 目标
 
-What are we trying to verify or achieve?
+我们试图验证或实现什么？
 
-## Setup
+## 实验设置
 
-Model, dataset, hyperparameters, hardware.
+模型、数据集、超参数、硬件。
 
-## Results
+## 结果
 
-## Analysis
+## 分析
 
-## Next Steps
+## 后续步骤

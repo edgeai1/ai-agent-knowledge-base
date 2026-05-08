@@ -28,199 +28,162 @@ tags:
 status: done
 ---
 
-## TL;DR
+## 简要总结
 
-AFlow reformulates agentic workflow optimization as a search problem over code-represented
-workflows. It uses Monte Carlo Tree Search (MCTS) to iteratively explore, refine, and discover
-effective workflows through code modification, tree-structured experience accumulation, and
-execution feedback. AFlow-optimized workflows outperform manually designed methods by an
-average of 5.7% and contemporary automatic methods by 19.5%, while enabling weaker models
-to outperform GPT-4o at 4.55% of its inference cost.
+AFlow 将智能体工作流优化重新定义为在代码表示工作流上的搜索问题。它使用蒙特卡洛树搜索（MCTS）通过代码修改、树结构经验积累和执行反馈来迭代地探索、改进和发现有效的工作流。AFlow 优化的工作流平均比手动设计的方法高出 5.7%，比同期自动化方法高出 19.5%，同时使弱模型能够以 GPT-4o 推理成本的 4.55% 超越其性能。
 
-## Motivation & Problem
+## 动机与问题
 
-Manually designing agentic workflows (chains of LLM calls with specific prompts, tools, and
-control flow) is labor-intensive and requires deep expertise. Existing approaches fall into two
-camps:
+手动设计智能体工作流（包含特定提示、工具和控制流的 LLM 调用链）是劳动密集型的，需要深厚的专业知识。现有方法分为两个阵营：
 
-1. **Manual design**: Frameworks like Chain-of-Thought, Tree-of-Thought, and Self-Consistency
-   require human experts to hand-craft workflows for each task domain.
-2. **Automated optimization**: Prior methods (DSPy, ADAS, etc.) either optimize only prompts
-   within fixed structures or search over natural-language-described workflows, limiting
-   expressiveness and reproducibility.
+1. **手动设计**：Chain-of-Thought、Tree-of-Thought 和 Self-Consistency 等框架需要人类专家为每个任务领域手工设计工作流。
+2. **自动化优化**：此前的方法（DSPy、ADAS 等）要么仅在固定结构内优化提示，要么搜索以自然语言描述的工作流，限制了表达力和可复现性。
 
-The key insight is that workflows can be represented as executable Python code, where
-LLM-invoking nodes are connected by edges (data flow), enabling the full power of programming
-constructs (loops, conditionals, composition) while remaining machine-searchable.
+核心洞察是：工作流可以表示为可执行的 Python 代码，其中调用 LLM 的节点通过边（数据流）连接，从而能够利用编程构造（循环、条件、组合）的全部能力，同时保持机器可搜索性。
 
-## Method
+## 方法
 
-### Core Formulation
+### 核心形式化
 
-AFlow represents each workflow as a Python class (a `Workflow`) containing:
-- **Nodes**: Individual LLM invocations with specific prompts and configurations
-- **Edges**: Data flow connections between nodes
-- **Operators**: Predefined reusable node combinations (Generate, Format, Review, Revise,
-  Ensemble, Test, Programmer)
+AFlow 将每个工作流表示为一个 Python 类（一个 `Workflow`），包含：
+- **节点**：带有特定提示和配置的单次 LLM 调用
+- **边**：节点之间的数据流连接
+- **算子**：预定义的可复用节点组合（Generate、Format、Review、Revise、Ensemble、Test、Programmer）
 
-### MCTS-Based Search
+### 基于 MCTS 的搜索
 
 ```
 MCTS_AFLOW(initial_workflow, dataset, iterations):
     tree = initialize_tree(initial_workflow)
 
     for i in 1..iterations:
-        # 1. SELECTION: soft mixed-probability node selection
-        #    Balances exploitation (best-performing) and exploration (least-visited)
+        # 1. 选择：软混合概率节点选择
+        #    平衡利用（最佳表现）和探索（最少访问）
         node = SELECT(tree, UCB_score)
 
-        # 2. EXPANSION: LLM-driven code modification
-        #    An optimizer LLM proposes modifications to the workflow code
+        # 2. 扩展：LLM 驱动的代码修改
+        #    优化器 LLM 提出对工作流代码的修改
         new_workflow = LLM_MODIFY(node.workflow, tree.experience)
 
-        # 3. EVALUATION: Execute workflow on validation samples
+        # 3. 评估：在验证样本上执行工作流
         score = EXECUTE(new_workflow, dataset.sample())
 
-        # 4. BACKPROPAGATION: Update experience and scores
+        # 4. 反向传播：更新经验和分数
         BACKPROPAGATE(tree, node, score, new_workflow)
 
     return best_workflow(tree)
 ```
 
-### Architecture Diagram
+### 架构图
 
 ```
 +-------------------+
-|  Optimizer LLM    |  (e.g., GPT-4o proposes code changes)
+|  优化器 LLM       |  （例如 GPT-4o 提出代码更改）
 +--------+----------+
          |
          v
 +--------+----------+     +------------------+
-|  MCTS Controller  |<--->| Tree Experience  |
-|  - Selection      |     | - Past workflows |
-|  - Expansion      |     | - Scores         |
-|  - Backpropagation|     | - Code diffs     |
+|  MCTS 控制器       |<--->| 树经验           |
+|  - 选择            |     | - 过往工作流     |
+|  - 扩展            |     | - 分数           |
+|  - 反向传播        |     | - 代码差异       |
 +--------+----------+     +------------------+
          |
          v
 +--------+----------+
-|  Workflow (Code)  |  Python class with Nodes + Edges
+|  工作流（代码）    |  带有节点 + 边的 Python 类
 |  - Node_1(LLM)    |
 |  - Node_2(LLM)    |
-|  - Operators       |
+|  - 算子            |
 +--------+----------+
          |
          v
 +--------+----------+
-|  Execution Engine |  Runs workflow on validation data
-|  - Score feedback  |
+|  执行引擎          |  在验证数据上运行工作流
+|  - 分数反馈        |
 +-------------------+
 ```
 
-### Operators
+### 算子
 
-Operators are predefined, reusable building blocks encapsulating common agentic patterns:
+算子是预定义的、可复用的构建块，封装了常见的智能体模式：
 
-| Operator     | Description                                          |
+| 算子       | 描述                                                |
 |-------------|------------------------------------------------------|
-| Generate    | Single LLM call with a prompt                       |
-| Format      | Parse and structure LLM output                       |
-| Review      | LLM evaluates quality of a previous generation       |
-| Revise      | LLM improves output based on review feedback         |
-| Ensemble    | Multiple LLM calls aggregated (voting/merging)       |
-| Test        | Execute code and return test results                 |
-| Programmer  | Generate and iteratively debug code                  |
+| Generate    | 带有提示的单次 LLM 调用                              |
+| Format      | 解析和结构化 LLM 输出                                |
+| Review      | LLM 评估先前生成内容的质量                           |
+| Revise      | LLM 根据审查反馈改进输出                             |
+| Ensemble    | 多次 LLM 调用聚合（投票/合并）                       |
+| Test        | 执行代码并返回测试结果                               |
+| Programmer  | 生成并迭代调试代码                                   |
 
-### Key Mechanism: Tree-Structured Experience
+### 核心机制：树结构经验
 
-Each MCTS node stores the complete workflow code and its execution history. When expanding,
-the optimizer LLM receives:
-- Current workflow code
-- Execution scores from sibling and ancestor nodes
-- Prior successful/failed modifications
-This accumulated context guides the search toward productive regions of the workflow space.
+每个 MCTS 节点存储完整的工作流代码及其执行历史。扩展时，优化器 LLM 接收：
+- 当前工作流代码
+- 来自兄弟节点和祖先节点的执行分数
+- 先前成功/失败的修改
+这些积累的上下文引导搜索朝向工作流空间中的高效区域。
 
-## Key Innovations
+## 关键创新
 
-1. **Code-as-workflow representation**: Unlike natural language descriptions, code-represented
-   workflows are unambiguous, executable, and composable. They support loops, conditionals,
-   and arbitrary Python logic.
+1. **代码即工作流表示**：与自然语言描述不同，代码表示的工作流是无歧义的、可执行的和可组合的。它们支持循环、条件和任意 Python 逻辑。
 
-2. **MCTS for workflow search**: First application of MCTS to the workflow optimization
-   problem. The tree structure naturally handles the exploration-exploitation tradeoff and
-   accumulates structured experience.
+2. **用于工作流搜索的 MCTS**：首次将 MCTS 应用于工作流优化问题。树结构自然地处理了探索-利用权衡并积累了结构化经验。
 
-3. **Operator abstraction**: Predefined operators bootstrap the search, encoding human
-   knowledge about effective agentic patterns without constraining the search space.
+3. **算子抽象**：预定义的算子引导搜索，编码了关于有效智能体模式的人类知识，同时不限制搜索空间。
 
-4. **Cross-model optimization**: The optimizer LLM (e.g., GPT-4o) discovers workflows
-   that are executed by a potentially different, cheaper model (e.g., GPT-4o-mini),
-   enabling cost-performance Pareto improvements.
+4. **跨模型优化**：优化器 LLM（例如 GPT-4o）发现的工作流由可能不同的、更便宜的模型（例如 GPT-4o-mini）执行，实现了成本-性能帕累托改进。
 
-## Experimental Setup
+## 实验设置
 
-- **Benchmarks**: 6 datasets across 3 domains
-  - Code: HumanEval (pass@1), MBPP (pass@1)
-  - Math: GSM8K (solve rate %), MATH (solve rate %)
-  - QA: HotpotQA (F1), DROP (F1)
-- **Baselines**: Manual designs (IO, CoT, CoT-SC, LtM, ToT) and automated methods
-  (DSPy, ADAS, and others)
-- **Models**: GPT-4o-mini as executor, GPT-4o as optimizer
-- **Search budget**: Multiple MCTS iterations per benchmark
+- **基准测试**：跨 3 个领域的 6 个数据集
+  - 代码：HumanEval (pass@1)、MBPP (pass@1)
+  - 数学：GSM8K（解决率 %）、MATH（解决率 %）
+  - 问答：HotpotQA (F1)、DROP (F1)
+- **基线**：手动设计（IO、CoT、CoT-SC、LtM、ToT）和自动化方法（DSPy、ADAS 等）
+- **模型**：GPT-4o-mini 作为执行器，GPT-4o 作为优化器
+- **搜索预算**：每个基准测试多次 MCTS 迭代
 
-## Results
+## 结果
 
-### Aggregate Performance
+### 总体性能
 
-| Method Category           | Avg. Performance | Comparison         |
+| 方法类别              | 平均性能         | 比较               |
 |--------------------------|------------------|--------------------|
-| AFlow (GPT-4o-mini)      | 80.3%            | --                 |
-| Best manual design       | ~74.6%           | AFlow +5.7%        |
-| Best automated method    | ~60.8%           | AFlow +19.5%       |
+| AFlow（GPT-4o-mini）     | 80.3%            | --                 |
+| 最佳手动设计             | ~74.6%           | AFlow +5.7%        |
+| 最佳自动化方法           | ~60.8%           | AFlow +19.5%       |
 
-### Key Findings
+### 关键发现
 
-- AFlow with GPT-4o-mini outperforms GPT-4o on multiple tasks at **4.55%** of
-  GPT-4o's inference cost, demonstrating strong Pareto efficiency.
-- On GSM8K, even without operators, AFlow achieves **93.1%**, surpassing all manual
-  designs. With operators, performance improves further.
-- AFlow autonomously discovers ensemble-like structures without being explicitly
-  programmed to do so, validating the expressiveness of the code search space.
-- Workflows are transferable: workflows discovered for one model can improve
-  performance when applied to other models.
+- AFlow 使用 GPT-4o-mini 在多个任务上以 GPT-4o 推理成本的 **4.55%** 超越了 GPT-4o，展示了强大的帕累托效率。
+- 在 GSM8K 上，即使不使用算子，AFlow 也达到了 **93.1%**，超越了所有手动设计。使用算子后，性能进一步提高。
+- AFlow 在没有被显式编程的情况下自主发现了类似集成的结构，验证了代码搜索空间的表达力。
+- 工作流是可迁移的：为一个模型发现的工作流在应用于其他模型时也能提高性能。
 
-### Ablation Study (GSM8K)
+### 消融实验（GSM8K）
 
-| Configuration              | Solve Rate |
+| 配置                      | 解决率     |
 |---------------------------|------------|
-| AFlow (full, with ops)    | Best       |
-| AFlow (no operators)      | 93.1%      |
-| Manual CoT-SC             | < 93.1%    |
-| Manual CoT                | < 93.1%    |
+| AFlow（完整，含算子）     | 最佳       |
+| AFlow（无算子）           | 93.1%      |
+| 手动 CoT-SC               | < 93.1%    |
+| 手动 CoT                  | < 93.1%    |
 
-## Limitations
+## 局限性
 
-1. **Search cost**: MCTS exploration requires many LLM calls for the optimizer, making
-   the workflow discovery phase expensive (though the discovered workflow is cheap to run).
-2. **Optimizer dependency**: Quality of discovered workflows depends on the capability of
-   the optimizer LLM (GPT-4o). Weaker optimizers may yield inferior workflows.
-3. **Benchmark-specific tuning**: Workflows are optimized per-benchmark; generalization
-   across diverse task distributions is not fully explored.
-4. **Operator design**: The predefined operator set encodes human assumptions about useful
-   patterns, which may bias the search or miss novel compositions.
-5. **Reproducibility of search**: MCTS with LLM-driven expansion introduces stochasticity;
-   different runs may discover different workflows.
+1. **搜索成本**：MCTS 探索需要优化器进行大量 LLM 调用，使工作流发现阶段成本高昂（但发现的工作流运行成本低廉）。
+2. **优化器依赖**：发现工作流的质量取决于优化器 LLM（GPT-4o）的能力。较弱的优化器可能产生较差的工作流。
+3. **基准测试特定调优**：工作流按基准测试进行优化；跨多样化任务分布的泛化未被充分探索。
+4. **算子设计**：预定义的算子集编码了关于有用模式的人类假设，这可能偏置搜索或遗漏新颖的组合。
+5. **搜索的可复现性**：带有 LLM 驱动扩展的 MCTS 引入了随机性；不同的运行可能发现不同的工作流。
 
-## Key Takeaways
+## 核心要点
 
-1. Representing workflows as code unlocks a vastly richer search space compared to
-   natural-language or fixed-topology approaches, supporting arbitrary control flow.
-2. MCTS is an effective algorithm for workflow optimization because it balances
-   exploration of novel structures with exploitation of known-good patterns.
-3. The operator abstraction is a practical way to inject human knowledge while
-   preserving automation -- operators bootstrap search without constraining it.
-4. Cost-performance Pareto improvements are achievable: AFlow finds workflows where
-   cheap models (GPT-4o-mini) outperform expensive models (GPT-4o), democratizing
-   access to high-quality agentic workflows.
-5. The framework is domain-agnostic, working across code generation, mathematical
-   reasoning, and question answering without architecture changes.
+1. 将工作流表示为代码释放了比自然语言或固定拓扑方法更丰富的搜索空间，支持任意控制流。
+2. MCTS 是工作流优化的有效算法，因为它平衡了对新颖结构的探索和对已知良好模式的利用。
+3. 算子抽象是注入人类知识同时保持自动化的实用方式 -- 算子引导搜索但不限制搜索。
+4. 成本-性能帕累托改进是可实现的：AFlow 发现了便宜模型（GPT-4o-mini）超越昂贵模型（GPT-4o）的工作流，使高质量智能体工作流的获取民主化。
+5. 该框架是领域无关的，在代码生成、数学推理和问答中无需架构更改即可工作。

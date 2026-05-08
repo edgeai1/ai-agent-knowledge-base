@@ -1,5 +1,5 @@
 ---
-title: "MRKL Systems: A Modular, Neuro-Symbolic Architecture that Combines Large Language Models, External Knowledge Sources and Discrete Reasoning"
+title: "MRKL Systems: A Modular, Neuro-Symbolic Architecture that Combines Large Language Models, External Knowledge Sources and Discrete Reasoning (MRKL 系统：结合大语言模型、外部知识源和离散推理的模块化神经符号架构)"
 authors:
   - Ehud Karpas
   - Omri Abend
@@ -32,119 +32,115 @@ tags:
 status: done
 ---
 
-# MRKL Systems: Modular Reasoning, Knowledge and Language
+# MRKL 系统：模块化推理、知识与语言
 
-## TL;DR
+## 简述
 
-MRKL (pronounced "miracle") proposes a neuro-symbolic architecture where a large language model
-serves as a central router that dispatches natural language queries to an extendable set of
-specialized "expert" modules -- both neural (e.g., other LMs fine-tuned for specific tasks) and
-symbolic (e.g., calculators, databases, APIs). The paper formalizes the concept that an LLM should
-not try to do everything itself but should instead orchestrate a collection of specialized systems.
-This conceptual framework directly preceded and inspired ReAct, LangChain agents, and the entire
-modern tool-using agent paradigm.
+MRKL（发音为"miracle"）提出了一种神经符号架构，其中大语言模型作为中央路由器，
+将自然语言查询分派给一组可扩展的专业"专家"模块——包括神经模块（例如为特定任务
+微调的其他语言模型）和符号模块（例如计算器、数据库、API）。论文形式化了这一概念：
+大语言模型不应试图自己完成所有事情，而应该编排一组专业系统。这个概念框架直接先于
+并启发了 ReAct、LangChain 智能体以及整个现代工具使用智能体范式。
 
 ---
 
-## Motivation & Problem
+## 动机与问题
 
-### Limitations of Monolithic LLMs
+### 单体大语言模型的局限
 
-Large language models like GPT-3 demonstrate impressive few-shot capabilities but suffer from
-critical structural limitations:
+像 GPT-3 这样的大语言模型展示了令人印象深刻的少样本能力，但存在关键的结构性局限：
 
-1. **Arithmetic failure** -- LLMs fail on multi-digit arithmetic. GPT-3 accuracy on 5-digit
-   addition drops from ~80% (3-digit) to under 10%. Multiplication is even worse.
-2. **Stale knowledge** -- Parametric knowledge is frozen at training time and cannot reflect
-   current events, prices, weather, or breaking news.
-3. **No proprietary access** -- LLMs cannot query private databases, internal company knowledge
-   bases, or paywalled content.
-4. **Lack of interpretability** -- When an LLM produces an answer, there is no audit trail of
-   which reasoning was applied or which data was consulted.
-5. **Brittleness on symbolic tasks** -- Tasks requiring precise symbolic computation (dates,
-   units, currencies, logic) degrade unpredictably as complexity increases.
+1. **算术失败**——大语言模型在多位数算术上失败。GPT-3 在 5 位数加法上的
+   准确率从约 80%（3 位数）降至 10% 以下。乘法更差。
+2. **知识过时**——参数化知识在训练时被冻结，无法反映当前事件、价格、
+   天气或突发新闻。
+3. **无法访问私有数据**——大语言模型无法查询私有数据库、公司内部知识库
+   或付费内容。
+4. **缺乏可解释性**——当大语言模型产生答案时，没有关于使用了哪种推理
+   或参考了哪些数据的审计记录。
+5. **符号任务上的脆弱性**——需要精确符号计算的任务（日期、单位、货币、
+   逻辑）随复杂度增加而不可预测地退化。
 
-### The Core Insight
+### 核心洞察
 
-Rather than building one massive model that does everything poorly, build a **system** where:
-- A language model handles natural language understanding and routing
-- Specialized modules handle tasks they are provably good at
-- The system is modular and extensible -- new capabilities can be added without retraining
+与其构建一个什么都做不好的巨大模型，不如构建一个**系统**：
+- 语言模型处理自然语言理解和路由
+- 专业模块处理其可证明擅长的任务
+- 系统是模块化和可扩展的——无需重新训练即可添加新能力
 
 ---
 
-## Method
+## 方法
 
-### The MRKL Architecture
+### MRKL 架构
 
 ```
                         +-------------------+
-                        |   USER QUERY      |
-                        | "What is 47392    |
-                        |  times 8841?"     |
+                        |   用户查询        |
+                        | "47392 乘以       |
+                        |  8841 是多少？"   |
                         +--------+----------+
                                  |
                                  v
                     +------------+------------+
-                    |        ROUTER           |
-                    | (Large Language Model)  |
-                    | - Parses intent         |
-                    | - Selects expert module |
-                    | - Formats input         |
-                    | - Integrates output     |
+                    |        路由器           |
+                    | （大语言模型）          |
+                    | - 解析意图              |
+                    | - 选择专家模块          |
+                    | - 格式化输入            |
+                    | - 整合输出              |
                     +--+------+------+-------+
                        |      |      |
               +--------+  +---+---+  +--------+
               |           |       |           |
               v           v       v           v
     +---------+--+ +------+----+ ++---------+ ++----------+
-    | Calculator | | Weather   | | Database | | Knowledge |
-    | (Symbolic) | | API       | | Query    | | Base      |
-    |            | | (Symbolic)| | (Symb.)  | | (Neural)  |
+    | 计算器     | | 天气      | | 数据库   | | 知识库    |
+    | （符号）   | | API       | | 查询     | |           |
+    |            | |（符号）   | |（符号）  | |（神经）   |
     | 47392*8841 | |           | |          | |           |
     | = 419,059  | |           | |          | |           |
     +------------+ +-----------+ +----------+ +-----------+
 
-    [Module 1]     [Module 2]    [Module 3]   [Module N]
-     Symbolic       Symbolic      Symbolic      Neural
-     Discrete       Continuous    Discrete      Continuous
+    [模块 1]       [模块 2]      [模块 3]     [模块 N]
+     符号           符号          符号          神经
+     离散           连续          离散          连续
 ```
 
-### Component Taxonomy
+### 组件分类
 
-MRKL classifies expert modules along two independent dimensions:
+MRKL 沿两个独立维度对专家模块进行分类：
 
 ```
-                      IMPLEMENTATION
-                   Neural        Symbolic
+                      实现方式
+                   神经          符号
               +-------------+---------------+
-   Discrete   | Fine-tuned  | Calculator,   |
-   (finite    | classifier  | Lookup table, |
-    output)   | for entity  | Database      |
-              | types       | query engine  |
-   DOMAIN     +-------------+---------------+
-              | Language    | Physics       |
-   Continuous | model for   | simulator,    |
-   (open-ended| open QA,    | Weather model,|
-    output)   | translation | Optimization  |
+   离散       | 微调的       | 计算器、      |
+   （有限     | 分类器       | 查找表、      |
+    输出）    | （实体类型） | 数据库        |
+              |              | 查询引擎      |
+   领域       +-------------+---------------+
+              | 语言模型     | 物理          |
+   连续       | 用于开放QA、 | 模拟器、      |
+   （开放     | 翻译等       | 天气模型、    |
+    输出）    |              | 优化          |
               +-------------+---------------+
 ```
 
-**Four categories of expert modules:**
+**四类专家模块：**
 
-1. **Neural + Discrete** -- Neural models that classify into a finite set of outputs
-   (e.g., sentiment classification, named entity recognition)
-2. **Neural + Continuous** -- Neural models that generate open-ended outputs
-   (e.g., a fine-tuned LM for specific domain QA, a translation model)
-3. **Symbolic + Discrete** -- Rule-based systems with finite outputs
-   (e.g., calculator, date arithmetic, unit converter, lookup tables)
-4. **Symbolic + Continuous** -- Algorithmic systems with open-ended outputs
-   (e.g., search engine, database query engine, weather simulator)
+1. **神经 + 离散**——分类到有限输出集的神经模型
+   （例如情感分类、命名实体识别）
+2. **神经 + 连续**——生成开放式输出的神经模型
+   （例如特定领域问答的微调语言模型、翻译模型）
+3. **符号 + 离散**——具有有限输出的基于规则的系统
+   （例如计算器、日期运算、单位转换器、查找表）
+4. **符号 + 连续**——具有开放式输出的算法系统
+   （例如搜索引擎、数据库查询引擎、天气模拟器）
 
-### The Routing Mechanism
+### 路由机制
 
-The router is the critical component. It is itself a language model (or fine-tuned LM) that
-performs the following steps:
+路由器是关键组件。它本身是一个语言模型（或微调的语言模型），执行以下步骤：
 
 ```
 Algorithm: MRKL Routing
@@ -152,260 +148,244 @@ Algorithm: MRKL Routing
 Input:  User query q, Set of expert modules E = {e_1,...,e_N}
 Output: Final answer a
 
-1. PARSE:     Extract intent and entities from q using the router LM
-2. CLASSIFY:  Determine which expert module e_k best handles q
-              - If q involves math -> route to Calculator
-              - If q involves dates -> route to Date module
-              - If q involves weather -> route to Weather API
-              - If q involves facts -> route to Knowledge Base
-              - If no expert matches -> FALLBACK to router LM itself
-3. FORMAT:    Transform q into the input format expected by e_k
-              - For Calculator: extract numbers and operations
-              - For Database: generate SQL or structured query
-              - For API: format as API request
-4. EXECUTE:   Send formatted input to e_k, receive result r_k
-5. INTEGRATE: Combine r_k with original context to produce answer a
-6. RETURN:    Present a to user
+1. PARSE:     使用路由器语言模型从 q 中提取意图和实体
+2. CLASSIFY:  确定哪个专家模块 e_k 最适合处理 q
+              - 如果 q 涉及数学 -> 路由到计算器
+              - 如果 q 涉及日期 -> 路由到日期模块
+              - 如果 q 涉及天气 -> 路由到天气 API
+              - 如果 q 涉及事实 -> 路由到知识库
+              - 如果没有专家匹配 -> 回退到路由器语言模型本身
+3. FORMAT:    将 q 转换为 e_k 期望的输入格式
+              - 对于计算器：提取数字和运算
+              - 对于数据库：生成 SQL 或结构化查询
+              - 对于 API：格式化为 API 请求
+4. EXECUTE:   将格式化输入发送到 e_k，接收结果 r_k
+5. INTEGRATE: 将 r_k 与原始上下文结合生成答案 a
+6. RETURN:    将 a 呈现给用户
 ```
 
-The routing can be implemented via:
-- **Fine-tuning:** Train the router LM to predict which expert to call (the approach used
-  in the Jurassic-X experiments)
-- **Few-shot prompting:** Provide the router with descriptions and examples for each expert
-- **Learned embedding similarity:** Embed the query and expert descriptions, route by
-  nearest neighbor
+路由可以通过以下方式实现：
+- **微调：** 训练路由器语言模型预测应调用哪个专家（Jurassic-X 实验中使用的方法）
+- **少样本提示：** 为路由器提供每个专家的描述和示例
+- **学习嵌入相似性：** 嵌入查询和专家描述，通过最近邻路由
 
-### Safe Fallback
+### 安全回退
 
-A critical design property: if the router cannot confidently assign the query to any expert
-module, it falls back to the base LLM's own generation. This ensures the system is never
-*worse* than a standalone LLM -- it can only be better.
+一个关键设计特性：如果路由器无法自信地将查询分配给任何专家模块，它会回退到
+基础大语言模型自身的生成。这确保了系统永远不会*劣于*独立的大语言模型——
+它只能更好。
 
 ---
 
-## Key Innovations
+## 关键创新
 
-1. **Formal neuro-symbolic framework for LLM augmentation** -- MRKL was the first paper to
-   formally articulate the architecture pattern of "LLM as router + specialized expert modules."
-   This conceptual framework became the blueprint for all subsequent agent systems.
+1. **大语言模型增强的形式化神经符号框架**——MRKL 是第一篇正式阐述"大语言模型
+   作为路由器+专业专家模块"架构模式的论文。这个概念框架成为所有后续智能体
+   系统的蓝图。
 
-2. **Module taxonomy** -- The two-dimensional classification (neural/symbolic x discrete/continuous)
-   provides a principled way to think about what types of tools an agent system should include.
+2. **模块分类**——二维分类（神经/符号 x 离散/连续）提供了一种有原则的方式
+   来思考智能体系统应包含哪些类型的工具。
 
-3. **Desiderata for augmented LM systems** -- The paper identifies six essential properties
-   that any such system should satisfy (see below).
+3. **增强型语言模型系统的设计准则**——论文确定了任何此类系统应满足的六个
+   基本属性（见下文）。
 
-4. **Compositionality through routing** -- By decomposing compound queries and routing
-   sub-problems to different experts, the system can handle multi-hop reasoning that no
-   single module could solve alone.
+4. **通过路由实现组合性**——通过分解复合查询并将子问题路由到不同专家，
+   系统可以处理单一模块无法独立解决的多跳推理。
 
-5. **Extensibility without retraining** -- New expert modules can be added to the system
-   without modifying or retraining the existing modules; only the router needs updating.
+5. **无需重新训练的可扩展性**——新的专家模块可以在不修改或重新训练现有模块
+   的情况下添加到系统中；只有路由器需要更新。
 
-### Six Desiderata
+### 六大设计准则
 
-The paper formally defines six properties a MRKL system should satisfy:
+论文正式定义了 MRKL 系统应满足的六个属性：
 
-| Desideratum          | Description                                                    |
-|----------------------|----------------------------------------------------------------|
-| **Safe fallback**    | If no expert matches, the system defaults to the LLM itself   |
-| **Extensibility**    | New experts can be added cheaply without breaking existing ones|
-| **Interpretability** | Routing decisions provide an audit trail for the answer        |
-| **Up-to-date info**  | External modules can access current data                       |
-| **Proprietary access**| Modules can connect to private data and internal systems      |
-| **Compositionality** | Multi-hop queries can be decomposed across multiple experts    |
-
----
-
-## Experimental Setup
-
-### Implementation: Jurassic-X
-
-AI21 Labs implemented MRKL as **Jurassic-X**, combining their Jurassic-1 LLM with approximately
-55 specialized expert modules covering domains including:
-
-- Arithmetic (calculator)
-- Currency conversion
-- Date/time reasoning
-- Weather forecasting
-- General knowledge retrieval
-- And many others
-
-### Focused Experiments: Arithmetic
-
-The paper's primary experimental contribution is a deep analysis of arithmetic routing. The
-experiments test whether a router fine-tuned to extract math problems from natural language
-and send them to a calculator can dramatically outperform an LLM doing arithmetic alone.
-
-**Training setup:**
-- Router model fine-tuned on the Jurassic-1 LM
-- Task: given a natural language math problem, extract the arithmetic expression and send
-  it to a symbolic calculator module
-- Training data: math problems with single-digit operands only
-- Test data: math problems with operands ranging from 1 to 9 digits
-
-**Problem types tested:**
-- Single-operation: addition, subtraction, multiplication
-- Two-operation: combinations (e.g., "add X and Y, then multiply by Z")
-- Digit-format numbers (e.g., "1234") vs word-format numbers (e.g., "one thousand two
-  hundred thirty-four")
-
-### Baselines
-
-- **GPT-3 (175B, text-davinci-002)** -- direct arithmetic via prompting
-- **Jurassic-1 LLM** -- direct arithmetic via prompting
-- **MRKL (Jurassic-X)** -- router + symbolic calculator
+| 设计准则           | 描述                                                           |
+|-------------------|----------------------------------------------------------------|
+| **安全回退**       | 如果没有专家匹配，系统默认使用大语言模型本身                  |
+| **可扩展性**       | 新专家可以低成本添加而不破坏现有功能                          |
+| **可解释性**       | 路由决策为答案提供审计记录                                    |
+| **最新信息**       | 外部模块可以访问当前数据                                      |
+| **私有数据访问**   | 模块可以连接到私有数据和内部系统                              |
+| **组合性**         | 多跳查询可以跨多个专家分解                                    |
 
 ---
 
-## Results
+## 实验设置
 
-### Arithmetic Accuracy: MRKL vs. GPT-3
+### 实现：Jurassic-X
 
-**Addition accuracy by number of digits:**
+AI21 Labs 将 MRKL 实现为 **Jurassic-X**，将其 Jurassic-1 大语言模型与
+大约 55 个专业专家模块结合，涵盖以下领域：
 
-| # Digits | GPT-3 175B | MRKL (Jurassic-X) |
-|----------|-----------|---------------------|
-| 1        | ~1.000    | 1.000               |
-| 2        | ~0.990    | 1.000               |
-| 3        | 0.804     | 1.000               |
-| 4        | 0.414     | 1.000               |
-| 5        | 0.093     | 1.000               |
-| 6        | --        | 1.000               |
-| 7        | --        | 1.000               |
-| 8        | --        | 1.000               |
-| 9        | --        | 1.000               |
+- 算术（计算器）
+- 货币转换
+- 日期/时间推理
+- 天气预报
+- 通用知识检索
+- 以及许多其他
 
-**Multiplication accuracy by number of digits:**
+### 重点实验：算术
 
-| # Digits | GPT-3 175B | MRKL (Jurassic-X) |
-|----------|-----------|---------------------|
-| 1        | ~1.000    | 0.98-1.00           |
-| 2        | ~0.60     | 0.98-1.00           |
-| 3        | ~0.20     | 0.98-1.00           |
-| 4        | ~0.05     | 0.98-1.00           |
-| 5        | ~0.00     | 0.98-1.00           |
-| 6-9      | ~0.00     | 0.98-1.00           |
+论文的主要实验贡献是对算术路由的深入分析。实验测试了一个经过微调的路由器
+能否从自然语言中提取数学问题并将其发送到计算器，从而显著超越大语言模型
+独自进行算术。
 
-Key insight: GPT-3 performance **degrades catastrophically** as digit count increases (dropping
-from ~0.80 on 3-digit addition to ~0.09 on 5-digit). The MRKL system maintains near-perfect
-accuracy (1.00 for addition, 0.98-1.00 for multiplication) across all digit lengths up to 9
-digits, because it routes the computation to a symbolic calculator.
+**训练设置：**
+- 在 Jurassic-1 语言模型上微调的路由器模型
+- 任务：给定自然语言数学问题，提取算术表达式并发送到符号计算器模块
+- 训练数据：仅包含单位数操作数的数学问题
+- 测试数据：操作数范围从 1 到 9 位的数学问题
 
-### Generalization Results
+**测试的问题类型：**
+- 单运算：加法、减法、乘法
+- 双运算：组合（例如"X 加 Y，然后乘以 Z"）
+- 数字格式数字（例如"1234"）vs 文字格式数字（例如"一千二百三十四"）
 
-**Training on word-format, testing on digit-format:**
+### 基线
 
-| Test Format | Accuracy |
-|-------------|----------|
-| Words -> Words   | ~1.00  |
-| Words -> Digits  | 0.987  |
-| Digits -> Digits | ~1.00  |
-| Digits -> Words  | 0.95+  |
-
-The router trained on word-based number representations ("forty-seven thousand three hundred
-ninety-two") generalized exceptionally well to digit-based representations ("47392"), achieving
-0.987 accuracy. This demonstrates that the router learns the abstract concept of "this is an
-arithmetic problem" rather than memorizing surface patterns.
-
-### Two-Operation Composition
-
-The system trained only on single-operation problems successfully handled most two-operation
-problems, achieving high accuracy (often 1.0 or high 0.9s) across different operation
-combinations (add-then-multiply, subtract-then-divide, etc.).
-
-### Where Routing Fails
-
-The experiments also reveal failure modes:
-- The router occasionally misparses complex natural language phrasing
-- Ambiguous queries (e.g., those that could be arithmetic or factual) sometimes route to the
-  wrong module
-- The composition of more than two operations was not tested extensively
+- **GPT-3 (175B, text-davinci-002)**——通过提示直接算术
+- **Jurassic-1 语言模型**——通过提示直接算术
+- **MRKL (Jurassic-X)**——路由器+符号计算器
 
 ---
 
-## Analysis & Insights
+## 结果
 
-### Why MRKL Matters as Intellectual Precursor
+### 算术准确率：MRKL vs. GPT-3
 
-MRKL is historically significant not for its experimental results (which are narrow) but for
-its **conceptual contribution**. The paper was the first to clearly articulate several ideas
-that became foundational:
+**按位数划分的加法准确率：**
 
-1. **LLM as orchestrator, not solver** -- The LLM's job is to understand the user's intent
-   and delegate, not to compute the answer itself. This is now the default assumption in
-   agent design.
+| 位数 | GPT-3 175B | MRKL (Jurassic-X) |
+|------|-----------|---------------------|
+| 1    | ~1.000    | 1.000               |
+| 2    | ~0.990    | 1.000               |
+| 3    | 0.804     | 1.000               |
+| 4    | 0.414     | 1.000               |
+| 5    | 0.093     | 1.000               |
+| 6    | --        | 1.000               |
+| 7    | --        | 1.000               |
+| 8    | --        | 1.000               |
+| 9    | --        | 1.000               |
 
-2. **Modular extensibility** -- The idea that you can add new capabilities by adding new
-   modules without retraining the core system. This directly maps to how tools are added
-   to modern agent frameworks.
+**按位数划分的乘法准确率：**
 
-3. **The routing problem** -- MRKL identified that the hard problem is not building the
-   expert modules (calculators exist) but teaching the LLM to route correctly. This remains
-   an active research challenge.
+| 位数 | GPT-3 175B | MRKL (Jurassic-X) |
+|------|-----------|---------------------|
+| 1    | ~1.000    | 0.98-1.00           |
+| 2    | ~0.60     | 0.98-1.00           |
+| 3    | ~0.20     | 0.98-1.00           |
+| 4    | ~0.05     | 0.98-1.00           |
+| 5    | ~0.00     | 0.98-1.00           |
+| 6-9  | ~0.00     | 0.98-1.00           |
 
-4. **Neuro-symbolic hybrid** -- The explicit combination of neural (LLM) and symbolic
-   (calculator, database) components was prescient. Modern agents routinely mix neural
-   generation with symbolic execution.
+关键洞察：GPT-3 的表现随位数增加**灾难性退化**（3 位数加法从约 0.80 降至
+5 位数的约 0.09）。MRKL 系统在最多 9 位数的所有位数长度上保持近完美准确率
+（加法 1.00，乘法 0.98-1.00），因为它将计算路由到符号计算器。
 
-### The Neuro-Symbolic Chasm
+### 泛化结果
 
-The paper coins the term "neuro-symbolic chasm" to describe the gap between:
-- What LLMs can do well (language understanding, few-shot reasoning, creative generation)
-- What symbolic systems can do well (precise computation, database lookup, formal logic)
+**在文字格式上训练，在数字格式上测试：**
 
-MRKL proposes bridging this chasm through natural language as the interface layer -- the LLM
-translates between the user's natural language and the expert module's expected input format.
+| 测试格式 | 准确率 |
+|----------|--------|
+| 文字 -> 文字 | ~1.00  |
+| 文字 -> 数字 | 0.987  |
+| 数字 -> 数字 | ~1.00  |
+| 数字 -> 文字 | 0.95+  |
 
-### Compositional Reasoning
+在文字数字表示（"forty-seven thousand three hundred ninety-two"）上训练的路由器
+非常好地泛化到了数字表示（"47392"），达到 0.987 准确率。这表明路由器学习了
+"这是一个算术问题"的抽象概念，而非记忆表面模式。
 
-A key insight is that real-world queries often require **composing** multiple expert modules.
-For example: "What was the GDP of France last year in Japanese yen?" requires:
-1. Knowledge retrieval (GDP of France)
-2. Date reasoning (what year is "last year"?)
-3. Currency conversion (EUR to JPY)
-4. Arithmetic (the conversion calculation)
+### 双运算组合
 
-MRKL argues that a modular system can handle such queries by routing sub-problems to the
-appropriate experts and composing their outputs.
+仅在单运算问题上训练的系统成功处理了大多数双运算问题，在不同运算组合
+（先加后乘、先减后除等）中达到了高准确率（通常为 1.0 或 0.9 以上）。
 
----
+### 路由失败的情况
 
-## Limitations & Critiques
-
-1. **Narrow experimental scope** -- The paper only deeply evaluates arithmetic routing. Claims
-   about general-purpose routing, multi-hop composition, and extensibility are conceptual
-   arguments, not experimentally validated.
-
-2. **Routing accuracy not fully measured** -- The paper does not provide comprehensive metrics
-   on routing accuracy across diverse query types. The router is only evaluated on arithmetic
-   extraction.
-
-3. **No comparison with prompting-based approaches** -- The paper does not compare MRKL routing
-   with simpler approaches like few-shot prompting the LLM to use tools (which later proved
-   effective in ReAct and Toolformer).
-
-4. **Closed-source implementation** -- Jurassic-X and the full 55-module system were not released,
-   making it impossible to reproduce or build upon the full system.
-
-5. **Scalability of routing** -- With 55+ modules, how does the router scale? The paper does
-   not address routing accuracy degradation as the number of modules increases.
-
-6. **Sequential routing only** -- The paper discusses compositionality as a desideratum but
-   does not demonstrate a working implementation of multi-hop, multi-module query resolution.
-
-7. **No learning from failures** -- When the router makes a mistake, there is no mechanism for
-   the system to detect the error and try a different module.
-
-8. **Training cost of router** -- Fine-tuning the router for each new expert module may not
-   scale as well as few-shot or zero-shot routing approaches.
+实验还揭示了失败模式：
+- 路由器偶尔误解复杂的自然语言表述
+- 模糊查询（例如可能是算术或事实的查询）有时路由到错误的模块
+- 超过两个运算的组合未被广泛测试
 
 ---
 
-## Connection to LangChain's MRKL Agent
+## 分析与洞察
 
-LangChain, the dominant agent framework from 2023 onward, directly implemented a "MRKL agent"
-as one of its core agent types:
+### 为什么 MRKL 作为思想先驱很重要
+
+MRKL 的历史重要性不在于其实验结果（范围较窄），而在于其**概念贡献**。
+论文是第一篇清晰阐述以下几个后来成为基础性的思想：
+
+1. **大语言模型作为编排者而非求解者**——大语言模型的职责是理解用户意图
+   并委派，而非自己计算答案。这现在是智能体设计的默认假设。
+
+2. **模块化可扩展性**——可以通过添加新模块来增加新能力而无需重新训练
+   核心系统的想法。这直接映射到现代智能体框架中工具添加的方式。
+
+3. **路由问题**——MRKL 指出困难的问题不是构建专家模块（计算器已存在），
+   而是教会大语言模型正确路由。这仍然是一个活跃的研究挑战。
+
+4. **神经符号混合**——神经（大语言模型）和符号（计算器、数据库）组件的
+   显式结合具有前瞻性。现代智能体常规地混合神经生成与符号执行。
+
+### 神经符号鸿沟
+
+论文创造了"神经符号鸿沟"一词来描述以下差距：
+- 大语言模型擅长的事情（语言理解、少样本推理、创造性生成）
+- 符号系统擅长的事情（精确计算、数据库查找、形式逻辑）
+
+MRKL 提出通过自然语言作为接口层来桥接这一鸿沟——大语言模型在用户的
+自然语言和专家模块期望的输入格式之间进行转换。
+
+### 组合推理
+
+一个关键洞察是，真实世界的查询通常需要**组合**多个专家模块。
+例如："去年法国的 GDP 用日元是多少？"需要：
+1. 知识检索（法国的 GDP）
+2. 日期推理（"去年"是哪一年？）
+3. 货币转换（EUR 到 JPY）
+4. 算术（转换计算）
+
+MRKL 认为模块化系统可以通过将子问题路由到合适的专家并组合其输出来
+处理此类查询。
+
+---
+
+## 局限性与批评
+
+1. **实验范围狭窄**——论文仅深入评估了算术路由。关于通用路由、多跳组合
+   和可扩展性的主张是概念性论证，未经实验验证。
+
+2. **路由准确率未充分衡量**——论文未提供跨多种查询类型的路由准确率
+   综合指标。路由器仅在算术提取上进行了评估。
+
+3. **未与基于提示的方法比较**——论文未将 MRKL 路由与更简单的方法
+   （如少样本提示大语言模型使用工具）进行比较（后者在 ReAct 和 Toolformer
+   中被证明有效）。
+
+4. **闭源实现**——Jurassic-X 和完整的 55 模块系统未发布，使得无法
+   复现或在完整系统上进行构建。
+
+5. **路由的可扩展性**——有 55+ 个模块时，路由器如何扩展？论文未讨论
+   随模块数量增加路由准确率的退化问题。
+
+6. **仅顺序路由**——论文将组合性作为设计准则讨论，但未展示多跳、
+   多模块查询解析的工作实现。
+
+7. **无从失败中学习**——当路由器犯错时，系统没有检测错误并尝试
+   不同模块的机制。
+
+8. **路由器的训练成本**——为每个新专家模块微调路由器可能不如
+   少样本或零样本路由方法具有可扩展性。
+
+---
+
+## 与 LangChain 的 MRKL 智能体的联系
+
+LangChain，2023 年以来占主导地位的智能体框架，直接实现了"MRKL 智能体"
+作为其核心智能体类型之一：
 
 ```python
 # LangChain's MRKL agent implementation (simplified)
@@ -427,64 +407,58 @@ agent = initialize_agent(
 # 6. Returns the result
 ```
 
-Key connections:
-- LangChain's `MRKLChain` is directly named after this paper
-- The `ZERO_SHOT_REACT_DESCRIPTION` agent type combines MRKL routing with ReAct reasoning
-- Tool descriptions in LangChain serve as the "expert module specifications" in MRKL
-- LangChain's `AgentExecutor` implements the router + execute + integrate loop
-- The safe fallback desideratum maps to LangChain's fallback handling
+关键联系：
+- LangChain 的 `MRKLChain` 直接以本论文命名
+- `ZERO_SHOT_REACT_DESCRIPTION` 智能体类型结合了 MRKL 路由和 ReAct 推理
+- LangChain 中的工具描述充当 MRKL 中的"专家模块规范"
+- LangChain 的 `AgentExecutor` 实现了路由器+执行+整合循环
+- 安全回退设计准则映射到 LangChain 的回退处理
 
-The evolution: MRKL (concept) -> ReAct (reasoning traces) -> LangChain (practical implementation)
--> modern agent frameworks (OpenAI function calling, Claude tool use, etc.)
-
----
-
-## Follow-up Work
-
-- **ReAct (Yao et al., 2022)** -- Extended MRKL routing with explicit reasoning traces
-  (Thought/Action/Observation loops), creating the dominant agent paradigm.
-- **Toolformer (Schick et al., 2023)** -- Approached the same problem from a training
-  perspective: teach the model to route via self-supervision rather than prompting.
-- **HuggingGPT (Shen et al., 2023)** -- Scaled the MRKL concept to hundreds of ML models
-  on HuggingFace as expert modules.
-- **LangChain (Chase, 2022-2023)** -- Made MRKL practical with an open-source framework
-  implementing MRKL-style agents with dozens of tool integrations.
-- **Gorilla (Patil et al., 2023)** -- Fine-tuned an LLM specifically for API routing across
-  thousands of APIs.
-- **OpenAI Function Calling (2023)** -- Productionized the MRKL routing concept with
-  structured function schemas and native model support.
-- **Claude Tool Use (Anthropic, 2023-2024)** -- Similar productionization with tool-use
-  capabilities built into Claude models.
+演进路径：MRKL（概念）-> ReAct（推理轨迹）-> LangChain（实际实现）
+-> 现代智能体框架（OpenAI function calling、Claude tool use 等）
 
 ---
 
-## Key Takeaways
+## 后续工作
 
-1. **The paper is more important for its ideas than its experiments.** MRKL formalized the
-   concept of "LLM as router to specialized modules" that now underpins every agent framework.
-   The arithmetic experiments are a proof of concept, not the main contribution.
+- **ReAct (Yao et al., 2022)**——用显式推理轨迹（思考/动作/观察循环）
+  扩展 MRKL 路由，创建了主导的智能体范式。
+- **Toolformer (Schick et al., 2023)**——从训练角度解决同一问题：
+  通过自监督而非提示来教会模型路由。
+- **HuggingGPT (Shen et al., 2023)**——将 MRKL 概念扩展到 HuggingFace
+  上数百个机器学习模型作为专家模块。
+- **LangChain (Chase, 2022-2023)**——通过开源框架将 MRKL 实用化，
+  实现了具有数十种工具集成的 MRKL 风格智能体。
+- **Gorilla (Patil et al., 2023)**——专门为跨数千个 API 的路由微调
+  了一个大语言模型。
+- **OpenAI Function Calling (2023)**——使用结构化函数模式和原生模型支持
+  将 MRKL 路由概念产品化。
+- **Claude Tool Use (Anthropic, 2023-2024)**——类似的产品化，将工具使用
+  能力内置到 Claude 模型中。
 
-2. **Symbolic modules solve symbolic problems.** The contrast between GPT-3's catastrophic
-   arithmetic degradation and MRKL's perfect accuracy via calculator routing demonstrates
-   why neuro-symbolic hybrids are necessary. No amount of scaling will make LLMs reliable
-   calculators.
+---
 
-3. **The routing problem is the hard problem.** Building a calculator is trivial; teaching
-   an LLM to reliably extract arithmetic from natural language and route it correctly is
-   the actual research challenge.
+## 核心要点
 
-4. **Extensibility is a system design principle.** MRKL's insight that new capabilities
-   should be addable without retraining the core system is now standard in agent design
-   (tools as plugins).
+1. **论文的思想比实验更重要。** MRKL 形式化了"大语言模型作为专业模块路由器"
+   的概念，现在支撑着每个智能体框架。算术实验是概念验证，而非主要贡献。
 
-5. **The six desiderata remain relevant.** Safe fallback, extensibility, interpretability,
-   up-to-date information, proprietary access, and compositionality are still the goals
-   that modern agent frameworks strive for.
+2. **符号模块解决符号问题。** GPT-3 灾难性的算术退化与 MRKL 通过计算器路由
+   实现完美准确率的对比，展示了为什么神经符号混合是必要的。再多的规模扩展
+   也不会使大语言模型成为可靠的计算器。
 
-6. **Natural language as universal interface.** MRKL's use of the LLM to translate between
-   user queries and module-specific input formats established that natural language can serve
-   as the glue layer in modular AI systems.
+3. **路由问题是难题。** 构建计算器很简单；教会大语言模型从自然语言中可靠地
+   提取算术并正确路由才是真正的研究挑战。
 
-7. **Historical lineage matters.** Understanding MRKL clarifies why LangChain agents work
-   the way they do, why tool descriptions matter, and why the router/executor pattern
-   is universal. MRKL is the conceptual ancestor of all modern AI agent architectures.
+4. **可扩展性是系统设计原则。** MRKL 关于新能力应可在不重新训练核心系统
+   的情况下添加的洞察，现在是智能体设计的标准（工具作为插件）。
+
+5. **六大设计准则仍然相关。** 安全回退、可扩展性、可解释性、最新信息、
+   私有数据访问和组合性仍然是现代智能体框架追求的目标。
+
+6. **自然语言作为通用接口。** MRKL 使用大语言模型在用户查询和模块特定
+   输入格式之间转换，确立了自然语言可以作为模块化 AI 系统的粘合层。
+
+7. **历史渊源很重要。** 理解 MRKL 有助于澄清 LangChain 智能体为何如此
+   工作、工具描述为何重要，以及路由器/执行器模式为何是通用的。MRKL 是
+   所有现代 AI 智能体架构的概念祖先。

@@ -21,214 +21,177 @@ tags:
 status: done
 ---
 
-## TL;DR
+## 简要总结
 
-Comprehensive survey on Agentic RAG -- the integration of autonomous AI agents into
-Retrieval-Augmented Generation pipelines. Traces the evolution from Naive RAG (retrieve-
-then-read) through Advanced/Modular RAG to fully Agentic RAG systems. Introduces a taxonomy
-based on agent cardinality (single vs. multi-agent), control structure, autonomy level,
-and knowledge representation. Covers key systems including Self-RAG, CRAG, and Adaptive
-RAG, along with agentic design patterns: reflection, planning, tool use, and multi-agent
-collaboration.
+关于 Agentic RAG 的全面综述 -- 将自主 AI 智能体集成到检索增强生成流水线中。追溯了从朴素 RAG（检索-然后-阅读）到高级/模块化 RAG 再到完全 Agentic RAG 系统的演化。引入了基于智能体数量（单 vs. 多智能体）、控制结构、自主级别和知识表示的分类体系。涵盖了 Self-RAG、CRAG 和 Adaptive RAG 等关键系统，以及智能体化设计模式：反思、规划、工具使用和多智能体协作。
 
-## Motivation & Problem
+## 动机与问题
 
-Traditional RAG suffers from several fundamental limitations:
+传统 RAG 存在几个根本性局限：
 
-1. **Indiscriminate retrieval**: Naive RAG retrieves a fixed number of passages for every
-   query, regardless of whether retrieval is actually needed or helpful.
-2. **No quality control**: Retrieved passages are passed to the generator without evaluation
-   of relevance, support, or contradictions.
-3. **Static pipelines**: The retrieve-then-read pipeline is rigid -- no iterative refinement,
-   no adaptive routing, no self-correction.
-4. **Single-step reasoning**: Complex queries requiring multi-hop reasoning or synthesis
-   across multiple documents are poorly served by single-retrieval pipelines.
+1. **无差别检索**：朴素 RAG 对每个查询检索固定数量的文章，无论检索是否真正需要或有帮助。
+2. **无质量控制**：检索到的文章未经相关性、支持性或矛盾性评估即传递给生成器。
+3. **静态流水线**：检索-然后-阅读流水线是僵化的 -- 没有迭代改进、没有自适应路由、没有自我纠正。
+4. **单步推理**：需要多跳推理或跨多文档综合的复杂查询在单次检索流水线中表现不佳。
 
-Agentic RAG addresses these limitations by embedding autonomous agents that can dynamically
-decide *when* to retrieve, *what* to retrieve, *how* to evaluate retrieved content, and
-*whether* to iterate.
+Agentic RAG 通过嵌入能够动态决定*何时*检索、*检索什么*、*如何*评估检索内容以及*是否*迭代的自主智能体来解决这些局限。
 
-## Method
+## 方法
 
-### Evolution of RAG Paradigms
+### RAG 范式的演化
 
 ```
 +============+     +=============+     +============+     +==============+
-| Naive RAG  | --> | Advanced    | --> | Modular    | --> | Agentic RAG  |
+| 朴素 RAG   | --> | 高级        | --> | 模块化     | --> | Agentic RAG  |
 |            |     | RAG         |     | RAG        |     |              |
 +============+     +=============+     +============+     +==============+
-| Query ->   |     | + Re-ranking|     | + Swappable|     | + Autonomous |
-| Retrieve ->|     | + Query     |     |   components|    |   agents     |
-| Generate   |     |   rewriting |     | + Routing  |     | + Reflection |
-|            |     | + Chunk     |     | + Feedback |     | + Planning   |
-|            |     |   optimization|   |   loops    |     | + Tool use   |
-|            |     |             |     |            |     | + Multi-agent|
+| 查询 ->    |     | + 重排序    |     | + 可替换   |     | + 自主       |
+| 检索 ->    |     | + 查询      |     |   组件     |     |   智能体     |
+| 生成       |     |   重写      |     | + 路由     |     | + 反思       |
+|            |     | + 分块      |     | + 反馈     |     | + 规划       |
+|            |     |   优化      |     |   循环     |     | + 工具使用   |
+|            |     |             |     |            |     | + 多智能体   |
 +============+     +=============+     +============+     +==============+
 ```
 
-### Taxonomy of Agentic RAG Architectures
+### Agentic RAG 架构分类体系
 
-The survey classifies systems along four dimensions:
+综述沿四个维度分类系统：
 
-**1. Agent Cardinality**
+**1. 智能体数量**
 ```
-Single-Agent RAG                    Multi-Agent RAG
+单智能体 RAG                        多智能体 RAG
 +------------------+               +------------------+
-| One agent manages|               | Specialized agents|
-| all RAG steps:   |               | for each role:   |
-| - Retrieval      |               | - Retriever Agent|
-| - Evaluation     |               | - Evaluator Agent|
-| - Generation     |               | - Generator Agent|
-| - Routing        |               | - Router Agent   |
+| 一个智能体管理   |               | 专用智能体       |
+| 所有 RAG 步骤：  |               | 负责各角色：     |
+| - 检索           |               | - 检索智能体     |
+| - 评估           |               | - 评估智能体     |
+| - 生成           |               | - 生成智能体     |
+| - 路由           |               | - 路由智能体     |
 +------------------+               +------------------+
 ```
 
-**2. Control Structure**
-- Sequential: Fixed order of operations
-- Router-based: Classifier routes to appropriate sub-pipeline
-- Adaptive: Dynamic control flow based on intermediate results
-- Hierarchical: Manager agent orchestrates worker agents
+**2. 控制结构**
+- 顺序：固定操作顺序
+- 基于路由器：分类器路由到适当的子流水线
+- 自适应：基于中间结果的动态控制流
+- 层次化：管理智能体编排工作智能体
 
-**3. Autonomy Level**
-- Low: Human-defined rules dictate retrieval decisions
-- Medium: Model-based classifiers guide pipeline depth
-- High: Fully autonomous agents with self-reflection and planning
+**3. 自主级别**
+- 低：人类定义的规则决定检索决策
+- 中：基于模型的分类器指导流水线深度
+- 高：具有自我反思和规划的完全自主智能体
 
-**4. Knowledge Representation**
-- Dense vectors (embedding-based retrieval)
-- Sparse vectors (BM25, TF-IDF)
-- Knowledge graphs (structured relationships)
-- Hybrid (multi-modal, multi-source)
+**4. 知识表示**
+- 稠密向量（基于嵌入的检索）
+- 稀疏向量（BM25、TF-IDF）
+- 知识图谱（结构化关系）
+- 混合（多模态、多来源）
 
-### Key Agentic RAG Paradigms
+### 关键 Agentic RAG 范式
 
 #### Self-RAG (Asai et al., ICLR 2024)
-- Model emits special reflection tokens (Retrieve, ISREL, ISSUP, ISUSE)
-- Decides *on-demand* when to retrieve and how to critique
-- Single model handles retrieval decision + generation + self-critique
+- 模型发出特殊反思 token（Retrieve、ISREL、ISSUP、ISUSE）
+- *按需*决定何时检索以及如何批评
+- 单一模型处理检索决策 + 生成 + 自我批评
 
-#### Corrective RAG (CRAG) (Yan et al., 2024)
+#### 纠正式 RAG (CRAG) (Yan et al., 2024)
 ```
-Query --> Retrieve --> Document Grader --> [Relevant]   --> Generate
-                                      --> [Ambiguous]  --> Web Search + Generate
-                                      --> [Irrelevant] --> Rephrase + Re-retrieve
+查询 --> 检索 --> 文档评分器 --> [相关]     --> 生成
+                            --> [模糊]     --> 网络搜索 + 生成
+                            --> [不相关]   --> 重新措辞 + 重新检索
 ```
-- Introduces lightweight retrieval evaluator for relevance grading
-- Three-way routing: relevant, ambiguous, irrelevant
-- Falls back to web search when local retrieval fails
+- 引入轻量级检索评估器进行相关性评分
+- 三向路由：相关、模糊、不相关
+- 本地检索失败时回退到网络搜索
 
-#### Adaptive RAG (Jeong et al., 2024)
+#### 自适应 RAG (Jeong et al., 2024)
 ```
-Query --> T5 Classifier --> [Easy]   --> Direct generation (no retrieval)
-                        --> [Medium] --> Single-step RAG
-                        --> [Hard]   --> Multi-step iterative RAG
+查询 --> T5 分类器 --> [简单]   --> 直接生成（无检索）
+                   --> [中等]   --> 单步 RAG
+                   --> [困难]   --> 多步迭代 RAG
 ```
-- Small T5-large classifier predicts query complexity
-- Routes to appropriate pipeline depth
-- Avoids unnecessary retrieval for simple queries
+- 小型 T5-large 分类器预测查询复杂度
+- 路由到适当的流水线深度
+- 避免对简单查询进行不必要的检索
 
-### Agentic Design Patterns
+### 智能体化设计模式
 
-| Pattern         | Description                                           | Example System    |
+| 模式           | 描述                                                    | 示例系统          |
 |----------------|-------------------------------------------------------|-------------------|
-| Reflection     | Agent evaluates own outputs and retrieval quality     | Self-RAG          |
-| Planning       | Agent decomposes complex queries into sub-queries     | IRCoT, ReAct      |
-| Tool Use       | Agent invokes external tools (search, calculators)    | Toolformer, CRAG  |
-| Multi-Agent    | Multiple specialized agents collaborate               | AutoGen RAG       |
-| Routing        | Agent selects appropriate retrieval strategy          | Adaptive RAG      |
-| Iterative      | Agent performs multiple retrieval-generation cycles   | ITER-RETGEN       |
+| 反思           | 智能体评估自身输出和检索质量                            | Self-RAG          |
+| 规划           | 智能体将复杂查询分解为子查询                            | IRCoT、ReAct      |
+| 工具使用       | 智能体调用外部工具（搜索、计算器）                      | Toolformer、CRAG  |
+| 多智能体       | 多个专用智能体协作                                     | AutoGen RAG       |
+| 路由           | 智能体选择适当的检索策略                               | Adaptive RAG      |
+| 迭代           | 智能体执行多个检索-生成循环                            | ITER-RETGEN       |
 
-### Framework Implementations
+### 框架实现
 
-The survey covers practical implementations across major frameworks:
+综述涵盖了主要框架中的实际实现：
 
-- **LangChain/LangGraph**: Graph-based agentic RAG with state management, loops,
-  and human-in-the-loop support
-- **LlamaIndex**: Agentic Document Workflows (ADW) for end-to-end document processing
-  with query routing and sub-question decomposition
-- **AutoGen**: Multi-agent conversational RAG with specialized retriever/generator agents
-- **CrewAI**: Role-based multi-agent RAG with predefined agent archetypes
+- **LangChain/LangGraph**：基于图的 agentic RAG，具有状态管理、循环和人在回路中支持
+- **LlamaIndex**：Agentic Document Workflows (ADW)，用于端到端文档处理，具有查询路由和子问题分解
+- **AutoGen**：具有专用检索器/生成器智能体的多智能体对话式 RAG
+- **CrewAI**：基于角色的多智能体 RAG，具有预定义的智能体原型
 
-## Key Innovations
+## 关键创新
 
-1. **Principled taxonomy**: First systematic classification of Agentic RAG architectures
-   along four orthogonal dimensions (cardinality, control, autonomy, knowledge).
+1. **原则性分类体系**：首个沿四个正交维度（数量、控制、自主、知识）系统分类 Agentic RAG 架构的工作。
 
-2. **Evolution narrative**: Clear articulation of the progression from Naive -> Advanced
-   -> Modular -> Agentic RAG, showing how each paradigm addresses the previous one's
-   limitations.
+2. **演化叙事**：清晰表述了从朴素 -> 高级 -> 模块化 -> Agentic RAG 的进程，展示了每种范式如何解决前一种的局限。
 
-3. **Design pattern catalog**: Identifies and categorizes reusable agentic patterns
-   (reflection, planning, tool use, multi-agent, routing) that can be composed to
-   build complex RAG systems.
+3. **设计模式编目**：识别和分类了可组合的可复用智能体模式（反思、规划、工具使用、多智能体、路由），可用于构建复杂的 RAG 系统。
 
-4. **Cross-domain analysis**: Examines Agentic RAG applications across healthcare,
-   finance, education, and enterprise document processing.
+4. **跨领域分析**：检视了 Agentic RAG 在医疗、金融、教育和企业文档处理中的应用。
 
-## Experimental Setup
+## 实验设置
 
-As a survey, the paper does not present original experiments. Instead, it provides:
+作为综述，论文不呈现原始实验。相反，它提供：
 
-- **Comparative analysis** of 10+ Agentic RAG systems and their reported results
-- **Architectural comparison** across implementation frameworks
-- **Design trade-off analysis** for different agentic patterns and configurations
+- 10+ 个 Agentic RAG 系统及其报告结果的**比较分析**
+- 跨实现框架的**架构比较**
+- 不同智能体模式和配置的**设计权衡分析**
 
-## Results
+## 结果
 
-### Comparative System Analysis
+### 比较系统分析
 
-| System       | Agent Type   | Retrieval Control | Self-Reflection | Multi-hop |
-|-------------|-------------|-------------------|-----------------|-----------|
-| Naive RAG   | None        | Always retrieve    | No              | No        |
-| Self-RAG    | Single      | On-demand          | Yes (tokens)    | Limited   |
-| CRAG        | Single      | Evaluate + route   | No              | Limited   |
-| Adaptive    | Single      | Classify + route   | No              | Yes       |
-| IRCoT       | Single      | Interleaved        | No              | Yes       |
-| ITER-RETGEN | Single      | Iterative          | Implicit        | Yes       |
-| AutoGen RAG | Multi       | Agent-decided      | Via agents      | Yes       |
+| 系统         | 智能体类型 | 检索控制           | 自我反思        | 多跳   |
+|-------------|-------------|-------------------|-----------------|--------|
+| 朴素 RAG    | 无          | 始终检索           | 否              | 否     |
+| Self-RAG    | 单          | 按需               | 是（token）     | 有限   |
+| CRAG        | 单          | 评估 + 路由        | 否              | 有限   |
+| Adaptive    | 单          | 分类 + 路由        | 否              | 是     |
+| IRCoT       | 单          | 交错               | 否              | 是     |
+| ITER-RETGEN | 单          | 迭代               | 隐式            | 是     |
+| AutoGen RAG | 多          | 智能体决定         | 通过智能体      | 是     |
 
-### Key Findings
+### 关键发现
 
-1. Self-RAG reduces hallucination rates to ~5.8% across evaluated configurations,
-   significantly lower than standard RAG pipelines (12-14%).
-2. Corrective RAG improves robustness by falling back to web search when local
-   retrieval quality is low, particularly effective for time-sensitive queries.
-3. Adaptive RAG reduces inference cost by 30-40% by skipping retrieval for simple queries
-   that the model can answer from parametric knowledge alone.
-4. Multi-agent RAG architectures show strongest performance on complex multi-hop
-   questions but incur higher latency and cost due to inter-agent communication.
+1. Self-RAG 在评估配置中将幻觉率降低到约 5.8%，显著低于标准 RAG 流水线（12-14%）。
+2. 纠正式 RAG 通过在本地检索质量低时回退到网络搜索提高了鲁棒性，对时间敏感的查询尤为有效。
+3. 自适应 RAG 通过跳过模型可以从参数化知识回答的简单查询的检索，将推理成本降低 30-40%。
+4. 多智能体 RAG 架构在复杂的多跳问题上表现最强，但由于智能体间通信产生了更高的延迟和成本。
 
-## Limitations
+## 局限性
 
-1. **Benchmark fragmentation**: Different Agentic RAG systems are evaluated on different
-   benchmarks, making direct comparison difficult.
-2. **Latency analysis missing**: The survey does not systematically compare inference
-   latency across agentic RAG architectures, which is critical for production deployment.
-3. **Cost modeling**: Limited analysis of compute and API costs for different agentic
-   patterns, despite this being a key practical concern.
-4. **Emerging systems**: Rapid development means some recent systems (2025) may not
-   be fully covered.
-5. **Evaluation metrics**: No unified evaluation framework is proposed for comparing
-   Agentic RAG systems across accuracy, latency, cost, and robustness.
+1. **基准测试碎片化**：不同的 Agentic RAG 系统在不同的基准测试上评估，使直接比较困难。
+2. **延迟分析缺失**：综述未系统比较不同 agentic RAG 架构的推理延迟，而这对生产部署至关重要。
+3. **成本建模**：对不同智能体模式的计算和 API 成本分析有限，尽管这是一个关键的实际关注点。
+4. **新兴系统**：快速发展意味着一些近期系统（2025 年）可能未被完全覆盖。
+5. **评估指标**：未提出用于跨准确率、延迟、成本和鲁棒性比较 Agentic RAG 系统的统一评估框架。
 
-## Key Takeaways
+## 核心要点
 
-1. The evolution from Naive to Agentic RAG represents a shift from static pipelines to
-   dynamic, agent-driven systems that can reason about *when and how* to retrieve.
+1. 从朴素到 Agentic RAG 的演化代表了从静态流水线到动态的、智能体驱动的系统的转变，这些系统能够推理*何时以及如何*检索。
 
-2. Reflection is the most impactful agentic pattern: Self-RAG's ability to self-critique
-   retrieval relevance and generation support significantly reduces hallucination.
+2. 反思是最具影响力的智能体模式：Self-RAG 自我批评检索相关性和生成支持的能力显著降低了幻觉。
 
-3. The choice between single-agent and multi-agent architectures involves clear
-   trade-offs: single-agent is simpler and lower-latency; multi-agent is more capable
-   for complex tasks but harder to debug and more expensive.
+3. 单智能体和多智能体架构之间的选择涉及明确的权衡：单智能体更简单且延迟更低；多智能体对复杂任务能力更强但更难调试且更昂贵。
 
-4. Router/classifier-based approaches (Adaptive RAG) offer a practical middle ground,
-   adding minimal overhead while significantly reducing unnecessary retrieval.
+4. 基于路由器/分类器的方法（Adaptive RAG）提供了实用的中间方案，以最小的开销显著减少了不必要的检索。
 
-5. Production Agentic RAG systems should compose multiple patterns (e.g., routing +
-   reflection + iterative retrieval) rather than relying on a single pattern.
+5. 生产 Agentic RAG 系统应组合多种模式（例如路由 + 反思 + 迭代检索），而非依赖单一模式。
 
-6. The field urgently needs standardized benchmarks and evaluation frameworks that
-   assess Agentic RAG systems across multiple dimensions: accuracy, latency, cost,
-   robustness to adversarial inputs, and hallucination rate.
+6. 该领域迫切需要标准化的基准测试和评估框架，跨多个维度评估 Agentic RAG 系统：准确率、延迟、成本、对对抗输入的鲁棒性和幻觉率。

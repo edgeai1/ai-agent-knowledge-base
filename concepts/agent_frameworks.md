@@ -1,39 +1,39 @@
 ---
-title: Agent Frameworks Comparison
+title: 智能体框架对比
 tags: [agent, framework, langchain, langgraph, autogen, crewai, metagpt, claude-sdk, openai-sdk, dify, coze]
 related: [llm_agent_fundamentals, agent_architecture_patterns, agent_techniques]
 ---
 
-## Definition
+## 定义
 
-Agent frameworks are software libraries and platforms that provide abstractions, primitives, and infrastructure for building LLM-based agents. They handle the boilerplate of agent loops, tool integration, memory management, and multi-agent orchestration.
+智能体框架是提供抽象、原语和基础设施的软件库和平台，用于构建基于 LLM 的智能体。它们处理智能体循环、工具集成、记忆管理和多智能体编排的样板代码。
 
 ---
 
-## Framework 1: LangChain / LangGraph
+## 框架 1：LangChain / LangGraph
 
-### Overview
-- **Developer**: LangChain Inc. (Harrison Chase)
-- **Language**: Python, JavaScript/TypeScript
-- **License**: MIT
-- **Repository**: github.com/langchain-ai/langchain, github.com/langchain-ai/langgraph
-- **First Release**: October 2022 (LangChain), January 2024 (LangGraph)
+### 概述
+- **开发者**：LangChain Inc. (Harrison Chase)
+- **语言**：Python、JavaScript/TypeScript
+- **许可证**：MIT
+- **仓库**：github.com/langchain-ai/langchain、github.com/langchain-ai/langgraph
+- **首次发布**：2022 年 10 月（LangChain）、2024 年 1 月（LangGraph）
 
-### Architecture
-LangChain started as a chain-based framework (sequential LLM calls) and evolved into a modular ecosystem:
+### 架构
+LangChain 最初是一个基于链的框架（顺序 LLM 调用），后来演变为模块化生态系统：
 
-- **LangChain Core**: Base abstractions (LLMs, prompts, output parsers, tools)
-- **LangChain Community**: Third-party integrations (vector stores, tools, LLM providers)
-- **LangGraph**: Graph-based agent orchestration framework (the recommended approach for agents as of 2024+)
-- **LangSmith**: Observability, testing, and evaluation platform
-- **LangServe**: Deployment as REST APIs
+- **LangChain Core**：基础抽象（LLM、提示、输出解析器、工具）
+- **LangChain Community**：第三方集成（向量存储、工具、LLM 提供商）
+- **LangGraph**：基于图的智能体编排框架（2024 年以后推荐的智能体构建方法）
+- **LangSmith**：可观测性、测试和评估平台
+- **LangServe**：部署为 REST API
 
-### LangGraph (Agent Framework)
-LangGraph models agents as **stateful graphs**:
-- **Nodes**: Functions that process state (LLM calls, tool execution, routing logic)
-- **Edges**: Transitions between nodes (conditional or unconditional)
-- **State**: A shared, typed state object that flows through the graph
-- **Checkpointing**: Built-in persistence for long-running agents, human-in-the-loop, and recovery
+### LangGraph（智能体框架）
+LangGraph 将智能体建模为**有状态图**：
+- **节点**：处理状态的函数（LLM 调用、工具执行、路由逻辑）
+- **边**：节点之间的转换（条件或无条件）
+- **状态**：在图中流动的共享类型化状态对象
+- **检查点**：内置持久化，支持长时间运行的智能体、人在回路中和故障恢复
 
 ```python
 # LangGraph conceptual example
@@ -48,51 +48,51 @@ graph.add_edge("tools", "agent")
 app = graph.compile()
 ```
 
-### Key Features
-- Model-agnostic (OpenAI, Anthropic, Google, open-source)
-- Huge ecosystem of integrations (700+ integrations)
-- LangGraph supports cycles, branching, parallel execution
-- Human-in-the-loop via interrupt/resume
-- Streaming support (token-level and event-level)
-- LangGraph Cloud for managed deployment
+### 主要特性
+- 模型无关（OpenAI、Anthropic、Google、开源）
+- 庞大的集成生态系统（700+ 集成）
+- LangGraph 支持循环、分支、并行执行
+- 通过中断/恢复实现人在回路中
+- 流式传输支持（token 级和事件级）
+- LangGraph Cloud 用于托管部署
 
-### Strengths
-- Largest community and ecosystem
-- Flexible and composable
-- LangGraph provides fine-grained control over agent behavior
-- Excellent documentation and tutorials
-- Strong observability via LangSmith
+### 优势
+- 最大的社区和生态系统
+- 灵活且可组合
+- LangGraph 提供对智能体行为的精细控制
+- 优秀的文档和教程
+- 通过 LangSmith 实现强大的可观测性
 
-### Limitations
-- LangChain (legacy chains/agents) has been criticized for over-abstraction
-- Steep learning curve for LangGraph's graph paradigm
-- Frequent breaking API changes (historically)
-- Can be verbose for simple use cases
+### 局限性
+- LangChain（旧版链/智能体）被批评过度抽象
+- LangGraph 的图范式学习曲线陡峭
+- 历史上频繁的破坏性 API 更改
+- 对于简单用例可能过于冗长
 
 ---
 
-## Framework 2: AutoGen (Microsoft)
+## 框架 2：AutoGen（Microsoft）
 
-### Overview
-- **Developer**: Microsoft Research
-- **Language**: Python, .NET (AutoGen 0.4+)
-- **License**: MIT (Creative Commons for some components)
-- **Repository**: github.com/microsoft/autogen
-- **First Release**: September 2023
-- **Major Rewrite**: AutoGen 0.4 (AgentChat) -- late 2024, complete redesign
+### 概述
+- **开发者**：Microsoft Research
+- **语言**：Python、.NET（AutoGen 0.4+）
+- **许可证**：MIT（部分组件为 Creative Commons）
+- **仓库**：github.com/microsoft/autogen
+- **首次发布**：2023 年 9 月
+- **重大重写**：AutoGen 0.4 (AgentChat) -- 2024 年底，完全重新设计
 
-### Architecture (AutoGen 0.4 / AgentChat)
-AutoGen 0.4 is a complete rewrite with a layered architecture:
+### 架构（AutoGen 0.4 / AgentChat）
+AutoGen 0.4 是一个具有分层架构的完全重写版本：
 
-- **Core Layer**: Asynchronous, event-driven agent runtime with message-passing
-- **AgentChat Layer**: High-level API for multi-agent conversations
-- **Extensions**: Model clients, tools, code execution
+- **核心层**：异步、事件驱动的智能体运行时，支持消息传递
+- **AgentChat 层**：用于多智能体对话的高级 API
+- **扩展**：模型客户端、工具、代码执行
 
-Key primitives:
-- **Agents**: AssistantAgent, UserProxyAgent, custom agents
-- **Teams**: RoundRobinGroupChat, SelectorGroupChat, Swarm, MagenticOneGroupChat
-- **Termination conditions**: MaxMessageTermination, TextMentionTermination, etc.
-- **Model clients**: OpenAI, Anthropic, etc.
+关键原语：
+- **智能体**：AssistantAgent、UserProxyAgent、自定义智能体
+- **团队**：RoundRobinGroupChat、SelectorGroupChat、Swarm、MagenticOneGroupChat
+- **终止条件**：MaxMessageTermination、TextMentionTermination 等
+- **模型客户端**：OpenAI、Anthropic 等
 
 ```python
 # AutoGen 0.4 conceptual example
@@ -105,45 +105,45 @@ team = RoundRobinGroupChat([agent1, agent2], max_turns=10)
 result = await team.run(task="Build a web scraper")
 ```
 
-### Key Features
-- First-class multi-agent conversations
-- Multiple team topologies (round-robin, selector-based, swarm, Magentic-One)
-- Built-in code execution (Docker sandbox, local)
-- Human-in-the-loop support
-- Cross-language support (.NET, Python)
-- Magentic-One: pre-built multi-agent team for complex web/file tasks
+### 主要特性
+- 一流的多智能体对话
+- 多种团队拓扑（轮询、基于选择器、群体、Magentic-One）
+- 内置代码执行（Docker 沙箱、本地）
+- 人在回路中支持
+- 跨语言支持（.NET、Python）
+- Magentic-One：预构建的多智能体团队，用于复杂的网页/文件任务
 
-### Strengths
-- Excellent for multi-agent systems
-- Clean async-first architecture (0.4)
-- Strong code execution capabilities
-- Backed by Microsoft Research
-- AutoGen Studio: no-code UI for building agent teams
+### 优势
+- 多智能体系统方面表现优秀
+- 干净的异步优先架构（0.4）
+- 强大的代码执行能力
+- 由 Microsoft Research 支持
+- AutoGen Studio：用于构建智能体团队的无代码 UI
 
-### Limitations
-- Breaking changes between 0.2 and 0.4 (migration required)
-- Documentation still catching up for 0.4
-- Smaller community than LangChain
-- Complex setup for advanced scenarios
+### 局限性
+- 0.2 和 0.4 之间的破坏性更改（需要迁移）
+- 0.4 版本的文档仍在完善中
+- 社区比 LangChain 小
+- 高级场景设置复杂
 
 ---
 
-## Framework 3: CrewAI
+## 框架 3：CrewAI
 
-### Overview
-- **Developer**: CrewAI Inc. (Joao Moura)
-- **Language**: Python
-- **License**: MIT
-- **Repository**: github.com/crewAIInc/crewAI
-- **First Release**: December 2023
+### 概述
+- **开发者**：CrewAI Inc. (Joao Moura)
+- **语言**：Python
+- **许可证**：MIT
+- **仓库**：github.com/crewAIInc/crewAI
+- **首次发布**：2023 年 12 月
 
-### Architecture
-CrewAI uses a role-playing metaphor inspired by real-world team structures:
+### 架构
+CrewAI 使用受现实世界团队结构启发的角色扮演隐喻：
 
-- **Agent**: An autonomous unit with a role, goal, backstory, and tools
-- **Task**: A specific assignment with a description, expected output, and assigned agent
-- **Crew**: A team of agents working together on a set of tasks
-- **Process**: The workflow type (sequential, hierarchical, or consensual)
+- **智能体**：具有角色、目标、背景故事和工具的自主单元
+- **任务**：具有描述、预期输出和指定智能体的具体分配
+- **团队**：一组智能体共同处理一组任务
+- **流程**：工作流类型（顺序、层级或共识）
 
 ```python
 # CrewAI conceptual example
@@ -173,86 +173,86 @@ crew = Crew(
 result = crew.kickoff()
 ```
 
-### Key Features
-- Simple, intuitive API based on real-world team metaphors
-- Role-based agent design (role, goal, backstory)
-- Sequential and hierarchical process types
-- Built-in delegation between agents
-- Memory (short-term, long-term, entity memory)
-- CrewAI Enterprise for production deployments
-- Flows: structured workflows combining crews with procedural code
+### 主要特性
+- 基于现实世界团队隐喻的简单直观 API
+- 基于角色的智能体设计（角色、目标、背景故事）
+- 顺序和层级流程类型
+- 内置智能体之间的委派
+- 记忆（短期、长期、实体记忆）
+- CrewAI Enterprise 用于生产部署
+- Flows：将团队与过程式代码结合的结构化工作流
 
-### Strengths
-- Easiest to learn among agent frameworks
-- Intuitive mental model (agents as team members)
-- Quick to prototype
-- Good for content creation, research, analysis pipelines
-- Growing ecosystem of pre-built tools
+### 优势
+- 智能体框架中最容易学习
+- 直观的心智模型（智能体作为团队成员）
+- 快速原型制作
+- 适合内容创建、研究、分析流水线
+- 不断增长的预构建工具生态系统
 
-### Limitations
-- Less flexible than LangGraph for complex control flows
-- Limited support for advanced agent patterns (e.g., dynamic agent creation)
-- Relatively young framework
-- Debugging can be opaque (agents are chatty)
-- Performance overhead from verbose inter-agent communication
-
----
-
-## Framework 4: MetaGPT
-
-### Overview
-- **Developer**: DeepWisdom (Alexander Wu et al.)
-- **Language**: Python
-- **License**: MIT
-- **Repository**: github.com/geekan/MetaGPT
-- **First Release**: June 2023
-- **Paper**: Hong et al., "MetaGPT: Meta Programming for a Multi-Agent Collaborative Framework" (2023)
-
-### Architecture
-MetaGPT structures multi-agent collaboration around **Standardized Operating Procedures (SOPs)** -- mimicking how real software companies operate:
-
-- **Roles**: ProductManager, Architect, ProjectManager, Engineer, QA
-- **Actions**: Each role has defined actions (WritePRD, DesignAPI, WriteCode, RunTest)
-- **Message Bus**: Publish-subscribe communication between agents
-- **Shared Environment**: Shared workspace with documents, code, and artifacts
-- **SOP Workflow**: Predefined sequence of role interactions
-
-### Key Features
-- Software development lifecycle simulation
-- Structured outputs at each stage (PRD, system design, API specs, code, tests)
-- Role-based design with clear responsibilities
-- Publish-subscribe messaging architecture
-- Incremental development with iterative refinement
-
-### Strengths
-- Produces high-quality structured software artifacts
-- Reduces hallucination through role constraints and output schemas
-- Novel SOP approach provides consistency
-- Good for code generation and software engineering tasks
-
-### Limitations
-- Primarily focused on software development use case
-- Complex codebase, harder to extend to other domains
-- High token consumption (multiple agents, long outputs)
-- Less general-purpose than LangGraph or AutoGen
+### 局限性
+- 对于复杂控制流不如 LangGraph 灵活
+- 对高级智能体模式（如动态智能体创建）支持有限
+- 相对年轻的框架
+- 调试可能不够透明（智能体通信冗长）
+- 冗长的智能体间通信带来性能开销
 
 ---
 
-## Framework 5: Claude Agent SDK (Anthropic)
+## 框架 4：MetaGPT
 
-### Overview
-- **Developer**: Anthropic
-- **Language**: Python, TypeScript
-- **License**: MIT
-- **First Release**: March 2025 (as part of Claude ecosystem)
+### 概述
+- **开发者**：DeepWisdom (Alexander Wu et al.)
+- **语言**：Python
+- **许可证**：MIT
+- **仓库**：github.com/geekan/MetaGPT
+- **首次发布**：2023 年 6 月
+- **论文**：Hong et al., "MetaGPT: Meta Programming for a Multi-Agent Collaborative Framework" (2023)
 
-### Architecture
-The Claude Agent SDK provides a minimal, opinionated framework for building agents with Claude:
+### 架构
+MetaGPT 围绕**标准操作流程（SOP）**构建多智能体协作——模拟真实软件公司的运作方式：
 
-- **Agent**: Core agent class with a model, instructions, tools, and optional handoff targets
-- **Tools**: Function tools, Bash tool, Computer tool, MCP servers
-- **Handoffs**: Transfer control between specialized agents
-- **Guardrails**: Input/output validation for safety
+- **角色**：ProductManager、Architect、ProjectManager、Engineer、QA
+- **行动**：每个角色有定义的行动（WritePRD、DesignAPI、WriteCode、RunTest）
+- **消息总线**：智能体之间的发布-订阅通信
+- **共享环境**：包含文档、代码和工件的共享工作区
+- **SOP 工作流**：预定义的角色交互序列
+
+### 主要特性
+- 软件开发生命周期模拟
+- 每个阶段的结构化输出（PRD、系统设计、API 规范、代码、测试）
+- 基于角色的设计，职责明确
+- 发布-订阅消息架构
+- 带有迭代优化的增量开发
+
+### 优势
+- 产生高质量的结构化软件工件
+- 通过角色约束和输出模式减少幻觉
+- 新颖的 SOP 方法提供一致性
+- 适合代码生成和软件工程任务
+
+### 局限性
+- 主要专注于软件开发用例
+- 代码库复杂，难以扩展到其他领域
+- token 消耗高（多个智能体，长输出）
+- 不如 LangGraph 或 AutoGen 通用
+
+---
+
+## 框架 5：Claude Agent SDK（Anthropic）
+
+### 概述
+- **开发者**：Anthropic
+- **语言**：Python、TypeScript
+- **许可证**：MIT
+- **首次发布**：2025 年 3 月（作为 Claude 生态系统的一部分）
+
+### 架构
+Claude Agent SDK 提供了一个极简、有主见的框架，用于使用 Claude 构建智能体：
+
+- **智能体**：核心智能体类，包含模型、指令、工具和可选的切换目标
+- **工具**：函数工具、Bash 工具、Computer 工具、MCP 服务器
+- **切换**：在专业化智能体之间转移控制权
+- **安全防护**：用于安全的输入/输出验证
 
 ```python
 # Claude Agent SDK conceptual example
@@ -270,51 +270,51 @@ agent = Agent(
 result = Runner.run(agent, messages=[{"role": "user", "content": "..."}])
 ```
 
-### Key Features
-- Tight integration with Claude models
-- Model Context Protocol (MCP) for standardized tool connections
-- Multi-agent handoffs (swarm-style agent switching)
-- Built-in guardrails for safety
-- Computer use capability (GUI interaction)
-- Tracing and observability
+### 主要特性
+- 与 Claude 模型紧密集成
+- 通过模型上下文协议（MCP）实现标准化工具连接
+- 多智能体切换（群体式智能体切换）
+- 内置安全防护
+- 计算机使用能力（GUI 交互）
+- 追踪和可观测性
 
-### Design Philosophy
-- Minimal abstraction (thin wrapper, not a heavy framework)
-- Agents are "just" Claude with tools and instructions
-- Emphasize simplicity and Claude-native patterns
-- MCP as the universal tool integration standard
+### 设计理念
+- 最小抽象（薄封装，而非重量级框架）
+- 智能体"只是"具有工具和指令的 Claude
+- 强调简洁性和 Claude 原生模式
+- MCP 作为通用工具集成标准
 
-### Strengths
-- Simple, minimal API
-- Best-in-class integration with Claude models
-- MCP provides standardized, reusable tool ecosystem
-- Computer use for GUI automation
-- Strong safety features (guardrails)
+### 优势
+- 简单、极简的 API
+- 与 Claude 模型一流集成
+- MCP 提供标准化、可复用的工具生态系统
+- 计算机使用用于 GUI 自动化
+- 强大的安全特性（安全防护）
 
-### Limitations
-- Claude-only (not model-agnostic)
-- Newer framework, smaller ecosystem than LangChain
-- Fewer built-in orchestration patterns than LangGraph
-- MCP ecosystem still growing
+### 局限性
+- 仅限 Claude（非模型无关）
+- 较新的框架，生态系统比 LangChain 小
+- 比 LangGraph 内置的编排模式少
+- MCP 生态系统仍在增长中
 
 ---
 
-## Framework 6: OpenAI Agents SDK
+## 框架 6：OpenAI Agents SDK
 
-### Overview
-- **Developer**: OpenAI
-- **Language**: Python
-- **License**: MIT
-- **First Release**: March 2025 (evolution of Swarm framework)
-- **Repository**: github.com/openai/openai-agents-python
+### 概述
+- **开发者**：OpenAI
+- **语言**：Python
+- **许可证**：MIT
+- **首次发布**：2025 年 3 月（由 Swarm 框架演变而来）
+- **仓库**：github.com/openai/openai-agents-python
 
-### Architecture
-The OpenAI Agents SDK is a lightweight, production-ready framework:
+### 架构
+OpenAI Agents SDK 是一个轻量级、面向生产的框架：
 
-- **Agent**: An LLM with instructions, tools, and handoff capabilities
-- **Handoffs**: Transfer conversation to another agent (inherited from Swarm)
-- **Guardrails**: Input/output validators for safety
-- **Tracing**: Built-in observability and debugging
+- **智能体**：具有指令、工具和切换能力的 LLM
+- **切换**：将对话转移给另一个智能体（继承自 Swarm）
+- **安全防护**：用于安全的输入/输出验证器
+- **追踪**：内置可观测性和调试
 
 ```python
 # OpenAI Agents SDK conceptual example
@@ -330,87 +330,87 @@ agent = Agent(
 result = Runner.run(agent, messages=[...])
 ```
 
-### Key Features
-- Built-in tracing and observability
-- Multi-agent handoffs (from Swarm)
-- Guardrails for input/output validation
-- Context management
-- Integration with OpenAI models and tools
+### 主要特性
+- 内置追踪和可观测性
+- 多智能体切换（来自 Swarm）
+- 输入/输出验证的安全防护
+- 上下文管理
+- 与 OpenAI 模型和工具集成
 
-### Strengths
-- Simple, minimal API (similar philosophy to Claude Agent SDK)
-- Native OpenAI model integration
-- Built-in tracing
-- Production-ready design
+### 优势
+- 简单、极简的 API（与 Claude Agent SDK 理念相似）
+- 原生 OpenAI 模型集成
+- 内置追踪
+- 面向生产的设计
 
-### Limitations
-- OpenAI-only (not model-agnostic)
-- Limited orchestration capabilities compared to LangGraph
-- Relatively new, limited community resources
+### 局限性
+- 仅限 OpenAI（非模型无关）
+- 与 LangGraph 相比编排能力有限
+- 相对较新，社区资源有限
 
 ---
 
-## Framework 7: Platform-Based Frameworks (Dify, Coze, etc.)
+## 框架 7：平台型框架（Dify、Coze 等）
 
 ### Dify
-- **Type**: Open-source LLM app development platform (with cloud offering)
-- **Repository**: github.com/langgenius/dify
-- **Key Features**:
-  - Visual workflow builder (drag-and-drop agent design)
-  - RAG pipeline with built-in knowledge base management
-  - Support for multiple LLM providers
-  - Agent and chatbot templates
-  - API-first design for embedding
-  - Built-in evaluation and monitoring
-- **Best For**: Teams wanting a visual, no-code/low-code approach to building AI apps and agents
-- **Strengths**: Accessible to non-developers, built-in RAG, good UI
-- **Limitations**: Less flexible than code-first frameworks, vendor dependency
+- **类型**：开源 LLM 应用开发平台（附带云服务）
+- **仓库**：github.com/langgenius/dify
+- **主要特性**：
+  - 可视化工作流构建器（拖拽式智能体设计）
+  - 内置知识库管理的 RAG 流水线
+  - 支持多个 LLM 提供商
+  - 智能体和聊天机器人模板
+  - API 优先设计，便于嵌入
+  - 内置评估和监控
+- **最适用于**：希望以可视化、无代码/低代码方式构建 AI 应用和智能体的团队
+- **优势**：非开发人员可用、内置 RAG、良好的 UI
+- **局限性**：不如代码优先的框架灵活、供应商依赖
 
-### Coze (ByteDance)
-- **Type**: Bot/agent building platform
-- **Key Features**:
-  - Visual bot builder with plugin system
-  - Built-in knowledge base, memory, and workflow capabilities
-  - Pre-built plugins for common integrations
-  - Multi-platform deployment (Discord, Telegram, Slack, web)
-  - Workflow automation with triggers
-- **Best For**: Building and deploying chatbots and simple agents quickly
-- **Strengths**: Easy to use, multi-platform deployment, free tier
-- **Limitations**: Less customizable, platform lock-in, primarily consumer-focused
+### Coze（字节跳动）
+- **类型**：机器人/智能体构建平台
+- **主要特性**：
+  - 带插件系统的可视化机器人构建器
+  - 内置知识库、记忆和工作流能力
+  - 常见集成的预构建插件
+  - 多平台部署（Discord、Telegram、Slack、Web）
+  - 带触发器的工作流自动化
+- **最适用于**：快速构建和部署聊天机器人和简单智能体
+- **优势**：易于使用、多平台部署、免费层
+- **局限性**：可定制性较低、平台锁定、主要面向消费者
 
-### Others
-- **Flowise**: Open-source drag-and-drop LLM flow builder (based on LangChain)
-- **Botpress**: Chatbot platform with LLM agent capabilities
-- **Wordware**: Collaborative IDE for building LLM agents
-- **Relevance AI**: No-code AI agent builder and deployment platform
+### 其他
+- **Flowise**：开源拖拽式 LLM 流程构建器（基于 LangChain）
+- **Botpress**：具有 LLM 智能体能力的聊天机器人平台
+- **Wordware**：用于构建 LLM 智能体的协作 IDE
+- **Relevance AI**：无代码 AI 智能体构建和部署平台
 
 ---
 
-## Comparison Matrix
+## 对比矩阵
 
-| Feature | LangGraph | AutoGen 0.4 | CrewAI | MetaGPT | Claude SDK | OpenAI SDK | Dify |
-|---------|-----------|-------------|--------|---------|------------|------------|------|
-| **Approach** | Graph-based | Multi-agent chat | Role-playing | SOP-based | Minimal wrapper | Minimal wrapper | Visual builder |
-| **Multi-agent** | Yes | Excellent | Good | Excellent | Handoffs | Handoffs | Basic |
-| **Model-agnostic** | Yes | Yes | Yes | Yes | No (Claude) | No (OpenAI) | Yes |
-| **Learning curve** | High | Medium | Low | Medium | Low | Low | Very Low |
-| **Flexibility** | Very High | High | Medium | Medium | Medium | Medium | Low |
-| **Production-ready** | Yes | Yes | Growing | Growing | Yes | Yes | Yes |
-| **Code vs No-code** | Code | Code | Code | Code | Code | Code | Both |
-| **Best for** | Complex workflows | Multi-agent | Team simulation | SW dev | Claude apps | OpenAI apps | Rapid prototyping |
-| **Community size** | Very Large | Large | Large | Medium | Growing | Growing | Large |
+| 特性 | LangGraph | AutoGen 0.4 | CrewAI | MetaGPT | Claude SDK | OpenAI SDK | Dify |
+|------|-----------|-------------|--------|---------|------------|------------|------|
+| **方法** | 基于图 | 多智能体对话 | 角色扮演 | 基于 SOP | 极简封装 | 极简封装 | 可视化构建器 |
+| **多智能体** | 是 | 优秀 | 良好 | 优秀 | 切换 | 切换 | 基础 |
+| **模型无关** | 是 | 是 | 是 | 是 | 否（Claude） | 否（OpenAI） | 是 |
+| **学习曲线** | 高 | 中 | 低 | 中 | 低 | 低 | 非常低 |
+| **灵活性** | 非常高 | 高 | 中 | 中 | 中 | 中 | 低 |
+| **生产就绪** | 是 | 是 | 发展中 | 发展中 | 是 | 是 | 是 |
+| **代码 vs 无代码** | 代码 | 代码 | 代码 | 代码 | 代码 | 代码 | 两者 |
+| **最适用于** | 复杂工作流 | 多智能体 | 团队模拟 | 软件开发 | Claude 应用 | OpenAI 应用 | 快速原型 |
+| **社区规模** | 非常大 | 大 | 大 | 中 | 增长中 | 增长中 | 大 |
 
-## Decision Guide
+## 选择指南
 
-- **"I need maximum flexibility and control"** -> LangGraph
-- **"I need multi-agent collaboration"** -> AutoGen or CrewAI
-- **"I want the simplest possible agent"** -> Claude SDK or OpenAI SDK
-- **"I'm building a software engineering agent"** -> MetaGPT
-- **"I want no-code/visual building"** -> Dify, Coze, or Flowise
-- **"I'm committed to Claude/Anthropic"** -> Claude Agent SDK + MCP
-- **"I'm committed to OpenAI"** -> OpenAI Agents SDK
+- **"我需要最大的灵活性和控制力"** -> LangGraph
+- **"我需要多智能体协作"** -> AutoGen 或 CrewAI
+- **"我想要最简单的智能体"** -> Claude SDK 或 OpenAI SDK
+- **"我在构建软件工程智能体"** -> MetaGPT
+- **"我想要无代码/可视化构建"** -> Dify、Coze 或 Flowise
+- **"我专注于 Claude/Anthropic"** -> Claude Agent SDK + MCP
+- **"我专注于 OpenAI"** -> OpenAI Agents SDK
 
-## References
+## 参考文献
 
 - LangChain docs: python.langchain.com
 - LangGraph docs: langchain-ai.github.io/langgraph/

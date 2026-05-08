@@ -43,178 +43,178 @@ tags:
 status: done
 ---
 
-# The Rise and Potential of Large Language Model Based Agents: A Survey
+# 基于大语言模型的智能体的崛起与潜力：综述
 
-## TL;DR
+## 简要总结
 
-This 86-page survey from the Renmin/Fudan NLP group presents an alternative agent framework centered on the **brain-perception-action** triad, inspired by cognitive science. It uniquely organizes the agent landscape into three interaction paradigms -- single-agent, multi-agent, and human-agent cooperation -- and includes a deep philosophical treatment of the agent concept tracing from Aristotle through Turing to modern LLMs. Published as the cover article of Science China Information Sciences, it provides the most comprehensive treatment of agent *applications* and *social phenomena* in the 2023 literature.
-
----
-
-## Motivation & Problem
-
-The authors identify several motivating observations:
-
-1. **Philosophical gap**: The concept of "agent" spans philosophy, cognitive science, and computer science, but the AI community had not adequately situated LLM-based agents within this intellectual lineage.
-2. **Why LLMs as agents?**: Previous agent paradigms (symbolic AI, reinforcement learning agents) had limited natural language understanding and generalization. LLMs offer emergent capabilities (in-context learning, instruction following, reasoning) that make them uniquely suited as the "brain" of autonomous agents.
-3. **Application fragmentation**: Agent applications in task solving, social simulation, gaming, and scientific discovery needed systematic categorization.
-4. **Social phenomena**: As agents interact in multi-agent settings, emergent social behaviors arise -- these needed documentation and analysis.
+这篇 86 页的综述来自人民大学/复旦 NLP 团队，提出了以**大脑-感知-行动**三元组为中心的替代智能体框架，灵感来自认知科学。它独特地将智能体版图组织为三种交互范式 -- 单智能体、多智能体和人机合作 -- 并包含对智能体概念从亚里士多德到图灵再到现代 LLM 的深度哲学论述。作为 Science China Information Sciences 的封面文章发表，它提供了 2023 年文献中对智能体*应用*和*社会现象*最全面的论述。
 
 ---
 
-## Method / Framework: Brain-Perception-Action
+## 动机与问题
 
-### The Brain Module
+作者识别出几个驱动性观察：
 
-The brain is the LLM itself, serving as the central controller. The survey decomposes brain capabilities into:
-
-**Natural Language Interaction:**
-- High-quality text generation enabling communication with humans and other agents.
-- Multi-turn dialogue management maintaining coherence across extended interactions.
-- Role-playing and persona adoption guided by system prompts.
-
-**Knowledge:**
-- **Linguistic knowledge**: Grammar, semantics, pragmatics internalized during pre-training.
-- **Commonsense knowledge**: Everyday reasoning about physical causality, social norms, temporal relations.
-- **Professional/domain knowledge**: Specialized expertise in law, medicine, coding, science (varying in reliability and depth).
-- Knowledge limitations: hallucination, outdated information, knowledge boundary uncertainty.
-
-**Memory:**
-- **Raise-then-use paradigm**: Memories are first raised (recalled/retrieved) and then used in reasoning.
-- **Memory formats**: natural language, code/structured data, embeddings.
-- **Memory sources**: experiential memory from interaction histories, knowledge-base memory from external sources.
-- Distinction between in-context memory (within the prompt) and external memory (retrieved from databases).
-
-**Reasoning and Planning:**
-- **Reasoning**: CoT, self-consistency, analogical reasoning, causal reasoning, counterfactual reasoning.
-- **Planning**: task decomposition (Plan-and-Solve), hierarchical planning, plan verification, adaptive re-planning.
-- Key distinction between *deliberative* planning (full plan before execution) and *reactive* planning (plan-as-you-go with environmental feedback).
-
-**Transferability and Generalization:**
-- Unseen task generalization via in-context learning and instruction tuning.
-- Cross-domain transfer without architectural changes.
-- Zero-shot and few-shot task adaptation.
-
-### The Perception Module
-
-The perception module handles multimodal input processing, extending agents beyond text:
-
-- **Textual input**: Primary modality; task descriptions, user instructions, document content.
-- **Visual input**: Image understanding via vision-language models (GPT-4V, LLaVA). Enables agents to interpret screenshots, diagrams, real-world scenes.
-- **Auditory input**: Speech recognition and audio understanding (Whisper integration). Enables voice-controlled agents.
-- **Other modalities**: Tactile data, sensor readings, 3D point clouds for embodied agents.
-- **Multimodal fusion**: Combining multiple input streams for richer situational awareness. Crucial for robotics and embodied AI applications.
-
-### The Action Module
-
-The action module governs the agent's outputs and interactions with the external world:
-
-- **Textual output**: Natural language responses, reports, summaries, code generation.
-- **Tool use**: API calls, database queries, web searches, calculator operations. Formalized as the agent selecting from an available tool inventory based on the current task state.
-- **Embodied actions**: Physical movement, object manipulation, navigation in simulated or real environments.
-- **Communication actions**: Sending messages to other agents or humans in collaborative settings.
-- **Action feedback loops**: The consequences of actions feed back into perception, creating the observe-think-act cycle.
+1. **哲学空白**："智能体"的概念跨越哲学、认知科学和计算机科学，但 AI 社区尚未充分将基于 LLM 的智能体置于这一知识谱系中。
+2. **为何选择 LLM 作为智能体？**：此前的智能体范式（符号 AI、强化学习智能体）的自然语言理解和泛化能力有限。LLM 提供了涌现能力（上下文学习、指令遵循、推理），使其特别适合作为自主智能体的"大脑"。
+3. **应用碎片化**：在任务求解、社会模拟、游戏和科学发现中的智能体应用需要系统化分类。
+4. **社会现象**：当智能体在多智能体设置中交互时，会出现涌现的社会行为 -- 这些需要记录和分析。
 
 ---
 
-## Three Interaction Paradigms
+## 方法 / 框架：大脑-感知-行动
 
-### Paradigm 1: Single-Agent Scenarios
+### 大脑模块
 
-Applications where a lone agent operates autonomously:
+大脑即 LLM 本身，作为中央控制器。综述将大脑能力分解为：
 
-**Task-oriented deployment:**
-- **Web agents**: Navigating websites, filling forms, making purchases (WebGPT, WebAgent, Mind2Web).
-- **Coding agents**: Writing, debugging, and testing code (Code Interpreter, Codex-based systems).
-- **Life assistants**: Managing schedules, emails, personal tasks.
+**自然语言交互：**
+- 高质量文本生成，实现与人类和其他智能体的通信。
+- 多轮对话管理，在长时间交互中保持连贯性。
+- 由系统提示引导的角色扮演和人设采纳。
 
-**Innovation-oriented deployment:**
-- Scientific hypothesis generation and experimental design.
-- Creative writing, art generation, and content creation.
-- Mathematical theorem proving and problem solving.
+**知识：**
+- **语言知识**：预训练期间内化的语法、语义、语用。
+- **常识知识**：关于物理因果、社会规范、时间关系的日常推理。
+- **专业/领域知识**：法律、医学、编程、科学等方面的专业知识（可靠性和深度各异）。
+- 知识局限：幻觉、信息过时、知识边界不确定性。
 
-**Lifecycle in simulation:**
-- Agents placed in persistent environments with long-horizon goals.
-- Voyager in Minecraft: autonomous exploration, skill acquisition, and curriculum-driven self-improvement.
-- Generative Agents: daily routines, relationship building, memory-driven behavioral evolution.
+**记忆：**
+- **提出-使用范式**：记忆先被提出（回忆/检索），然后用于推理。
+- **记忆格式**：自然语言、代码/结构化数据、嵌入。
+- **记忆来源**：来自交互历史的经验记忆、来自外部来源的知识库记忆。
+- 上下文内记忆（在提示中）和外部记忆（从数据库检索）的区分。
 
-### Paradigm 2: Multi-Agent Scenarios
+**推理与规划：**
+- **推理**：CoT、自一致性、类比推理、因果推理、反事实推理。
+- **规划**：任务分解（Plan-and-Solve）、层次规划、计划验证、自适应重新规划。
+- 关键区分：*审慎式*规划（执行前完整规划）和*反应式*规划（边执行边规划，有环境反馈）。
 
-Settings where multiple agents collaborate, compete, or coexist:
+**迁移性与泛化性：**
+- 通过上下文学习和指令调优实现对未见过任务的泛化。
+- 无需架构更改的跨领域迁移。
+- 零样本和少样本任务适应。
 
-**Cooperative interaction:**
-- **Complementary cooperation**: Agents with different specializations work together (e.g., ChatDev's CEO-CTO-programmer-tester pipeline). Each agent contributes unique expertise to a shared goal.
-- **Debate and discussion**: Agents engage in structured argumentation to improve solution quality. ChatEval uses multi-agent debate for text evaluation, achieving better calibration than single-agent scoring.
-- **Collaborative reasoning**: Multiple agents share intermediate reasoning steps, catching errors the others miss. Improves accuracy on complex reasoning tasks compared to single-agent approaches.
+### 感知模块
 
-**Adversarial interaction:**
-- **Red-teaming**: Adversarial agents probe for vulnerabilities in target agents.
-- **Negotiation**: Agents with conflicting objectives negotiate outcomes (price bargaining, resource allocation).
-- **Competitive games**: Strategic gameplay in environments like Diplomacy, Werewolf, Avalon.
+感知模块处理多模态输入，将智能体扩展到文本之外：
 
-**Communication topologies:**
-- **Layered**: Hierarchical communication with manager agents and worker agents.
-- **Decentralized**: Peer-to-peer communication without central coordination.
-- **Shared message pool**: All agents read from and write to a common communication channel.
-- **Dynamic**: Communication structure evolves based on task requirements.
+- **文本输入**：主要模态；任务描述、用户指令、文档内容。
+- **视觉输入**：通过视觉-语言模型（GPT-4V、LLaVA）的图像理解。使智能体能够解释截图、图表、真实场景。
+- **听觉输入**：语音识别和音频理解（Whisper 集成）。实现语音控制的智能体。
+- **其他模态**：触觉数据、传感器读数、3D 点云，用于具身智能体。
+- **多模态融合**：结合多个输入流以获得更丰富的情境感知。对机器人和具身 AI 应用至关重要。
 
-### Paradigm 3: Human-Agent Cooperation
+### 行动模块
 
-Settings integrating human expertise with agent capabilities:
+行动模块管理智能体的输出以及与外部世界的交互：
 
-- **Instructor-executor**: Human provides high-level goals; agent decomposes and executes. Human may intervene for corrections.
-- **Equal partnership**: Human and agent collaborate as peers, each contributing strengths (human judgment and world knowledge; agent speed and tirelessness).
-- **Agent-as-mentor**: Agent guides humans through learning, problem-solving, or decision-making (educational tutoring, medical decision support).
-- **Evaluation-in-the-loop**: Human evaluators continuously assess agent outputs, providing feedback that shapes subsequent behavior.
-
----
-
-## Key Contributions
-
-1. **Cognitive-science-grounded framework**: The brain-perception-action triad maps more naturally to cognitive science concepts than the Fudan survey's engineering-oriented four-module decomposition, offering complementary analytical power.
-2. **Most comprehensive application coverage** in the 2023 literature, spanning web navigation, coding, scientific discovery, gaming, social simulation, education, and healthcare.
-3. **Multi-agent and social analysis**: First survey to systematically categorize multi-agent interaction patterns (cooperative, adversarial) and communication topologies in the LLM agent context.
-4. **Agent society analysis**: Documents emergent social phenomena in multi-agent simulations -- opinion formation, information cascading, trust dynamics, social norm emergence.
-5. **Philosophical and historical context**: Traces the agent concept from Aristotle's notion of agency through Turing's computational agents to modern LLM-based systems, providing intellectual grounding for the field.
-6. **Scale**: At 86 pages with 600+ references, it remains one of the most thorough treatments of LLM agents published.
+- **文本输出**：自然语言回复、报告、摘要、代码生成。
+- **工具使用**：API 调用、数据库查询、网络搜索、计算器操作。形式化为智能体根据当前任务状态从可用工具清单中选择。
+- **具身行动**：在模拟或真实环境中的物理移动、物体操纵、导航。
+- **通信行动**：在协作设置中向其他智能体或人类发送消息。
+- **行动反馈循环**：行动的后果反馈到感知中，形成观察-思考-行动循环。
 
 ---
 
-## How This Survey Complements the Fudan Survey
+## 三种交互范式
 
-| Dimension | Fudan (Wang et al.) | Renmin (Xi et al.) |
+### 范式 1：单智能体场景
+
+单个智能体自主运行的应用：
+
+**面向任务的部署：**
+- **网络智能体**：网站导航、表单填写、网上购物（WebGPT、WebAgent、Mind2Web）。
+- **编码智能体**：编写、调试和测试代码（Code Interpreter、基于 Codex 的系统）。
+- **生活助手**：管理日程、邮件、个人事务。
+
+**面向创新的部署：**
+- 科学假设生成和实验设计。
+- 创意写作、艺术生成和内容创作。
+- 数学定理证明和问题求解。
+
+**在模拟中的生命周期：**
+- 智能体被放置在具有长期目标的持久环境中。
+- Voyager 在 Minecraft 中：自主探索、技能获取和课程驱动的自我改进。
+- Generative Agents：日常作息、关系建设、记忆驱动的行为演化。
+
+### 范式 2：多智能体场景
+
+多个智能体协作、竞争或共存的设置：
+
+**合作交互：**
+- **互补合作**：具有不同专长的智能体共同工作（例如 ChatDev 的 CEO-CTO-程序员-测试员流水线）。每个智能体为共同目标贡献独特的专业知识。
+- **辩论与讨论**：智能体参与结构化论证以提高解决方案质量。ChatEval 使用多智能体辩论进行文本评估，实现了比单智能体评分更好的校准。
+- **协作推理**：多个智能体共享中间推理步骤，捕捉彼此遗漏的错误。与单智能体方法相比，提高了复杂推理任务的准确性。
+
+**对抗交互：**
+- **红队测试**：对抗性智能体探测目标智能体中的漏洞。
+- **谈判**：具有冲突目标的智能体协商结果（价格议价、资源分配）。
+- **竞争游戏**：在 Diplomacy、Werewolf、Avalon 等环境中进行策略博弈。
+
+**通信拓扑：**
+- **分层**：具有管理智能体和工作智能体的层次化通信。
+- **去中心化**：无中央协调的点对点通信。
+- **共享消息池**：所有智能体从共同的通信频道读写。
+- **动态**：通信结构根据任务需求演化。
+
+### 范式 3：人机合作
+
+整合人类专长与智能体能力的设置：
+
+- **指导者-执行者**：人类提供高层目标；智能体分解并执行。人类可以进行纠正干预。
+- **平等伙伴**：人类和智能体作为同伴协作，各自贡献优势（人类的判断力和世界知识；智能体的速度和不知疲倦）。
+- **智能体作为导师**：智能体引导人类进行学习、问题解决或决策（教育辅导、医疗决策支持）。
+- **循环中的评估**：人类评估者持续评估智能体输出，提供反馈以塑造后续行为。
+
+---
+
+## 关键贡献
+
+1. **基于认知科学的框架**：大脑-感知-行动三元组比复旦综述的工程导向四模块分解更自然地映射到认知科学概念，提供了互补的分析能力。
+2. **2023 年文献中最全面的应用覆盖**，跨越网络导航、编程、科学发现、游戏、社会模拟、教育和医疗。
+3. **多智能体和社会分析**：首个在 LLM 智能体语境下系统分类多智能体交互模式（合作、对抗）和通信拓扑的综述。
+4. **智能体社会分析**：记录了多智能体模拟中的涌现社会现象 -- 舆论形成、信息级联、信任动态、社会规范涌现。
+5. **哲学与历史背景**：追溯智能体概念从亚里士多德的能动性概念到图灵的计算智能体再到现代基于 LLM 的系统，为该领域提供了知识根基。
+6. **规模**：86 页、600+ 参考文献，仍然是 LLM 智能体领域最全面的论述之一。
+
+---
+
+## 本综述如何与复旦综述互补
+
+| 维度 | 复旦 (Wang et al.) | 人民大学 (Xi et al.) |
 |-----------|--------------------|--------------------|
-| **Framework** | Engineering: profiling + memory + planning + action | Cognitive: brain + perception + action |
-| **Focus** | Agent *construction* -- how to build | Agent *application* -- what agents do |
-| **Memory treatment** | Deep (short-term/long-term, formats, operations) | Embedded within brain module |
-| **Perception** | Not a separate module | Explicit multimodal perception module |
-| **Multi-agent** | Brief coverage | Extensive: cooperation, adversarial, topologies |
-| **Human-agent** | Limited | Full paradigm with multiple interaction modes |
-| **Social phenomena** | Mentioned | Dedicated analysis of emergent behaviors |
-| **Philosophical roots** | Minimal | Extensive historical tracing |
-| **Best used for** | Designing agent architectures | Understanding agent capabilities and ecosystems |
+| **框架** | 工程导向：角色设定 + 记忆 + 规划 + 行动 | 认知导向：大脑 + 感知 + 行动 |
+| **侧重** | 智能体*构建* -- 如何建造 | 智能体*应用* -- 智能体能做什么 |
+| **记忆处理** | 深入（短期/长期、格式、操作） | 嵌入在大脑模块中 |
+| **感知** | 不是独立模块 | 显式的多模态感知模块 |
+| **多智能体** | 简要覆盖 | 广泛：合作、对抗、拓扑 |
+| **人机交互** | 有限 | 完整范式，包含多种交互模式 |
+| **社会现象** | 提及 | 专门的涌现行为分析 |
+| **哲学根源** | 很少 | 广泛的历史追溯 |
+| **最适用于** | 设计智能体架构 | 理解智能体能力和生态系统 |
 
-**Recommendation**: Read both. The Fudan survey provides the structural vocabulary (profiling/memory/planning/action) for designing agents, while this survey provides the application landscape and interaction paradigm analysis for deploying them.
-
----
-
-## Limitations
-
-1. **Perception module underspecified**: While identified as a first-class component, the perception module receives less detailed treatment than the brain and action modules, with limited discussion of how multimodal perception actually works in practice.
-2. **Quantitative evaluation sparse**: Like the Fudan survey, this work is primarily qualitative and descriptive rather than benchmark-driven.
-3. **Temporal scope**: Coverage extends to September 2023; the rapid pace of the field means many important systems (GPT-4 Turbo agents, Claude-based agents, open-source agent frameworks like CrewAI) postdate the survey.
-4. **Multi-agent scalability**: The survey documents multi-agent patterns but does not deeply explore scalability challenges -- what happens with 100 or 1000 interacting agents versus 2-10.
-5. **Safety and alignment**: Adversarial interaction is discussed from a functional perspective but not from a safety/alignment perspective (prompt injection, jailbreaking, value drift in agent societies).
-6. **Reproducibility**: Many described systems lack open-source implementations or standardized evaluation, making it difficult to verify claims or compare approaches.
+**建议**：两篇都读。复旦综述提供了设计智能体的结构性词汇（角色设定/记忆/规划/行动），而本综述提供了部署智能体的应用版图和交互范式分析。
 
 ---
 
-## Key Takeaways
+## 局限性
 
-1. **Brain-perception-action provides a cognitively intuitive decomposition** that is especially useful when designing multimodal or embodied agents where perception is a first-class concern.
-2. **Multi-agent interaction is not merely a technical extension but a qualitatively different regime** -- emergent social phenomena, communication topology choices, and adversarial dynamics introduce challenges absent from single-agent settings.
-3. **Human-agent cooperation deserves its own paradigm** rather than being treated as a special case of single-agent operation. The instructor-executor and equal-partnership modes have different implications for system design.
-4. **LLMs are suitable agent brains because of four properties**: broad knowledge, language-based reasoning, in-context learning for fast adaptation, and instruction-following for controllability.
-5. **The survey's emphasis on agent societies anticipates important future work** in multi-agent simulation, computational social science, and understanding emergent behaviors in agent populations.
-6. **Together with the Fudan survey, these two papers defined the 2023 conceptual framework** that all subsequent LLM agent research builds upon or reacts against.
-7. **The debate mechanism (multi-agent argumentation) is highlighted as particularly effective** for improving reasoning quality, foreshadowing the "society of minds" approach that gained prominence in 2024-2025.
+1. **感知模块规范不足**：虽然被识别为一等公民组件，但感知模块的详细论述不如大脑和行动模块，对多模态感知在实践中如何工作的讨论有限。
+2. **定量评估稀少**：与复旦综述一样，本工作主要是定性和描述性的，而非基准测试驱动的。
+3. **时间范围**：覆盖延伸至 2023 年 9 月；该领域的快速发展意味着许多重要系统（GPT-4 Turbo 智能体、基于 Claude 的智能体、CrewAI 等开源智能体框架）在综述之后才出现。
+4. **多智能体可扩展性**：综述记录了多智能体模式，但没有深入探讨可扩展性挑战 -- 当 100 个或 1000 个智能体交互时会发生什么，而不仅仅是 2-10 个。
+5. **安全与对齐**：对抗交互从功能角度而非安全/对齐角度讨论（提示注入、越狱、智能体社会中的价值漂移）。
+6. **可复现性**：许多描述的系统缺乏开源实现或标准化评估，使验证声明或比较方法变得困难。
+
+---
+
+## 核心要点
+
+1. **大脑-感知-行动提供了认知直觉性的分解**，在设计多模态或具身智能体（感知是一等关注点）时特别有用。
+2. **多智能体交互不仅仅是技术扩展，而是质的不同的体制** -- 涌现的社会现象、通信拓扑选择和对抗动态引入了单智能体设置中不存在的挑战。
+3. **人机合作值得拥有自己的范式**，而非被视为单智能体操作的特殊情况。指导者-执行者和平等伙伴模式对系统设计有不同的影响。
+4. **LLM 适合作为智能体大脑，因为它们具有四个属性**：广泛的知识、基于语言的推理、用于快速适应的上下文学习、以及用于可控性的指令遵循。
+5. **综述对智能体社会的强调预见了未来的重要工作**，涉及多智能体模拟、计算社会科学和理解智能体群体中的涌现行为。
+6. **与复旦综述一起，这两篇论文定义了 2023 年的概念框架**，所有后续的 LLM 智能体研究都建立在其之上或对其作出回应。
+7. **辩论机制（多智能体论证）被特别强调为提高推理质量的有效手段**，预示了 2024-2025 年日益突出的"心智社会"方法。

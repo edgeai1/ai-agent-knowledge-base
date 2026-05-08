@@ -11,166 +11,147 @@ status: done
 date_read: 2026-05-08
 ---
 
-# CAMEL: Communicative Agents for "Mind" Exploration of Large Language Model Society
+# CAMEL：用于大型语言模型社会"心智"探索的通信智能体
 
-## TL;DR
+## 摘要
 
-CAMEL introduces a role-playing framework for autonomous multi-agent cooperation using "inception
-prompting" -- a prompt engineering technique that assigns two LLM instances distinct roles (AI User
-and AI Assistant) and guides them to collaboratively complete tasks without human intervention. The
-framework generates large-scale conversational datasets (25K conversations in AI Society, 50K in
-Code) and reveals emergent cooperative behaviors in LLM societies. CAMEL agents win 76.3% of
-human preference evaluations, establishing the foundational paradigm for LLM-based multi-agent
-communication research.
+CAMEL 引入了一个基于角色扮演的自主多智能体协作框架，使用"启始提示"技术——一种提示工程方法，为两个 LLM 实例分配不同角色（AI 用户和 AI 助手），引导它们无需人类干预即可协作完成任务。该框架生成大规模对话数据集（AI Society 中 25K 对话，Code 中 50K 对话），并揭示了 LLM 社会中的涌现协作行为。CAMEL 智能体在 76.3% 的人类偏好评估中获胜，确立了基于 LLM 的多智能体通信研究的基础范式。
 
-## Motivation & Problem
+## 研究动机与问题
 
-By early 2023, chat-based LLMs (GPT-4, ChatGPT) showed remarkable ability in complex task-solving
-through conversational interaction. However, several critical challenges remained:
+到 2023 年初，基于聊天的 LLM（GPT-4、ChatGPT）在通过对话交互解决复杂任务方面展现了卓越能力。然而，仍存在几个关键挑战：
 
-1. **Human bottleneck**: Effective use of LLMs relied heavily on human users providing guidance,
-   feedback, and course-corrections during conversations. This human dependency was expensive,
-   time-consuming, and fundamentally unscalable.
-2. **Autonomous cooperation challenge**: Could two or more LLM agents cooperate autonomously to
-   complete complex tasks without any human intervention? This was an open question with no
-   established methodology.
-3. **Role adherence problem**: When two LLMs interact freely, they tend to drift from their
-   assigned roles, lose task focus, or enter loops of mutual agreement without making progress.
-4. **Scalable data generation**: Collecting high-quality task-oriented conversational data
-   traditionally required human annotators. Could multi-agent interaction generate such data
-   automatically at scale?
-5. **Understanding LLM societies**: As LLMs become more capable, understanding how they cooperate,
-   communicate, and exhibit emergent behaviors in multi-agent settings becomes scientifically
-   important for AI alignment and safety.
+1. **人类瓶颈**：LLM 的有效使用严重依赖人类用户在对话过程中提供指导、反馈和修正。这种人类依赖成本高、耗时长，且根本无法扩展。
+2. **自主协作挑战**：两个或多个 LLM 智能体能否在无任何人类干预的情况下自主协作完成复杂任务？这是一个没有既定方法论的开放问题。
+3. **角色遵守问题**：当两个 LLM 自由交互时，它们倾向于偏离分配的角色、失去任务焦点，或陷入相互认同却无进展的循环。
+4. **可扩展数据生成**：收集高质量的任务导向对话数据传统上需要人工标注员。多智能体交互能否自动大规模生成这类数据？
+5. **理解 LLM 社会**：随着 LLM 能力增强，理解它们在多智能体环境中如何协作、通信和展现涌现行为，对于 AI 对齐和安全具有科学重要性。
 
-CAMEL's insight: **Inception prompting** -- carefully designed system prompts that specify roles,
-communication protocols, and termination conditions -- can guide two LLM instances to cooperate
-autonomously and productively on complex tasks.
+CAMEL 的洞察：**启始提示**——精心设计的系统提示，指定角色、通信协议和终止条件——可以引导两个 LLM 实例在复杂任务上自主且高效地协作。
 
-## Method
+## 方法
 
-### Role-Playing Framework Architecture
+### 角色扮演框架架构
 
 ```
 +-------------------------------------------------------------------+
-|                    CAMEL Role-Playing Framework                    |
+|                    CAMEL 角色扮演框架                                |
 |                                                                   |
-|  Task Specifier (optional)                                        |
-|  "Make the task more specific"                                    |
+|  任务指定器（可选）                                                 |
+|  "使任务更加具体"                                                  |
 |       |                                                           |
 |       v                                                           |
-|  Specified Task: "Develop a Python web scraper for..."            |
+|  指定任务: "开发一个 Python 网络爬虫..."                            |
 |       |                                                           |
 |       +---------------------------+                               |
 |       |                           |                               |
 |       v                           v                               |
 |  +-----------+              +-----------+                         |
-|  |  AI User  |   message    |AI Assistant|                        |
-|  | (instructs| -----------> | (executes, |                        |
-|  |  guides,  |              |  provides  |                        |
-|  |  evaluates)| <----------- |  solutions)|                       |
-|  +-----------+   response   +-----------+                         |
+|  |  AI 用户  |   消息        |AI 助手    |                         |
+|  | (指导、   | -----------> | (执行、    |                         |
+|  |  引导、   |              |  提供      |                         |
+|  |  评估)   | <----------- |  解决方案) |                         |
+|  +-----------+   响应       +-----------+                         |
 |       |                           |                               |
-|       |    Multi-turn dialogue    |                               |
-|       |    until task completion  |                               |
-|       |    or termination signal  |                               |
+|       |    多轮对话               |                               |
+|       |    直到任务完成            |                               |
+|       |    或终止信号              |                               |
 |       v                           v                               |
-|  [Conversation record with solutions]                             |
+|  [包含解决方案的对话记录]                                           |
 +-------------------------------------------------------------------+
 ```
 
-### Inception Prompting Mechanism
+### 启始提示机制
 
-The inception prompt consists of three coordinated prompt components:
+启始提示由三个协调的提示组件组成：
 
-#### 1. Task Specifier Prompt
-An optional prompt that takes a general task idea and makes it specific and actionable:
+#### 1. 任务指定器提示
+一个可选提示，将一般性任务想法变得具体且可执行：
 
 ```
-Input:  General idea (e.g., "AI and finance")
-Prompt: "Please make the following task more specific.
-         Be creative and imaginative.
-         Task: {assistant_role} helps {user_role} with {task}."
-Output: Specific task description
+输入:  一般想法 (例如, "AI 和金融")
+提示: "请将以下任务变得更加具体。
+       发挥创意和想象力。
+       任务: {assistant_role} 帮助 {user_role} 完成 {task}。"
+输出: 具体任务描述
 ```
 
-#### 2. AI User System Prompt
+#### 2. AI 用户系统提示
 ```
-System Prompt for AI User:
+AI 用户的系统提示:
 ---
-You are a {user_role}. You are collaborating with {assistant_role}.
-Your task is: {specified_task}
+你是一个 {user_role}。你正在与 {assistant_role} 协作。
+你的任务是: {specified_task}
 
-You must instruct the {assistant_role} to complete the task
-step by step. Your instructions should be:
-- Clear and specific
-- One step at a time
-- Building on previous responses
+你必须指导 {assistant_role} 逐步完成任务。你的指令应该：
+- 清晰且具体
+- 每次一个步骤
+- 建立在先前响应的基础上
 
-Communication protocol:
-- Always provide instructions, never provide solutions directly
-- Evaluate the assistant's response before proceeding
-- Say "<CAMEL_TASK_DONE>" when the task is fully completed
+通信协议:
+- 始终提供指令，不要直接提供解决方案
+- 在继续之前评估助手的响应
+- 当任务完全完成时说 "<CAMEL_TASK_DONE>"
 
-Constraints:
-- Do not ask the assistant to provide information you can provide
-- Do not repeat instructions
-- Be concise and focused
----
-```
-
-#### 3. AI Assistant System Prompt
-```
-System Prompt for AI Assistant:
----
-You are a {assistant_role}. You are collaborating with {user_role}.
-Your task is: {specified_task}
-
-You must follow the {user_role}'s instructions and complete the task.
-Your responses should be:
-- Detailed and helpful
-- Following the instruction precisely
-- Building on previous conversation context
-
-Communication protocol:
-- Always follow instructions from the user
-- Provide complete solutions for each step
-- Indicate if an instruction is unclear or impossible
-
-Constraints:
-- Do not ask clarifying questions unless absolutely necessary
-- Do not deviate from the assigned task
-- Provide concrete outputs (code, text, plans) not vague suggestions
+约束:
+- 不要让助手提供你能提供的信息
+- 不要重复指令
+- 保持简洁和专注
 ---
 ```
 
-### Interaction Protocol
+#### 3. AI 助手系统提示
+```
+AI 助手的系统提示:
+---
+你是一个 {assistant_role}。你正在与 {user_role} 协作。
+你的任务是: {specified_task}
+
+你必须遵循 {user_role} 的指令并完成任务。
+你的响应应该：
+- 详细且有帮助
+- 精确遵循指令
+- 建立在之前的对话上下文上
+
+通信协议:
+- 始终遵循用户的指令
+- 为每个步骤提供完整的解决方案
+- 如果指令不清楚或无法执行，请说明
+
+约束:
+- 除非绝对必要，不要提出澄清性问题
+- 不要偏离分配的任务
+- 提供具体输出（代码、文本、计划），而非模糊建议
+---
+```
+
+### 交互协议
 
 ```
-Algorithm: CAMEL Role-Playing Interaction
+Algorithm: CAMEL 角色扮演交互
 -------------------------------------------
-Input:  Roles (user_role, assistant_role), Task T
-Output: Conversation C with task solutions
+输入:  角色 (user_role, assistant_role), 任务 T
+输出: 包含任务解决方案的对话 C
 
 1:  task_specific = TaskSpecifier(T, user_role, assistant_role)
 2:  user = InitAgent(AI_User_Prompt, user_role, task_specific)
 3:  assistant = InitAgent(AI_Assistant_Prompt, assistant_role, task_specific)
 4:  C = []
 5:
-6:  // User provides first instruction
+6:  // 用户提供第一条指令
 7:  instruction = user.generate_initial_instruction()
 8:  C.append(("user", instruction))
 9:
 10: for turn = 1 to MAX_TURNS:
-11:     // Assistant responds to instruction
+11:     // 助手回应指令
 12:     response = assistant.respond(instruction)
 13:     C.append(("assistant", response))
 14:
-15:     // Check termination
+15:     // 检查终止条件
 16:     if "<CAMEL_TASK_DONE>" in response or turn == MAX_TURNS:
 17:         break
 18:
-19:     // User evaluates and provides next instruction
+19:     // 用户评估并提供下一条指令
 20:     instruction = user.next_instruction(response)
 21:     C.append(("user", instruction))
 22:
@@ -181,137 +162,103 @@ Output: Conversation C with task solutions
 27: return C
 ```
 
-### Dataset Generation at Scale
+### 大规模数据集生成
 
-Using the role-playing framework, CAMEL generates four datasets:
+利用角色扮演框架，CAMEL 生成四个数据集：
 
 ```
-Dataset Generation Pipeline:
+数据集生成流水线:
 ------------------------------
 
-AI Society Dataset:
-  50 assistant roles x 50 user roles x 10 tasks = 25,000 conversations
-  Roles: doctor, teacher, engineer, artist, scientist, ...
-  Tasks: Generated by combining role pairs with task specifier
+AI Society 数据集:
+  50 个助手角色 x 50 个用户角色 x 10 个任务 = 25,000 对话
+  角色: 医生、教师、工程师、艺术家、科学家 ...
+  任务: 通过组合角色对与任务指定器生成
 
-Code Dataset:
-  50 programming domains x 50 tasks x 20 languages = 50,000 conversations
-  Domains: web dev, data science, game dev, systems, ...
-  Languages: Python, JavaScript, C++, Java, Go, Rust, ...
+Code 数据集:
+  50 个编程领域 x 50 个任务 x 20 种语言 = 50,000 对话
+  领域: Web 开发、数据科学、游戏开发、系统 ...
+  语言: Python, JavaScript, C++, Java, Go, Rust ...
 
-Math Dataset:
-  Single-turn question-answer pairs for mathematical reasoning
+Math 数据集:
+  单轮问答对，用于数学推理
 
-Science Dataset:
-  Single-turn question-answer pairs for scientific reasoning
+Science 数据集:
+  单轮问答对，用于科学推理
 ```
 
-## Key Innovations
+## 关键创新
 
-1. **Inception prompting**: A systematic prompt engineering technique for autonomous multi-agent
-   cooperation. The carefully designed system prompts encode roles, protocols, and constraints
-   that maintain productive interaction without human intervention.
-2. **Role-playing paradigm**: First systematic framework for LLM-to-LLM role-playing interaction,
-   establishing the foundational pattern adopted by subsequent multi-agent systems (ChatDev,
-   MetaGPT, AutoGen, etc.).
-3. **Scalable data generation**: The framework produces large-scale, task-oriented conversational
-   datasets automatically, providing a new approach to synthetic data generation.
-4. **AI society exploration**: First scientific study of emergent behaviors in LLM multi-agent
-   societies, including cooperation patterns, role adherence, and communication dynamics.
-5. **Communication protocol design**: The explicit encoding of communication rules (turn-taking,
-   termination signals, role constraints) into prompts established a template for multi-agent
-   prompt engineering.
+1. **启始提示**：一种系统化的提示工程技术，用于自主多智能体协作。精心设计的系统提示编码了角色、协议和约束，在无人类干预的情况下维持高效交互。
+2. **角色扮演范式**：首个系统化的 LLM 对 LLM 角色扮演交互框架，确立了被后续多智能体系统（ChatDev、MetaGPT、AutoGen 等）采用的基础模式。
+3. **可扩展数据生成**：该框架自动生成大规模、任务导向的对话数据集，为合成数据生成提供了新方法。
+4. **AI 社会探索**：首个关于 LLM 多智能体社会中涌现行为的科学研究，包括协作模式、角色遵守和通信动态。
+5. **通信协议设计**：将通信规则（轮流发言、终止信号、角色约束）显式编码到提示中，建立了多智能体提示工程的模板。
 
-## Experimental Setup
+## 实验设置
 
-- **Base model**: GPT-3.5-Turbo (primary), GPT-4 (comparison)
-- **Dataset generation**: 25,000 AI Society conversations, 50,000 Code conversations
-- **Evaluation methods**:
-  - Human evaluation: Preference judgments by human annotators
-  - GPT-4 evaluation: Automated quality assessment using GPT-4 as judge
-  - Behavioral analysis: Categorization of agent behaviors and emergent patterns
-- **Metrics**: Win rate in preference evaluation, conversation quality, task completion
-- **Analysis dimensions**: Role adherence, task progress, conversation coherence, emergent behaviors
+- **基础模型**：GPT-3.5-Turbo（主要）、GPT-4（对比）
+- **数据集生成**：25,000 AI Society 对话，50,000 Code 对话
+- **评估方法**：
+  - 人类评估：人工标注员的偏好判断
+  - GPT-4 评估：使用 GPT-4 作为评判者的自动质量评估
+  - 行为分析：智能体行为和涌现模式的分类
+- **指标**：偏好评估中的胜率、对话质量、任务完成度
+- **分析维度**：角色遵守、任务进展、对话连贯性、涌现行为
 
-## Results
+## 结果
 
-### Human Preference Evaluation
+### 人类偏好评估
 
-| Metric                  | CAMEL Win Rate |
+| 指标                    | CAMEL 胜率     |
 |-------------------------|:--------------:|
-| Human evaluation        | **76.3%**      |
-| GPT-4 evaluation        | **73.0%**      |
+| 人类评估                | **76.3%**      |
+| GPT-4 评估              | **73.0%**      |
 
-CAMEL-generated solutions were preferred by human evaluators 76.3% of the time compared to
-single-agent baselines, demonstrating that multi-agent role-playing produces higher-quality outputs.
+与单智能体基线相比，人类评估者在 76.3% 的情况下更偏好 CAMEL 生成的解决方案，表明多智能体角色扮演能产出更高质量的输出。
 
-### Dataset Statistics
+### 数据集统计
 
-| Dataset      | Conversations | Role/Domain Coverage      | Avg. Turns |
-|-------------|:-------------:|---------------------------|:----------:|
-| AI Society  | 25,000        | 50 x 50 role combinations | ~15-20     |
-| Code        | 50,000        | 50 domains x 20 languages | ~10-15     |
-| Math        | --            | Single-turn QA pairs      | 1          |
-| Science     | --            | Single-turn QA pairs      | 1          |
+| 数据集      | 对话数        | 角色/领域覆盖            | 平均轮次   |
+|-------------|:-------------:|--------------------------|:----------:|
+| AI Society  | 25,000        | 50 x 50 角色组合          | ~15-20     |
+| Code        | 50,000        | 50 领域 x 20 语言         | ~10-15     |
+| Math        | --            | 单轮问答对                | 1          |
+| Science     | --            | 单轮问答对                | 1          |
 
-### Behavioral Analysis Findings
+### 行为分析发现
 
-The authors analyzed conversation dynamics and identified several emergent behaviors:
+作者分析了对话动态并识别出几种涌现行为：
 
-1. **Flattening**: Agents sometimes converge to shallow responses, reducing conversation depth
-   over many turns (a form of "lazy" cooperation)
-2. **Role flipping**: Occasionally the AI User begins providing solutions instead of instructions,
-   and the AI Assistant starts asking questions
-3. **Repetition loops**: Agents may enter cycles of restating similar content without progress
-4. **Autonomous task decomposition**: The AI User spontaneously breaks complex tasks into logical
-   sub-steps, exhibiting planning behavior not explicitly prompted
-5. **Self-correction**: The AI Assistant sometimes identifies and corrects its own errors when the
-   AI User points out issues in subsequent instructions
+1. **扁平化**：智能体有时趋向于浅层回应，在多轮后降低对话深度（一种"偷懒"的协作形式）
+2. **角色翻转**：偶尔 AI 用户开始提供解决方案而非指令，AI 助手开始提出问题
+3. **重复循环**：智能体可能进入重复陈述相似内容且无进展的循环
+4. **自主任务分解**：AI 用户自发地将复杂任务分解为逻辑子步骤，展现出未被显式提示的规划行为
+5. **自我修正**：当 AI 用户在后续指令中指出问题时，AI 助手有时会识别并修正自身错误
 
-### Conversation Quality Analysis
+### 对话质量分析
 
-- Conversations maintain task relevance for 15-20 turns on average before quality degradation
-- The task specifier significantly improves conversation focus and output quality
-- Explicit termination conditions ("<CAMEL_TASK_DONE>") prevent indefinite conversation loops
-- Role-specific constraints reduce role confusion and off-topic drift
+- 对话平均保持 15-20 轮的任务相关性后质量开始下降
+- 任务指定器显著提升对话焦点和输出质量
+- 明确的终止条件（"<CAMEL_TASK_DONE>"）防止了无限制的对话循环
+- 角色特定约束减少了角色混淆和偏题
 
-## Limitations
+## 局限性
 
-1. **Role flipping and drift**: Despite inception prompting, agents occasionally swap roles or
-   drift from their assigned responsibilities, particularly in longer conversations.
-2. **Flattening over long conversations**: Response quality tends to degrade after ~20 turns, with
-   agents producing increasingly shallow or repetitive outputs.
-3. **GPT-3.5-Turbo limitations**: Primary experiments use GPT-3.5-Turbo, whose capabilities
-   constrain the complexity of tasks that can be effectively completed through role-playing.
-4. **Two-agent limitation**: The framework supports only two agents (User + Assistant). Extension
-   to multi-party conversations with 3+ agents is not explored.
-5. **No external tool use**: Agents interact purely through text; integration with code execution,
-   web browsing, or other tools is not supported.
-6. **Quality variance**: The quality of generated conversations varies significantly depending on
-   role combinations and task complexity -- some produce excellent solutions while others generate
-   superficial dialogues.
-7. **Evaluation limitations**: Human evaluation on a subset of conversations may not fully represent
-   the distribution of quality across 75,000+ generated conversations.
-8. **No iterative improvement**: Once generated, conversations are not refined or filtered
-   automatically for quality; post-hoc quality filtering is left to downstream applications.
+1. **角色翻转和漂移**：尽管有启始提示，智能体偶尔仍会交换角色或偏离分配的职责，特别是在较长对话中。
+2. **长对话中的扁平化**：响应质量在约 20 轮后趋于下降，智能体产出越来越浅层或重复的内容。
+3. **GPT-3.5-Turbo 的局限**：主要实验使用 GPT-3.5-Turbo，其能力限制了可通过角色扮演有效完成的任务复杂度。
+4. **双智能体限制**：框架仅支持两个智能体（用户 + 助手）。未探索扩展到 3 个以上智能体的多方对话。
+5. **无外部工具使用**：智能体仅通过文本交互；不支持与代码执行、网络浏览或其他工具的集成。
+6. **质量差异**：生成的对话质量因角色组合和任务复杂度而显著不同——部分产出优秀的解决方案，而另一些则生成表面化的对话。
+7. **评估局限**：对对话子集的人类评估可能不完全代表 75,000+ 生成对话的质量分布。
+8. **无迭代改进**：一旦生成，对话不会自动进行质量优化或过滤；质量后处理留给下游应用。
 
-## Key Takeaways
+## 核心要点
 
-1. **Inception prompting enables autonomous cooperation**: Carefully designed system prompts with
-   explicit roles, protocols, and constraints can sustain productive multi-agent interaction
-   without human intervention -- a key enabling technique for the multi-agent paradigm.
-2. **Role-playing is a powerful abstraction**: The User-Assistant role-playing pattern provides a
-   simple yet effective framework for task decomposition and collaborative problem-solving,
-   establishing the template used by ChatDev, MetaGPT, and many subsequent systems.
-3. **Scalable synthetic data generation**: Multi-agent role-playing can generate large-scale,
-   diverse conversational datasets automatically, offering a practical alternative to expensive
-   human annotation for training data collection.
-4. **Emergent behaviors in LLM societies**: LLM agents exhibit identifiable social behaviors
-   (cooperation, role adherence, self-correction, lazy convergence) that mirror aspects of human
-   group dynamics, opening avenues for studying AI social behavior.
-5. **Foundational multi-agent research**: CAMEL is among the earliest and most influential papers
-   establishing multi-agent LLM collaboration as a research field, directly inspiring ChatDev,
-   MetaGPT, AutoGen, and the broader multi-agent ecosystem.
-6. **Communication protocol matters**: The specific design of turn-taking rules, termination
-   conditions, and role constraints has outsized impact on conversation quality -- unstructured
-   multi-agent chat degrades rapidly without these guardrails.
+1. **启始提示实现自主协作**：精心设计的系统提示含有明确的角色、协议和约束，可以在无人类干预的情况下维持高效的多智能体交互——这是多智能体范式的关键使能技术。
+2. **角色扮演是强大的抽象**：用户-助手角色扮演模式为任务分解和协作式问题解决提供了简单而有效的框架，建立了被 ChatDev、MetaGPT 和许多后续系统采用的模板。
+3. **可扩展的合成数据生成**：多智能体角色扮演可以自动生成大规模、多样化的对话数据集，为昂贵的人工标注提供了实用的替代方案。
+4. **LLM 社会中的涌现行为**：LLM 智能体展现出可识别的社会行为（协作、角色遵守、自我修正、惰性收敛），这些行为反映了人类群体动态的某些方面，开辟了研究 AI 社会行为的新途径。
+5. **基础性多智能体研究**：CAMEL 是最早且最具影响力的将多智能体 LLM 协作确立为研究领域的论文之一，直接启发了 ChatDev、MetaGPT、AutoGen 以及更广泛的多智能体生态系统。
+6. **通信协议至关重要**：轮流规则、终止条件和角色约束的具体设计对对话质量有着巨大影响——非结构化的多智能体聊天在缺乏这些保障措施时会迅速退化。

@@ -1,5 +1,5 @@
 ---
-title: "HuggingGPT: Solving AI Tasks with ChatGPT and Its Friends in Hugging Face"
+title: "HuggingGPT: Solving AI Tasks with ChatGPT and Its Friends in Hugging Face (HuggingGPT：用 ChatGPT 及其在 Hugging Face 上的伙伴解决 AI 任务)"
 authors: "Yongliang Shen, Kaitao Song, Xu Tan, Dongsheng Li, Weiming Lu, Yueting Zhuang"
 venue: "NeurIPS 2023"
 year: 2023
@@ -12,86 +12,82 @@ status: done
 date_reviewed: 2026-05-08
 ---
 
-# HuggingGPT: Solving AI Tasks with ChatGPT and Its Friends in Hugging Face
+# HuggingGPT：用 ChatGPT 及其在 Hugging Face 上的伙伴解决 AI 任务
 
-## TL;DR
+## 简述
 
-HuggingGPT (codenamed JARVIS) uses an LLM (ChatGPT) as a central controller to orchestrate
-hundreds of specialist AI models hosted on Hugging Face Hub. It decomposes user requests
-into structured sub-tasks via a four-stage pipeline -- task planning (with dependency
-parsing), model selection (download-count ranking + LLM reasoning), task execution (with
-resource management and parallel scheduling), and response generation -- enabling a single
-system to handle complex multi-modal tasks spanning language, vision, audio, and video
-without any model fine-tuning.
+HuggingGPT（代号 JARVIS）使用大语言模型（ChatGPT）作为中央控制器来编排
+Hugging Face Hub 上托管的数百个专业 AI 模型。它通过四阶段流水线分解用户请求——
+任务规划（含依赖解析）、模型选择（下载量排名+大语言模型推理）、任务执行
+（含资源管理和并行调度）、响应生成——使单个系统能够处理跨越语言、视觉、
+音频和视频的复杂多模态任务，无需任何模型微调。
 
-## Motivation & Problem
+## 动机与问题
 
-By early 2023, a fundamental tension characterized the AI landscape:
+到 2023 年初，AI 领域存在一个根本性的张力：
 
-1. **Specialist model proliferation**: Thousands of task-specific models on Hugging Face
-   (object detection, image segmentation, speech recognition, text-to-image, etc.), each
-   excelling narrowly but unable to handle multi-step or cross-modal requests.
+1. **专业模型激增**：Hugging Face 上有数千个任务特定模型（目标检测、图像分割、
+   语音识别、文本生成图像等），各自在狭窄领域表现出色，但无法处理多步骤或
+   跨模态请求。
 
-2. **LLM generality vs. specialization**: ChatGPT/GPT-4 exhibit broad language
-   understanding and planning ability but cannot directly perform vision, audio, or
-   video tasks without additional tools.
+2. **大语言模型的通用性 vs. 专业性**：ChatGPT/GPT-4 展现了广泛的语言理解和
+   规划能力，但无法在没有额外工具的情况下直接执行视觉、音频或视频任务。
 
-3. **User burden**: Solving "generate an image of a cat, detect objects in it, and
-   describe the scene in speech" requires manually identifying models, chaining I/O,
-   and handling format conversions.
+3. **用户负担**：解决"生成一只猫的图像、检测其中的物体、并将场景用语音描述"
+   需要手动识别模型、链接输入输出，并处理格式转换。
 
-**Prior work limitations**:
-- **Visual ChatGPT** (Wu et al., 2023): Connects ChatGPT to a fixed set of vision
-  models -- limited to pre-defined visual tools, not extensible.
-- **Toolformer** (Schick et al., 2023): Teaches LLMs to use tools via fine-tuning --
-  supports only a handful of APIs and requires training.
-- **TaskMatrix.AI** (Liang et al., 2023): Proposes connecting foundation models to
-  millions of APIs -- remained a conceptual framework with no empirical evaluation.
+**先前工作的局限**：
+- **Visual ChatGPT** (Wu et al., 2023)：将 ChatGPT 连接到固定的视觉模型集——
+  仅限于预定义的视觉工具，不可扩展。
+- **Toolformer** (Schick et al., 2023)：通过微调教会大语言模型使用工具——
+  仅支持少数 API 且需要训练。
+- **TaskMatrix.AI** (Liang et al., 2023)：提出将基础模型连接到数百万个 API——
+  仍为概念框架，无实验评估。
 
-HuggingGPT's insight: use the LLM as a **task planner and controller** (not executor),
-leveraging Hugging Face's model descriptions as a dynamic, continuously growing tool
-registry. The system's capabilities expand automatically as new models are published.
+HuggingGPT 的洞察：使用大语言模型作为**任务规划器和控制器**（而非执行者），
+利用 Hugging Face 的模型描述作为动态、持续增长的工具注册表。系统的能力随着
+新模型的发布自动扩展。
 
-## Method
+## 方法
 
-### Four-Stage Pipeline Architecture
+### 四阶段流水线架构
 
 ```
-  User Request: "Generate an image of a girl reading, detect objects, describe in speech"
+  用户请求: "生成一个女孩读书的图像、检测物体、用语音描述"
        |
        v
   +---------------------------------------------------------------+
-  | STAGE 1: TASK PLANNING (ChatGPT)                               |
-  |   Parse request -> structured task DAG                         |
-  |   Output: [{task, id, dep, args}, ...]                         |
-  +---------------------------------------------------------------+
-       |
-       v
-  +---------------------------------------------------------------+
-  | STAGE 2: MODEL SELECTION (ChatGPT)                             |
-  |   For each task: retrieve top-K models from HF Hub             |
-  |   Rank by downloads -> LLM selects best fit                    |
+  | 阶段 1: 任务规划 (ChatGPT)                                     |
+  |   解析请求 -> 结构化任务 DAG                                   |
+  |   输出: [{task, id, dep, args}, ...]                           |
   +---------------------------------------------------------------+
        |
        v
   +---------------------------------------------------------------+
-  | STAGE 3: TASK EXECUTION (HF Inference API / Local)             |
-  |   Execute in topological order of DAG                          |
-  |   Independent tasks run in parallel                            |
-  |   Handle resource passing between dependent tasks              |
+  | 阶段 2: 模型选择 (ChatGPT)                                     |
+  |   对每个任务: 从 HF Hub 检索 top-K 模型                       |
+  |   按下载量排序 -> LLM 选择最佳匹配                            |
   +---------------------------------------------------------------+
        |
        v
   +---------------------------------------------------------------+
-  | STAGE 4: RESPONSE GENERATION (ChatGPT)                         |
-  |   Aggregate execution logs + outputs                           |
-  |   Generate coherent natural language response for user         |
+  | 阶段 3: 任务执行 (HF Inference API / 本地)                     |
+  |   按 DAG 拓扑序执行                                           |
+  |   独立任务并行运行                                             |
+  |   处理依赖任务间的资源传递                                     |
+  +---------------------------------------------------------------+
+       |
+       v
+  +---------------------------------------------------------------+
+  | 阶段 4: 响应生成 (ChatGPT)                                     |
+  |   汇总执行日志+输出                                            |
+  |   为用户生成连贯的自然语言响应                                 |
   +---------------------------------------------------------------+
 ```
 
-### Stage 1: Task Planning with Dependency Parsing
+### 阶段 1：带依赖解析的任务规划
 
-The LLM parses user requests into structured JSON. Each task is a tuple of four fields:
+大语言模型将用户请求解析为结构化 JSON。每个任务是四个字段的元组：
 
 ```json
 [
@@ -102,197 +98,199 @@ The LLM parses user requests into structured JSON. Each task is a tuple of four 
 ]
 ```
 
-**Field semantics**:
-- `task`: Task type from HF taxonomy (~30 categories: text-classification, object-detection,
-  text-to-image, automatic-speech-recognition, video-classification, etc.)
-- `id`: Unique integer identifier for topological ordering
-- `dep`: List of prerequisite task IDs (defines DAG edges)
-- `args`: Input arguments; `<generated>-N` references output of task N
+**字段语义**：
+- `task`：来自 HF 分类体系的任务类型（约 30 个类别：text-classification、
+  object-detection、text-to-image、automatic-speech-recognition、
+  video-classification 等）
+- `id`：用于拓扑排序的唯一整数标识符
+- `dep`：前置任务 ID 列表（定义 DAG 边）
+- `args`：输入参数；`<generated>-N` 引用任务 N 的输出
 
-**Dependency DAG patterns** the planner handles:
+**规划器处理的依赖 DAG 模式**：
 ```
-Sequential:  T1 -> T2 -> T3
-Parallel:    T1 -> T2,  T1 -> T3    (T2, T3 independent)
-Diamond:     T1 -> T2,  T1 -> T3,  T2+T3 -> T4
+顺序:    T1 -> T2 -> T3
+并行:    T1 -> T2,  T1 -> T3    (T2, T3 独立)
+菱形:    T1 -> T2,  T1 -> T3,  T2+T3 -> T4
 ```
 
-**Prompt template** combines specification-based instruction (JSON schema + dependency
-format definition) with demonstration-based parsing (3-5 few-shot examples of complex
-request-to-task-list decomposition).
+**提示模板**结合了基于规范的指令（JSON 模式+依赖格式定义）和基于演示的
+解析（3-5 个复杂请求到任务列表分解的少样本示例）。
 
-### Stage 2: Model Selection with Ranking Criteria
+### 阶段 2：带排名标准的模型选择
 
-Four-step selection pipeline per task:
-1. **Filter**: Retrieve HF Hub models matching the task type tag
-2. **Rank**: Sort by download count (primary quality proxy)
-3. **Truncate**: Take top-K candidates (K=3-5, limited by context window)
-4. **Select**: LLM chooses best fit from candidates with descriptions
+每个任务的四步选择流水线：
+1. **过滤**：检索 HF Hub 上匹配任务类型标签的模型
+2. **排名**：按下载量排序（主要质量代理指标）
+3. **截断**：取 top-K 候选（K=3-5，受上下文窗口限制）
+4. **选择**：大语言模型从带描述的候选中选择最佳匹配
 
 ```
 score(m) = w1 * rank_downloads(m) + w2 * relevance(desc(m), task) + w3 * likes(m)
 selected = argmax_{m in top-K} score(m)
 ```
 
-In practice, the LLM makes the final selection via in-context reasoning over model
-descriptions. Download-count pre-ranking ensures only well-tested models reach selection.
+实践中，大语言模型通过对模型描述的上下文推理做出最终选择。下载量预排名
+确保只有经过充分测试的模型进入选择环节。
 
-### Stage 3: Task Execution with Resource Management
+### 阶段 3：带资源管理的任务执行
 
-**Execution**: Via HF Inference API (cloud, default) or local GPU deployment.
-**Scheduling**: Topological order of DAG; independent tasks run in parallel (rate-limited).
-**Resource passing**: Upstream outputs stored locally, referenced by path for downstream.
-**Error cascade**: API failure -> retry (3x) -> fallback model -> format conversion ->
-skip dependent tasks -> report partial results.
+**执行**：通过 HF Inference API（云端，默认）或本地 GPU 部署。
+**调度**：DAG 拓扑序；独立任务并行运行（有速率限制）。
+**资源传递**：上游输出本地存储，通过路径引用供下游使用。
+**错误级联**：API 失败 -> 重试（3 次）-> 备选模型 -> 格式转换 ->
+跳过依赖任务 -> 报告部分结果。
 
-### Stage 4: Response Generation
+### 阶段 4：响应生成
 
-LLM receives structured execution logs (task, model, status, output per task) and
-generates a coherent natural language summary with artifact references and failure notes.
+大语言模型接收结构化执行日志（每个任务的任务、模型、状态、输出），
+生成带产物引用和失败说明的连贯自然语言摘要。
 
-## Key Innovations
+## 关键创新
 
-1. **LLM as controller, not executor**: ChatGPT orchestrates specialist models across
-   modalities, combining LLM planning capability with expert model execution.
+1. **大语言模型作为控制器而非执行者**：ChatGPT 跨模态编排专业模型，
+   结合大语言模型的规划能力和专家模型的执行能力。
 
-2. **Dynamic tool registry**: Unlike Visual ChatGPT's fixed tool set, HuggingGPT accesses
-   the entire HF Hub -- a continuously growing registry. New capabilities require zero
-   system changes, only new model uploads by the community.
+2. **动态工具注册表**：与 Visual ChatGPT 的固定工具集不同，HuggingGPT
+   访问整个 HF Hub——一个持续增长的注册表。新能力无需系统更改，
+   只需社区上传新模型。
 
-3. **Structured dependency parsing**: JSON-based task DAG enables complex multi-step,
-   multi-modal workflows with explicit dependency tracking and parallel execution.
+3. **结构化依赖解析**：基于 JSON 的任务 DAG 支持具有显式依赖跟踪和
+   并行执行的复杂多步骤、多模态工作流。
 
-4. **Cross-modal composition**: Naturally chains models across domain boundaries
-   (text -> image -> detection -> speech) to handle requests no single model could.
+4. **跨模态组合**：自然地链接跨领域边界的模型
+   （文本 -> 图像 -> 检测 -> 语音）以处理单一模型无法完成的请求。
 
-5. **No fine-tuning**: Operates entirely through in-context learning, immediately
-   deployable with any sufficiently capable LLM.
+5. **无需微调**：完全通过上下文学习运作，可立即部署于任何足够
+   强大的大语言模型。
 
-## Experimental Setup
+## 实验设置
 
-- **Controller LLMs**: ChatGPT (GPT-3.5-turbo), GPT-4; also tested Alpaca-7B, Vicuna-7B
-- **Model Hub**: Hugging Face Hub (~30 task categories, thousands of models)
-- **Evaluation corpus**: 130 diverse user requests across:
-  - Single-task requests (one model invocation)
-  - Sequential multi-task (ordered chain)
-  - Graph-structured requests (complex DAG dependencies)
-- **Evaluation metrics**:
-  - Task planning: F1, accuracy (single tasks); F1, normalized Edit Distance (sequential)
-  - Model selection: passing rate (%), rationality (%)
-  - End-to-end: success rate (%) -- whether user request is fully resolved
-- **Human evaluation**: 130 requests assessed at each pipeline stage
+- **控制器大语言模型**：ChatGPT (GPT-3.5-turbo)、GPT-4；也测试了 Alpaca-7B、Vicuna-7B
+- **模型中心**：Hugging Face Hub（约 30 个任务类别，数千个模型）
+- **评估语料**：130 个多样化用户请求，涵盖：
+  - 单任务请求（一次模型调用）
+  - 顺序多任务（有序链）
+  - 图结构请求（复杂 DAG 依赖）
+- **评估指标**：
+  - 任务规划：F1、准确率（单任务）；F1、归一化编辑距离（顺序）
+  - 模型选择：通过率 (%)、合理性 (%)
+  - 端到端：成功率 (%)——用户请求是否被完全解决
+- **人工评估**：130 个请求在每个流水线阶段进行评估
 
-## Results
+## 结果
 
-### Task Planning Accuracy by LLM
+### 按大语言模型划分的任务规划准确率
 
-| LLM         | Single-Task F1 | Sequential-Task F1 | Graph-Task F1 |
-|-------------|----------------|---------------------|---------------|
-| GPT-4       | ~98%           | ~92%                | ~85%          |
-| GPT-3.5     | ~95%           | ~82%                | ~65%          |
-| Vicuna-7B   | Low-Moderate   | Low                 | Very Low      |
-| Alpaca-7B   | Low            | Very Low            | Very Low      |
+| 大语言模型  | 单任务 F1 | 顺序任务 F1 | 图任务 F1 |
+|------------|----------|-------------|----------|
+| GPT-4      | ~98%     | ~92%        | ~85%     |
+| GPT-3.5    | ~95%     | ~82%        | ~65%     |
+| Vicuna-7B  | 中低     | 低          | 非常低   |
+| Alpaca-7B  | 低       | 非常低      | 非常低   |
 
-GPT-3.5/GPT-4 show absolute predominance on complex tasks. Open-source models fail
-on DAG-structured planning, producing malformed JSON or missing dependencies.
+GPT-3.5/GPT-4 在复杂任务上展现出绝对优势。开源模型在 DAG 结构规划上
+失败，产生格式错误的 JSON 或缺失依赖。
 
-### Stage-wise Performance (GPT-3.5)
+### 分阶段性能（GPT-3.5）
 
-| Stage              | Passing Rate | Key Bottleneck             |
-|--------------------|-------------|----------------------------|
-| Task Planning      | ~80%+       | Complex DAG structures     |
-| Model Selection    | ~85%        | Ambiguous task descriptions |
-| Task Execution     | Model-dep.  | API latency, model quality |
-| Response Generation| ~70-80%     | Error propagation          |
+| 阶段               | 通过率    | 关键瓶颈               |
+|--------------------|---------|------------------------|
+| 任务规划            | ~80%+   | 复杂 DAG 结构          |
+| 模型选择            | ~85%    | 模糊的任务描述         |
+| 任务执行            | 依模型   | API 延迟、模型质量     |
+| 响应生成            | ~70-80% | 错误传播               |
 
-### End-to-End Success Rate
+### 端到端成功率
 
-| Request Complexity | GPT-3.5 Success | GPT-4 Success |
-|--------------------|----------------|---------------|
-| Single-modal       | ~80%           | ~90%          |
-| Cross-modal        | ~60%           | ~78%          |
-| Complex DAG chain  | ~45%           | ~70%          |
+| 请求复杂度         | GPT-3.5 成功率 | GPT-4 成功率 |
+|-------------------|---------------|-------------|
+| 单模态             | ~80%          | ~90%        |
+| 跨模态             | ~60%          | ~78%        |
+| 复杂 DAG 链        | ~45%          | ~70%        |
 
-### Error Cascading Analysis
+### 错误级联分析
 
-Error probability compounds multiplicatively across stages:
+错误概率在各阶段间乘法累积：
 ```
-P(end-to-end success) = P(plan) * P(select|plan) * P(execute|select) * P(respond|execute)
+P(端到端成功) = P(规划) * P(选择|规划) * P(执行|选择) * P(响应|执行)
 
-If each stage = 85%:  0.85^4 = 0.52  (only 52% end-to-end)
-If each stage = 90%:  0.90^4 = 0.66  (only 66% end-to-end)
-If each stage = 95%:  0.95^4 = 0.81  (still only 81%)
+如果每阶段 = 85%:  0.85^4 = 0.52  (仅 52% 端到端)
+如果每阶段 = 90%:  0.90^4 = 0.66  (仅 66% 端到端)
+如果每阶段 = 95%:  0.95^4 = 0.81  (仍仅 81%)
 ```
 
-Primary error modes ranked by frequency:
-1. API/inference failures (~30%): HF Inference API timeouts or errors
-2. Task planning errors (~25%): Incorrect decomposition or missing tasks
-3. Format mismatches (~20%): Output of one model incompatible with next
-4. Model selection errors (~15%): Inadequate model for specific input
-5. Response aggregation errors (~10%): LLM fails to coherently combine results
+主要错误模式按频率排名：
+1. API/推理失败（约 30%）：HF Inference API 超时或错误
+2. 任务规划错误（约 25%）：不正确的分解或遗漏任务
+3. 格式不匹配（约 20%）：一个模型的输出与下一个不兼容
+4. 模型选择错误（约 15%）：对特定输入选择了不适当的模型
+5. 响应聚合错误（约 10%）：大语言模型未能连贯地组合结果
 
-### Comparison with TaskMatrix.AI
+### 与 TaskMatrix.AI 的比较
 
-| Aspect              | HuggingGPT              | TaskMatrix.AI            |
+| 方面                | HuggingGPT              | TaskMatrix.AI            |
 |---------------------|--------------------------|--------------------------|
-| Tool registry       | HF Hub (~thousands)      | Millions of APIs (vision)|
-| Implementation      | Fully built, open-source | Conceptual framework     |
-| Model selection     | Download-count + LLM     | API spec matching        |
-| Evaluation          | 130-request experiments  | No empirical evaluation  |
-| Modalities          | Language, vision, audio  | Potentially unlimited    |
-| Execution           | HF Inference API / local | Flexible (any endpoint)  |
+| 工具注册表          | HF Hub（约数千）         | 数百万 API（愿景）       |
+| 实现                | 完全构建，开源           | 概念框架                 |
+| 模型选择            | 下载量+LLM              | API 规范匹配             |
+| 评估                | 130 请求实验             | 无实验评估               |
+| 模态                | 语言、视觉、音频         | 潜在无限                 |
+| 执行                | HF Inference API/本地    | 灵活（任何端点）         |
 
-HuggingGPT is narrower in scope but demonstrates the concept concretely. TaskMatrix.AI
-is broader in vision but lacks empirical grounding.
+HuggingGPT 范围更窄但具体展示了概念。TaskMatrix.AI 愿景更广但缺乏
+经验支撑。
 
-## Analysis & Insights
+## 分析与洞察
 
-1. **Controller quality is the primary scaling axis**: GPT-4 vs. GPT-3.5 yields ~20pp
-   improvement. Better controllers directly translate to better orchestration.
-2. **Model hub as dynamic tool inventory**: Capabilities grow automatically with community
-   contributions, but reliability depends on third-party model quality.
-3. **Error propagation is the central challenge**: 90% per-step across 4 steps = only 66%
-   end-to-end. Motivates error recovery and alternative path planning.
-4. **Context window is a hard bottleneck**: Top-K model descriptions per task quickly
-   exhaust 4K-8K token windows. Complex pipelines force description truncation.
-5. **Few-shot prompt sensitivity**: Planning accuracy shifts 10-15pp depending on examples.
-6. **Latency accumulation**: 3-step pipeline at 5s/model = 15s+ total, plus LLM calls.
+1. **控制器质量是主要扩展轴**：GPT-4 vs. GPT-3.5 带来约 20 个百分点
+   的提升。更好的控制器直接转化为更好的编排。
+2. **模型中心作为动态工具清单**：能力随社区贡献自动增长，但可靠性
+   取决于第三方模型质量。
+3. **错误传播是核心挑战**：4 步中每步 90% = 仅 66% 端到端。
+   推动了错误恢复和替代路径规划。
+4. **上下文窗口是硬瓶颈**：每个任务的 top-K 模型描述很快耗尽
+   4K-8K token 窗口。复杂流水线迫使描述被截断。
+5. **少样本提示敏感性**：规划准确率根据示例变化 10-15 个百分点。
+6. **延迟累积**：3 步流水线每模型 5 秒 = 15 秒以上总计，加上
+   大语言模型调用。
 
-## Limitations & Critiques
+## 局限性与批评
 
-1. **Context window constraint**: Tasks and candidate models bounded by context length.
-2. **Error cascading**: Single planning mistake invalidates entire downstream pipeline.
-3. **HF API dependency**: Not all models available; rate limits and unpredictable latency.
-4. **Download count as quality proxy**: Popular models not always best for specific inputs.
-5. **No learning**: No caching of patterns, model choices, or planning improvements.
-6. **Security**: Arbitrary community models risk poisoning and adversarial outputs.
-7. **Limited taxonomy**: ~30 categories miss 3D generation, RL, molecular simulation, etc.
-8. **No interactive refinement**: "Make the dog larger" requires full re-execution.
+1. **上下文窗口约束**：任务和候选模型受上下文长度限制。
+2. **错误级联**：单个规划错误使整个下游流水线失效。
+3. **HF API 依赖**：并非所有模型可用；速率限制和不可预测的延迟。
+4. **下载量作为质量代理**：热门模型不一定最适合特定输入。
+5. **无学习**：无模式缓存、模型选择或规划改进。
+6. **安全性**：任意社区模型存在中毒和对抗输出的风险。
+7. **有限的分类体系**：约 30 个类别遗漏了 3D 生成、强化学习、
+   分子模拟等。
+8. **无交互式改进**："让狗更大"需要完全重新执行。
 
-## Follow-up Work
+## 后续工作
 
-- **Visual ChatGPT** (Wu et al., 2023): Fixed vision tool set, same pattern but less dynamic.
-- **Gorilla** (Patil et al., 2023): Fine-tunes LLMs for API call generation accuracy.
-- **ToolLLM** (Qin et al., 2023): 16,000+ API benchmark with fine-tuned tool-use models.
-- **TaskWeaver** (Qiao et al., 2023): Code-first planning, converting plans to executable code.
-- **AutoGen** (Wu et al., 2023): Multi-agent framework generalizing the controller pattern.
-- **OpenAGI** (Ge et al., 2023): Adds RLTF for self-improvement in orchestration.
-- **AnyTool** (Du et al., 2024): Hierarchical API retrieval with self-reflection.
+- **Visual ChatGPT** (Wu et al., 2023)：固定视觉工具集，相同模式但较少动态。
+- **Gorilla** (Patil et al., 2023)：微调大语言模型以提高 API 调用生成准确率。
+- **ToolLLM** (Qin et al., 2023)：16,000+ API 基准测试，配合微调的工具使用模型。
+- **TaskWeaver** (Qiao et al., 2023)：代码优先的规划，将计划转换为可执行代码。
+- **AutoGen** (Wu et al., 2023)：泛化控制器模式的多智能体框架。
+- **OpenAGI** (Ge et al., 2023)：增加 RLTF 以实现编排中的自我改进。
+- **AnyTool** (Du et al., 2024)：层级 API 检索，带自反思。
 
-## Key Takeaways
+## 核心要点
 
-1. **LLMs are effective orchestrators**: Even without fine-tuning, LLMs decompose complex
-   requests, select tools, and synthesize multi-modal results. The "LLM as brain,
-   specialist models as tools" architecture became the dominant agent paradigm.
+1. **大语言模型是有效的编排者**：即使没有微调，大语言模型也能分解复杂请求、
+   选择工具并综合多模态结果。"大语言模型作为大脑，专业模型作为工具"的
+   架构成为主导的智能体范式。
 
-2. **Community ecosystems are powerful tool registries**: Hugging Face's standardized
-   model cards and APIs provide a natural, extensible inventory for LLM agents.
+2. **社区生态系统是强大的工具注册表**：Hugging Face 标准化的模型卡和 API
+   为大语言模型智能体提供了自然、可扩展的清单。
 
-3. **Error cascading is the central unsolved problem**: Per-stage accuracy must be very
-   high (>95%) for acceptable end-to-end reliability on multi-step pipelines.
+3. **错误级联是核心未解决问题**：每步准确率必须非常高（>95%），
+   多步流水线才能达到可接受的端到端可靠性。
 
-4. **Context length directly limits scalability**: The framework cannot grow beyond
-   what the controller LLM can process in a single context window.
+4. **上下文长度直接限制可扩展性**：框架无法增长超过控制器大语言模型
+   在单个上下文窗口中能处理的范围。
 
-5. **The "LLM as controller" pattern** pioneered by HuggingGPT became foundational,
-   directly influencing ChatGPT Plugins, Semantic Kernel, LangChain tools, and modern
-   function-calling architectures.
+5. **HuggingGPT 开创的"大语言模型作为控制器"模式**成为基础性的，
+   直接影响了 ChatGPT Plugins、Semantic Kernel、LangChain tools
+   以及现代函数调用架构。
