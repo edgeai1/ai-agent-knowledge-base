@@ -1,6 +1,6 @@
 # AI 智能体论文索引
 
-**60 篇论文 | 16,000+ 行 | 全部中文 | 覆盖 2022-2026**
+**75 篇论文 | 20,000+ 行 | 全部中文 | 覆盖 2022-2026**
 
 ## 基础论文 (2022-2023)
 
@@ -60,6 +60,26 @@
 | [DeerFlow](deep_research/deerflow.md) | 2025 | 295 | ByteDance 开源研究框架 (66K+ Stars) |
 | [Deep Research Agents Roadmap](deep_research/deep_research_agents_roadmap.md) | 2025 | 299 | 系统性考察与路线图 |
 | [AgentRxiv](deep_research/agentrxiv.md) | 2025 | 280 | 协作自主研究平台 |
+| [WebDancer](deep_research/webdancer.md) | 2025 | 150 | 自主信息搜索 Agent |
+| [WebSailor](deep_research/websailor.md) | 2025 | 153 | 超人级推理 72B 开源 SOTA |
+| [R1-Searcher++](deep_research/r1_searcher_plus.md) | 2025 | 153 | 动态知识获取 RL |
+| [DeepScientist](deep_research/deep_scientist.md) | 2025 | 153 | 渐进式前沿科学发现 |
+| [SciResearcher](deep_research/sci_researcher.md) | 2026 | 184 | 前沿科学推理 8B SOTA |
+| [LiteResearcher](deep_research/lite_researcher.md) | 2026 | 161 | 可扩展零成本 RL 训练 4B |
+| [OpenSearch-VL](deep_research/opensearch_vl.md) | 2026 | 176 | 多模态深度搜索 Agent |
+| [SPARK](deep_research/spark_pathology.md) | 2026 | 178 | 癌症病理发现 (Nature Medicine) |
+| [AI Scientist](deep_research/ai_scientist.md) | 2024→2026 | 218 | 全自动科研 (Nature 2026) |
+| [Deep Research of Deep Research](deep_research/deep_research_of_deep_research.md) | 2026 | 150 | 元综述：统一 DR 定义框架 |
+
+## 深度研究基准测试
+
+| 基准 | 年份 | 行数 | 核心思想 |
+|------|------|-------|----------|
+| [BrowseComp-Plus](benchmark/browsecomp_plus.md) | 2026 | 150 | 公平透明评估 (ACL 2026) |
+| [IDRBench](benchmark/idrbench.md) | 2026 | 159 | 首个交互式深度研究基准 |
+| [DeepResearch Bench](benchmark/deep_research_bench.md) | 2026 | 154 | 9,430 细粒度评估指标 |
+| [ReportBench](benchmark/reportbench.md) | 2025 | 152 | 学术综述任务评估 |
+| [DeepResearchEval](benchmark/deep_research_eval.md) | 2026 | 170 | 自动化评估框架 |
 
 ## 编码智能体
 
