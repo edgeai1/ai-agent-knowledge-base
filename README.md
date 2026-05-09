@@ -4,7 +4,7 @@
     <strong>系统化的 AI 智能体研究论文、核心概念与前沿追踪</strong>
   </p>
   <p align="center">
-    📄 60+ 篇深度论文分析 · 📚 11 个核心概念 · 🔬 覆盖 2022-2026 全时间线
+    📄 104 个文件 · 📝 21,698 行 · 🔬 38 篇 Deep Research · 📊 12 篇基准测试 · 🇨🇳 全中文
   </p>
 </p>
 
@@ -16,14 +16,14 @@
 - [知识库结构](#-知识库结构)
 - [论文索引](#-论文索引)
   - [奠基论文](#-奠基论文-2022-2023)
-  - [深度研究智能体](#-深度研究智能体-deep-research)
+  - [深度研究智能体](#-深度研究智能体-38篇)
   - [多智能体系统](#-多智能体系统)
   - [记忆与规划](#-记忆与规划)
   - [编码智能体](#-编码智能体)
   - [GUI / 计算机使用](#-gui--计算机使用)
   - [工作流与编排](#-工作流与编排)
   - [Agentic RAG](#-agentic-rag)
-  - [基准测试](#-基准测试)
+  - [基准测试](#-基准测试-12篇)
   - [安全](#-安全)
   - [综述论文](#-综述论文)
 - [核心概念](#-核心概念)
@@ -51,16 +51,16 @@
 📂 papers/                         论文笔记（按方向分类）
 ├── 📂 agent/
 │   ├── 🏛️ foundational/           奠基论文 (9篇)
-│   ├── 🔬 deep_research/          深度研究智能体 (22篇)
+│   ├── 🔬 deep_research/          深度研究智能体 (38篇) ⭐ 重点方向
 │   ├── 👥 multi_agent/            多智能体系统 (4篇)
 │   ├── 🧠 memory/                 记忆与规划 (4篇)
 │   ├── 💻 coding/                 编码智能体 (4篇)
 │   ├── 🖥️ gui/                    GUI/计算机使用 (3篇)
 │   ├── ⚙️ workflow/               工作流与编排 (2篇)
 │   ├── 🔍 agentic_rag/            智能体RAG (2篇)
-│   ├── 📊 benchmark/              基准测试 (4篇)
+│   ├── 📊 benchmark/              基准测试 (12篇)
 │   ├── 🛡️ safety/                 安全 (1篇)
-│   └── 📖 survey/                 综述 (3篇)
+│   └── 📖 survey/                 综述 (4篇)
 ├── 📂 llm/                        LLM 基础论文 (2篇)
 │
 📂 concepts/                       核心概念 (11篇)
@@ -88,32 +88,80 @@
 | **Voyager** - 终身学习具身智能体 | 2023 | NeurIPS 2023 Spotlight | [📝 笔记](papers/agent/foundational/voyager.md) |
 | **AutoGPT** - 自主目标驱动智能体 | 2023 | 开源项目 | [📝 笔记](papers/agent/foundational/autogpt.md) |
 
-### 🔬 深度研究智能体 (Deep Research)
+### 🔬 深度研究智能体 (38篇)
+
+#### RL 搜索系列
+
+| 论文 | 年份 | 会议 | 导航 |
+|------|------|------|------|
+| **R1-Searcher** - RL 搜索能力激励 | 2025.03 | arXiv | [📝 笔记](papers/agent/deep_research/r1_searcher.md) |
+| **Search-R1** - 推理+搜索 RL 框架 | 2025.03 | COLM 2025 | [📝 笔记](papers/agent/deep_research/search_r1.md) |
+| **R1-Searcher++** - 动态知识获取 | 2025.05 | arXiv | [📝 笔记](papers/agent/deep_research/r1_searcher_plus.md) |
+| **DeepResearcher** - 端到端 RL | 2025 | EMNLP 2025 | [📝 笔记](papers/agent/deep_research/deep_researcher.md) |
+| **PANGU DeepDiver** - 搜索强度缩放 | 2025.05 | NeurIPS 2025 | [📝 笔记](papers/agent/deep_research/pangu_deepdiver.md) |
+| **PokeeResearch** - RLAIF 7B | 2025.10 | arXiv | [📝 笔记](papers/agent/deep_research/pokee_research.md) |
+| **CoSearch** - 推理+排序联合 GRPO | 2026.04 | arXiv | [📝 笔记](papers/agent/deep_research/cosearch.md) |
+
+#### Web Agent 系列
+
+| 论文 | 年份 | 会议 | 导航 |
+|------|------|------|------|
+| **MindSearch** - 认知深度搜索 | 2024 | arXiv | [📝 笔记](papers/agent/deep_research/mindsearch.md) |
+| **Search-o1** - 搜索增强推理 | 2025 | EMNLP 2025 | [📝 笔记](papers/agent/deep_research/search_o1.md) |
+| **WebDancer** - 自主信息搜索 | 2025.05 | arXiv | [📝 笔记](papers/agent/deep_research/webdancer.md) |
+| **WebSailor** - 超人级推理 72B | 2025.07 | arXiv | [📝 笔记](papers/agent/deep_research/websailor.md) |
+| **WebThinker** - LRM 自主搜索报告 | 2026 | WWW 2026 Oral | [📝 笔记](papers/agent/deep_research/webthinker.md) |
+
+#### 文献综合与报告生成
 
 | 论文 | 年份 | 会议 | 导航 |
 |------|------|------|------|
 | **STORM** - 多视角文章写作 | 2024 | NAACL 2024 | [📝 笔记](papers/agent/deep_research/storm.md) |
-| **MindSearch** - 认知深度搜索 | 2024 | arXiv | [📝 笔记](papers/agent/deep_research/mindsearch.md) |
-| **ResearchAgent** - 迭代研究想法生成 | 2024 | NAACL 2025 | [📝 笔记](papers/agent/deep_research/research_agent.md) |
-| **DeepResearcher** - RL 深度研究 | 2025 | EMNLP 2025 | [📝 笔记](papers/agent/deep_research/deep_researcher.md) |
-| **R1-Searcher** - RL 搜索能力激励 | 2025 | arXiv | [📝 笔记](papers/agent/deep_research/r1_searcher.md) |
-| **Search-R1** - 推理+搜索 RL 框架 | 2025 | COLM 2025 | [📝 笔记](papers/agent/deep_research/search_r1.md) |
-| **Search-o1** - 智能体搜索增强推理 | 2025 | EMNLP 2025 | [📝 笔记](papers/agent/deep_research/search_o1.md) |
-| **PANGU DeepDiver** - 搜索强度缩放 | 2025 | NeurIPS 2025 | [📝 笔记](papers/agent/deep_research/pangu_deepdiver.md) |
-| **PokeeResearch** - RLAIF 深度研究 | 2025 | arXiv | [📝 笔记](papers/agent/deep_research/pokee_research.md) |
-| **Tongyi DeepResearch** - 通义深度研究 | 2025 | 技术报告 | [📝 笔记](papers/agent/deep_research/tongyi_deep_research.md) |
-| **Agent Laboratory** - 自主研究工作流 | 2025 | EMNLP 2025 | [📝 笔记](papers/agent/deep_research/agent_laboratory.md) |
-| **AI Scientist v2** - 自动科研发现 | 2025 | arXiv | [📝 笔记](papers/agent/deep_research/ai_scientist_v2.md) |
-| **AgentRxiv** - 协作自主研究 | 2025 | arXiv | [📝 笔记](papers/agent/deep_research/agentrxiv.md) |
-| **DeerFlow** - ByteDance 研究框架 | 2025 | 开源 (66K+ Stars) | [📝 笔记](papers/agent/deep_research/deerflow.md) |
 | **OpenScholar** - 科学文献综合 | 2026 | Nature 2026 | [📝 笔记](papers/agent/deep_research/openscholar.md) |
-| **WebThinker** - LRM 自主搜索报告 | 2026 | WWW 2026 Oral | [📝 笔记](papers/agent/deep_research/webthinker.md) |
 | **OpenResearcher** - 开放研究轨迹合成 | 2026 | arXiv | [📝 笔记](papers/agent/deep_research/open_researcher.md) |
 | **O-Researcher** - 多智能体蒸馏 | 2026 | arXiv | [📝 笔记](papers/agent/deep_research/o_researcher.md) |
+| **Tongyi DeepResearch** - 通义深度研究 | 2025 | 技术报告 | [📝 笔记](papers/agent/deep_research/tongyi_deep_research.md) |
+| **Marco DeepResearch** - 验证中心设计 | 2026.03 | arXiv | [📝 笔记](papers/agent/deep_research/marco_deep_research.md) |
+
+#### 科研自动化
+
+| 论文 | 年份 | 会议 | 导航 |
+|------|------|------|------|
+| **ResearchAgent** - 迭代想法生成 | 2024 | NAACL 2025 | [📝 笔记](papers/agent/deep_research/research_agent.md) |
+| **AI Scientist** - 全自动科研 | 2024→2026 | Nature 2026 | [📝 笔记](papers/agent/deep_research/ai_scientist.md) |
+| **AI Scientist v2** - 智能体树搜索 | 2025 | arXiv | [📝 笔记](papers/agent/deep_research/ai_scientist_v2.md) |
+| **Agent Laboratory** - 自主研究工作流 | 2025 | EMNLP 2025 | [📝 笔记](papers/agent/deep_research/agent_laboratory.md) |
+| **DeepScientist** - 渐进式前沿发现 | 2025.09 | arXiv | [📝 笔记](papers/agent/deep_research/deep_scientist.md) |
+| **AgentRxiv** - 协作自主研究 | 2025 | arXiv | [📝 笔记](papers/agent/deep_research/agentrxiv.md) |
+| **SPARK** - 癌症病理发现 | 2026 | Nature Medicine | [📝 笔记](papers/agent/deep_research/spark_pathology.md) |
+| **SciResearcher** - 前沿科学推理 | 2026.05 | arXiv | [📝 笔记](papers/agent/deep_research/sci_researcher.md) |
+
+#### 检索与训练基础设施
+
+| 论文 | 年份 | 会议 | 导航 |
+|------|------|------|------|
+| **AgentIR** - 推理感知检索 | 2026.03 | arXiv | [📝 笔记](papers/agent/deep_research/agentir.md) |
+| **DeepResearch-9K** - 9K 训练集 | 2026.03 | arXiv | [📝 笔记](papers/agent/deep_research/deepresearch_9k.md) |
+| **LiteResearcher** - 零成本 RL 4B | 2026.04 | arXiv | [📝 笔记](papers/agent/deep_research/lite_researcher.md) |
+| **OpenSearch-VL** - 多模态深搜 | 2026 | arXiv | [📝 笔记](papers/agent/deep_research/opensearch_vl.md) |
+
+#### 架构与效率
+
+| 论文 | 年份 | 会议 | 导航 |
+|------|------|------|------|
 | **DeepAgent** - 通用推理智能体 | 2026 | WWW 2026 Oral | [📝 笔记](papers/agent/deep_research/deep_agent.md) |
-| 📖 Deep Research Survey | 2025 | arXiv | [📝 笔记](papers/agent/deep_research/deep_research_survey.md) |
-| 📖 Deep Research Agents Roadmap | 2025 | TMLR | [📝 笔记](papers/agent/deep_research/deep_research_agents_roadmap.md) |
-| 📖 从搜索到深度研究演进 | 2025 | arXiv | [📝 笔记](papers/agent/deep_research/web_search_to_deep_research.md) |
+| **W&D** - 并行工具调用 | 2026.02 | Salesforce | [📝 笔记](papers/agent/deep_research/wide_and_deep.md) |
+| **Self-Manager** - 并行 Agent 循环 | 2026.01 | arXiv | [📝 笔记](papers/agent/deep_research/self_manager.md) |
+| **DeerFlow** - ByteDance 研究框架 | 2025 | 开源 (66K+ Stars) | [📝 笔记](papers/agent/deep_research/deerflow.md) |
+
+#### Deep Research 综述
+
+| 论文 | 年份 | 导航 |
+|------|------|------|
+| 📖 Deep Research Survey | 2025 | [📝 笔记](papers/agent/deep_research/deep_research_survey.md) |
+| 📖 Deep Research Agents Roadmap | 2025 | [📝 笔记](papers/agent/deep_research/deep_research_agents_roadmap.md) |
+| 📖 从搜索到深度研究演进 | 2025 | [📝 笔记](papers/agent/deep_research/web_search_to_deep_research.md) |
+| 📖 Deep Research of Deep Research | 2026.03 | [📝 笔记](papers/agent/deep_research/deep_research_of_deep_research.md) |
 
 ### 👥 多智能体系统
 
@@ -163,14 +211,22 @@
 | **Self-RAG** - 自反思检索增强生成 | 2024 | [📝 笔记](papers/agent/agentic_rag/self_rag.md) |
 | 📖 Agentic RAG 综述 | 2025 | [📝 笔记](papers/agent/agentic_rag/agentic_rag_survey.md) |
 
-### 📊 基准测试
+### 📊 基准测试 (12篇)
 
-| 基准 | 年份 | 导航 |
-|------|------|------|
-| **SWE-bench** - GitHub Issue 解决 | 2024 | [📝 笔记](papers/agent/benchmark/swe_bench.md) |
-| **AgentBench** - 8 环境智能体评估 | 2023 | [📝 笔记](papers/agent/benchmark/agentbench.md) |
-| **WebArena** - 真实网络环境 | 2024 | [📝 笔记](papers/agent/benchmark/webarena.md) |
-| **OSWorld** - 真实操作系统 | 2024 | [📝 笔记](papers/agent/benchmark/osworld.md) |
+| 基准 | 年份 | 关注点 | 导航 |
+|------|------|--------|------|
+| **SWE-bench** | 2024 | GitHub Issue 解决 | [📝 笔记](papers/agent/benchmark/swe_bench.md) |
+| **AgentBench** | 2023 | 8 环境智能体评估 | [📝 笔记](papers/agent/benchmark/agentbench.md) |
+| **WebArena** | 2024 | 真实网络环境 | [📝 笔记](papers/agent/benchmark/webarena.md) |
+| **OSWorld** | 2024 | 真实操作系统 | [📝 笔记](papers/agent/benchmark/osworld.md) |
+| **BrowseComp-Plus** | 2026 | 公平 DR 评估 (ACL 2026) | [📝 笔记](papers/agent/benchmark/browsecomp_plus.md) |
+| **IDRBench** | 2026 | 交互式深度研究 | [📝 笔记](papers/agent/benchmark/idrbench.md) |
+| **DeepResearch Bench** | 2026 | 9,430 细粒度指标 | [📝 笔记](papers/agent/benchmark/deep_research_bench.md) |
+| **ReportBench** | 2025 | 学术综述任务 | [📝 笔记](papers/agent/benchmark/reportbench.md) |
+| **DeepResearchEval** | 2026 | 自动化评估框架 | [📝 笔记](papers/agent/benchmark/deep_research_eval.md) |
+| **SAGE** | 2026 | DR 检索基准 | [📝 笔记](papers/agent/benchmark/sage_retrieval.md) |
+| **DeepSearchQA** | 2026 | Google DeepMind 900 提示 | [📝 笔记](papers/agent/benchmark/deepsearchqa.md) |
+| **DRACO** | 2026 | Perplexity 跨领域 | [📝 笔记](papers/agent/benchmark/draco.md) |
 
 ### 🛡️ 安全
 
@@ -185,6 +241,7 @@
 | LLM Agent 综述 (复旦) | 2023 | [📝 笔记](papers/agent/survey/llm_agent_survey_fudan.md) |
 | LLM Agent 综述 (人大) | 2023 | [📝 笔记](papers/agent/survey/llm_agent_survey_renmin.md) |
 | 从推理到智能体 | 2025 | [📝 笔记](papers/agent/survey/reasoning_to_agents_2025.md) |
+| RL Agentic Search 综述 | 2025 | [📝 笔记](papers/agent/survey/rl_agentic_search_survey.md) |
 | LLM Agent 综述合集 | 2023-2024 | [📝 笔记](papers/llm/llm_agent_surveys.md) |
 
 ---
@@ -193,17 +250,17 @@
 
 | 概念 | 说明 | 导航 |
 |------|------|------|
-| 🏗️ **智能体架构** | 感知-推理-行动-观察循环，组件设计 | [查看](concepts/agent_architecture.md) |
+| 🏗️ **智能体架构** | 感知-推理-行动-观察循环 | [查看](concepts/agent_architecture.md) |
 | 🔄 **架构模式** | ReAct、Plan-Execute、Reflexion、多智能体 | [查看](concepts/agent_architecture_patterns.md) |
-| 🧠 **记忆系统** | 短期/长期记忆，RAG，反思，虚拟上下文 | [查看](concepts/agent_memory.md) |
+| 🧠 **记忆系统** | 短期/长期、RAG、反思、虚拟上下文 | [查看](concepts/agent_memory.md) |
 | 🧠 **记忆深入** | 存储后端、代码示例、反思与遗忘 | [查看](concepts/agent_memory_systems.md) |
 | 🔧 **工具使用** | 函数调用、ACI 设计、MCP 协议 | [查看](concepts/tool_use.md) |
-| 🌐 **MCP & A2A** | 2026 智能体互操作标准协议 | [查看](concepts/mcp_a2a_protocols.md) |
-| 👥 **多智能体** | 协作模式、框架对比、2026 趋势 | [查看](concepts/multi_agent_systems.md) |
+| 🌐 **MCP & A2A** | 2026 智能体互操作标准 | [查看](concepts/mcp_a2a_protocols.md) |
+| 👥 **多智能体** | 协作模式、框架对比、趋势 | [查看](concepts/multi_agent_systems.md) |
 | ⚡ **关键技术** | CoT, RAG, ToT, 自一致性, 提示链 | [查看](concepts/agent_techniques.md) |
-| 📐 **框架对比** | LangGraph, AutoGen, CrewAI, MetaGPT 等 | [查看](concepts/agent_frameworks.md) |
-| 🔄 **ReAct 模式** | Thought-Action-Observation 循环详解 | [查看](concepts/react_pattern.md) |
-| 📘 **智能体基础** | Agent = LLM + 记忆 + 规划 + 工具 + 行动 | [查看](concepts/llm_agent_fundamentals.md) |
+| 📐 **框架对比** | LangGraph, AutoGen, CrewAI, MetaGPT | [查看](concepts/agent_frameworks.md) |
+| 🔄 **ReAct 模式** | Thought-Action-Observation 循环 | [查看](concepts/react_pattern.md) |
+| 📘 **智能体基础** | Agent = LLM + 记忆 + 规划 + 工具 | [查看](concepts/llm_agent_fundamentals.md) |
 
 ---
 
@@ -236,7 +293,14 @@
 
 ```
 入门：Chain-of-Thought → ReAct → Toolformer → 智能体架构概念
-├── 深度研究方向：STORM → DeepResearcher → WebThinker → OpenResearcher
+
+├── 深度研究方向（重点）：
+│   ├── 文献综合: STORM → OpenScholar → OpenResearcher
+│   ├── RL 搜索: R1-Searcher → Search-R1 → DeepResearcher → PANGU DeepDiver
+│   ├── Web Agent: MindSearch → WebDancer → WebSailor → WebThinker
+│   ├── 科研自动化: AI Scientist → Agent Laboratory → SciResearcher
+│   └── 训练基础设施: DeepResearch-9K → LiteResearcher → AgentIR
+
 ├── 多智能体方向：CAMEL → MetaGPT → AutoGen → ChatDev
 ├── 记忆方向：Generative Agents → Reflexion → MemGPT → CoALA
 ├── 编码智能体：SWE-Agent → CodeAct → Devin → OpenHands
@@ -265,5 +329,5 @@ grep -r "tags:.*deep-research" papers/
 ---
 
 <p align="center">
-  <sub>使用 Claude Code 构建 · 持续更新中</sub>
+  <sub>使用 Claude Code 构建 · 持续更新中 · 最后更新: 2026.05</sub>
 </p>
