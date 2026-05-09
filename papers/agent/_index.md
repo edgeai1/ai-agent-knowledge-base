@@ -1,6 +1,6 @@
 # AI 智能体论文索引
 
-**75 篇论文 | 20,000+ 行 | 全部中文 | 覆盖 2022-2026**
+**85 篇论文 | 22,000+ 行 | 全部中文 | 覆盖 2022-2026.05**
 
 ## 基础论文 (2022-2023)
 
@@ -70,6 +70,12 @@
 | [SPARK](deep_research/spark_pathology.md) | 2026 | 178 | 癌症病理发现 (Nature Medicine) |
 | [AI Scientist](deep_research/ai_scientist.md) | 2024→2026 | 218 | 全自动科研 (Nature 2026) |
 | [Deep Research of Deep Research](deep_research/deep_research_of_deep_research.md) | 2026 | 150 | 元综述：统一 DR 定义框架 |
+| [AgentIR](deep_research/agentir.md) | 2026.03 | 160 | 推理感知检索 AgentIR-4B |
+| [CoSearch](deep_research/cosearch.md) | 2026.04 | 172 | 推理+排序联合训练 GRPO |
+| [DeepResearch-9K](deep_research/deepresearch_9k.md) | 2026.03 | 185 | 9000 问题训练集 + DR-R1 |
+| [W&D](deep_research/wide_and_deep.md) | 2026.02 | 189 | Salesforce 并行工具调用 |
+| [Marco DeepResearch](deep_research/marco_deep_research.md) | 2026.03 | 205 | 验证中心设计 8B 模型 |
+| [Self-Manager](deep_research/self_manager.md) | 2026.01 | 197 | 并行 Agent 循环长文研究 |
 
 ## 深度研究基准测试
 
@@ -80,6 +86,15 @@
 | [DeepResearch Bench](benchmark/deep_research_bench.md) | 2026 | 154 | 9,430 细粒度评估指标 |
 | [ReportBench](benchmark/reportbench.md) | 2025 | 152 | 学术综述任务评估 |
 | [DeepResearchEval](benchmark/deep_research_eval.md) | 2026 | 170 | 自动化评估框架 |
+| [SAGE](benchmark/sage_retrieval.md) | 2026.02 | 154 | 检索基准，BM25 胜 LLM 30% |
+| [DeepSearchQA](benchmark/deepsearchqa.md) | 2026.01 | 160 | Google DeepMind 900 提示基准 |
+| [DRACO](benchmark/draco.md) | 2026.02 | 211 | Perplexity 跨领域基准 |
+
+## 综述
+
+| 论文 | 年份 | 行数 | 核心思想 |
+|------|------|-------|----------|
+| [RL Agentic Search 综述](survey/rl_agentic_search_survey.md) | 2025 | 217 | RL 搜索三维分类体系 |
 
 ## 编码智能体
 
