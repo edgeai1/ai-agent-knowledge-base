@@ -76,6 +76,7 @@
 | [W&D](deep_research/wide_and_deep.md) | 2026.02 | 189 | Salesforce 并行工具调用 |
 | [Marco DeepResearch](deep_research/marco_deep_research.md) | 2026.03 | 205 | 验证中心设计 8B 模型 |
 | [Self-Manager](deep_research/self_manager.md) | 2026.01 | 197 | 并行 Agent 循环长文研究 |
+| [T²PO](deep_research/t2po.md) | 2026.05 | 438 | 不确定性引导探索控制 (ICML 2026 Spotlight) |
 
 ## 深度研究基准测试
 
