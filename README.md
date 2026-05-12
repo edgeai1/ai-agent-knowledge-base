@@ -42,6 +42,7 @@
 | 🔧 [**工具使用**](concepts/tool_use.md) | 函数调用、ACI 设计、MCP 协议 |
 | 🌐 [**MCP & A2A 协议**](concepts/mcp_a2a_protocols.md) | 2026 智能体互操作标准 |
 | 📊 [**2026 全景**](notes/2026_agent_landscape.md) | 行业动态、SOTA 排行、研究前沿 |
+| 🗺️ [**研究递进脉络**](notes/research_progression.md) | 各方向演进逻辑、范式转换、融合趋势 |
 
 ---
 
