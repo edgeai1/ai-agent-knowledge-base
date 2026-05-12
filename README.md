@@ -4,7 +4,7 @@
     <strong>系统化的 AI 智能体研究论文、核心概念与前沿追踪</strong>
   </p>
   <p align="center">
-    📄 104 个文件 · 📝 21,698 行 · 🔬 38 篇 Deep Research · 📊 12 篇基准测试 · 🇨🇳 全中文
+    📄 110 个文件 · 📝 23,317 行 · 🔬 43 篇 Deep Research · 📊 12 篇基准测试 · 🇨🇳 全中文
   </p>
 </p>
 
@@ -88,7 +88,7 @@
 | **Voyager** - 终身学习具身智能体 | 2023 | NeurIPS 2023 Spotlight | [📝 笔记](papers/agent/foundational/voyager.md) |
 | **AutoGPT** - 自主目标驱动智能体 | 2023 | 开源项目 | [📝 笔记](papers/agent/foundational/autogpt.md) |
 
-### 🔬 深度研究智能体 (38篇)
+### 🔬 深度研究智能体 (43篇)
 
 #### RL 搜索系列
 
@@ -100,7 +100,9 @@
 | **DeepResearcher** - 端到端 RL | 2025 | EMNLP 2025 | [📝 笔记](papers/agent/deep_research/deep_researcher.md) |
 | **PANGU DeepDiver** - 搜索强度缩放 | 2025.05 | NeurIPS 2025 | [📝 笔记](papers/agent/deep_research/pangu_deepdiver.md) |
 | **PokeeResearch** - RLAIF 7B | 2025.10 | arXiv | [📝 笔记](papers/agent/deep_research/pokee_research.md) |
+| **ZeroSearch** - 无需真实搜索的 RL | 2025.05 | arXiv | [📝 笔记](papers/agent/deep_research/zerosearch.md) |
 | **CoSearch** - 推理+排序联合 GRPO | 2026.04 | arXiv | [📝 笔记](papers/agent/deep_research/cosearch.md) |
+| **T²PO** - 不确定性引导探索控制 | 2026.05 | ICML 2026 Spotlight | [📝 笔记](papers/agent/deep_research/t2po.md) |
 
 #### Web Agent 系列
 
@@ -122,6 +124,7 @@
 | **O-Researcher** - 多智能体蒸馏 | 2026 | arXiv | [📝 笔记](papers/agent/deep_research/o_researcher.md) |
 | **Tongyi DeepResearch** - 通义深度研究 | 2025 | 技术报告 | [📝 笔记](papers/agent/deep_research/tongyi_deep_research.md) |
 | **Marco DeepResearch** - 验证中心设计 | 2026.03 | arXiv | [📝 笔记](papers/agent/deep_research/marco_deep_research.md) |
+| **Step-DeepResearch** - 原子能力分解 32B | 2025.12 | 技术报告 | [📝 笔记](papers/agent/deep_research/step_deep_research.md) |
 
 #### 科研自动化
 
@@ -153,6 +156,8 @@
 | **W&D** - 并行工具调用 | 2026.02 | Salesforce | [📝 笔记](papers/agent/deep_research/wide_and_deep.md) |
 | **Self-Manager** - 并行 Agent 循环 | 2026.01 | arXiv | [📝 笔记](papers/agent/deep_research/self_manager.md) |
 | **DeerFlow** - ByteDance 研究框架 | 2025 | 开源 (66K+ Stars) | [📝 笔记](papers/agent/deep_research/deerflow.md) |
+| **EvoFSM** - FSM 可控自进化 | 2026.01 | arXiv | [📝 笔记](papers/agent/deep_research/evofsm.md) |
+| **DeepVerifier** - 推理时验证缩放 | 2026.01 | ACL 2026 | [📝 笔记](papers/agent/deep_research/deep_verifier.md) |
 
 #### Deep Research 综述
 
@@ -242,6 +247,7 @@
 | LLM Agent 综述 (人大) | 2023 | [📝 笔记](papers/agent/survey/llm_agent_survey_renmin.md) |
 | 从推理到智能体 | 2025 | [📝 笔记](papers/agent/survey/reasoning_to_agents_2025.md) |
 | RL Agentic Search 综述 | 2025 | [📝 笔记](papers/agent/survey/rl_agentic_search_survey.md) |
+| Deep Search Agents 综述 | ACL 2026 | [📝 笔记](papers/agent/survey/deep_search_agents_survey.md) |
 | LLM Agent 综述合集 | 2023-2024 | [📝 笔记](papers/llm/llm_agent_surveys.md) |
 
 ---
