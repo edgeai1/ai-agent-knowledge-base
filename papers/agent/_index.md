@@ -77,6 +77,10 @@
 | [Marco DeepResearch](deep_research/marco_deep_research.md) | 2026.03 | 205 | 验证中心设计 8B 模型 |
 | [Self-Manager](deep_research/self_manager.md) | 2026.01 | 197 | 并行 Agent 循环长文研究 |
 | [T²PO](deep_research/t2po.md) | 2026.05 | 438 | 不确定性引导探索控制 (ICML 2026 Spotlight) |
+| [Step-DeepResearch](deep_research/step_deep_research.md) | 2025.12 | 200 | 原子能力分解，成本效率 32B |
+| [DeepVerifier](deep_research/deep_verifier.md) | 2026.01 | 203 | 推理时验证缩放，DRA 失败分类 |
+| [EvoFSM](deep_research/evofsm.md) | 2026.01 | 220 | FSM 可控自进化 |
+| [ZeroSearch](deep_research/zerosearch.md) | 2025.05 | 223 | 无需真实搜索的 RL 训练，成本降 88% |
 
 ## 深度研究基准测试
 
@@ -96,6 +100,7 @@
 | 论文 | 年份 | 行数 | 核心思想 |
 |------|------|-------|----------|
 | [RL Agentic Search 综述](survey/rl_agentic_search_survey.md) | 2025 | 217 | RL 搜索三维分类体系 |
+| [Deep Search Agents 综述](survey/deep_search_agents_survey.md) | 2026 | 265 | 全流水线综述 (ACL 2026 Main) |
 
 ## 编码智能体
 
