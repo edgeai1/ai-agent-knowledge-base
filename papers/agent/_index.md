@@ -1,6 +1,10 @@
 # AI 智能体论文索引
 
-**85 篇论文 | 22,000+ 行 | 全部中文 | 覆盖 2022-2026.05**
+**100+ 篇论文 | 27,800+ 行 | 全部中文 | 覆盖 2022-2026.05.25**
+
+> 📌 **2026.05 新增 14 篇**：Deep Research（DeepWeb-Bench、Argus、HDRI、BioMedArena、Pi-Serini、SIRA、DoGMaTiQ、ODR+、Rethinking RL-DR）、记忆（TriMem）、智能体 RL（ActFocus）、自演化（MOSS）、基准元评测（LLM Agent Benchmark Audit）、综述（Code as Agent Harness）。
+>
+> 📌 **后训练 OPD/OPSD 新方向（5 篇）**：OPSD 原始论文、OPD Survey、Rethinking OPD、Lightning OPD、OPSD Brief —— 涵盖 2026 年最热门的 LLM 后训练技术。
 
 ## 基础论文 (2022-2023)
 

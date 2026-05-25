@@ -4,7 +4,7 @@
     <strong>系统化的 AI 智能体研究论文、核心概念与前沿追踪</strong>
   </p>
   <p align="center">
-    📄 110 个文件 · 📝 23,317 行 · 🔬 43 篇 Deep Research · 📊 12 篇基准测试 · 🇨🇳 全中文
+    📄 130 个文件 · 📝 27,800+ 行 · 🔬 52 篇 Deep Research · 🎓 5 篇后训练 · 📊 13 篇基准测试 · 🇨🇳 全中文
   </p>
 </p>
 
@@ -15,15 +15,16 @@
 - [快速导航](#-快速导航)
 - [知识库结构](#-知识库结构)
 - [论文索引](#-论文索引)
-  - [奠基论文](#-奠基论文-2022-2023)
-  - [深度研究智能体](#-深度研究智能体-38篇)
+  - [奠基论文](#-奠基论文-2022-2026)
+  - [深度研究智能体](#-深度研究智能体-52篇)
+  - [后训练与蒸馏（OPD/OPSD）](#-后训练与蒸馏-opdopsd-5篇)
   - [多智能体系统](#-多智能体系统)
   - [记忆与规划](#-记忆与规划)
   - [编码智能体](#-编码智能体)
   - [GUI / 计算机使用](#-gui--计算机使用)
   - [工作流与编排](#-工作流与编排)
   - [Agentic RAG](#-agentic-rag)
-  - [基准测试](#-基准测试-12篇)
+  - [基准测试](#-基准测试-13篇)
   - [安全](#-安全)
   - [综述论文](#-综述论文)
 - [核心概念](#-核心概念)
@@ -51,17 +52,18 @@
 ```
 📂 papers/                         论文笔记（按方向分类）
 ├── 📂 agent/
-│   ├── 🏛️ foundational/           奠基论文 (9篇)
-│   ├── 🔬 deep_research/          深度研究智能体 (38篇) ⭐ 重点方向
+│   ├── 🏛️ foundational/           奠基论文 (11篇)
+│   ├── 🔬 deep_research/          深度研究智能体 (52篇) ⭐ 重点方向
+│   ├── 🎓 post_training/          后训练与蒸馏 OPD/OPSD (5篇) ⭐ 新增
 │   ├── 👥 multi_agent/            多智能体系统 (4篇)
-│   ├── 🧠 memory/                 记忆与规划 (4篇)
+│   ├── 🧠 memory/                 记忆与规划 (5篇)
 │   ├── 💻 coding/                 编码智能体 (4篇)
 │   ├── 🖥️ gui/                    GUI/计算机使用 (3篇)
 │   ├── ⚙️ workflow/               工作流与编排 (2篇)
 │   ├── 🔍 agentic_rag/            智能体RAG (2篇)
-│   ├── 📊 benchmark/              基准测试 (12篇)
+│   ├── 📊 benchmark/              基准测试 (13篇)
 │   ├── 🛡️ safety/                 安全 (1篇)
-│   └── 📖 survey/                 综述 (4篇)
+│   └── 📖 survey/                 综述 (5篇)
 ├── 📂 llm/                        LLM 基础论文 (2篇)
 │
 📂 concepts/                       核心概念 (11篇)
@@ -74,7 +76,7 @@
 
 ## 📄 论文索引
 
-### 🏛️ 奠基论文 (2022-2023)
+### 🏛️ 奠基论文 (2022-2026)
 
 | 论文 | 年份 | 会议 | 导航 |
 |------|------|------|------|
@@ -88,8 +90,10 @@
 | **Tree of Thoughts** - 思维树 | 2023 | NeurIPS 2023 | [📝 笔记](papers/agent/foundational/tree_of_thoughts.md) |
 | **Voyager** - 终身学习具身智能体 | 2023 | NeurIPS 2023 Spotlight | [📝 笔记](papers/agent/foundational/voyager.md) |
 | **AutoGPT** - 自主目标驱动智能体 | 2023 | 开源项目 | [📝 笔记](papers/agent/foundational/autogpt.md) |
+| **ActFocus** - 解决 Agent RL 动作瓶颈 ⭐ 2026.05 | 2026.05 | arXiv | [📝 笔记](papers/agent/foundational/actfocus.md) |
+| **MOSS** - 源代码级自演化代理 ⭐ 2026.05 | 2026.05 | arXiv | [📝 笔记](papers/agent/foundational/moss.md) |
 
-### 🔬 深度研究智能体 (43篇)
+### 🔬 深度研究智能体 (52篇)
 
 #### RL 搜索系列
 
@@ -104,6 +108,8 @@
 | **ZeroSearch** - 无需真实搜索的 RL | 2025.05 | arXiv | [📝 笔记](papers/agent/deep_research/zerosearch.md) |
 | **CoSearch** - 推理+排序联合 GRPO | 2026.04 | arXiv | [📝 笔记](papers/agent/deep_research/cosearch.md) |
 | **T²PO** - 不确定性引导探索控制 | 2026.05 | ICML 2026 Spotlight | [📝 笔记](papers/agent/deep_research/t2po.md) |
+| **Rethinking RL-Based DR** - RL 设计空间四因素分析 ⭐ 2026 | 2026.02 | arXiv | [📝 笔记](papers/agent/deep_research/rethinking_rl_dr.md) |
+| **ODR / ODR+** - 开源 DR 评测 + SOTA | 2025 | arXiv | [📝 笔记](papers/agent/deep_research/odr_plus.md) |
 
 #### Web Agent 系列
 
@@ -148,6 +154,8 @@
 | **DeepResearch-9K** - 9K 训练集 | 2026.03 | arXiv | [📝 笔记](papers/agent/deep_research/deepresearch_9k.md) |
 | **LiteResearcher** - 零成本 RL 4B | 2026.04 | arXiv | [📝 笔记](papers/agent/deep_research/lite_researcher.md) |
 | **OpenSearch-VL** - 多模态深搜 | 2026 | arXiv | [📝 笔记](papers/agent/deep_research/opensearch_vl.md) |
+| **SIRA** - 超智能单轮检索代理 ⭐ 2026.05 | 2026.05 | arXiv | [📝 笔记](papers/agent/deep_research/sira.md) |
+| **Pi-Serini** - 词法检索是否足够？⭐ 2026.05 | 2026.05 | arXiv | [📝 笔记](papers/agent/deep_research/pi_serini.md) |
 
 #### 架构与效率
 
@@ -159,6 +167,16 @@
 | **DeerFlow** - ByteDance 研究框架 | 2025 | 开源 (66K+ Stars) | [📝 笔记](papers/agent/deep_research/deerflow.md) |
 | **EvoFSM** - FSM 可控自进化 | 2026.01 | arXiv | [📝 笔记](papers/agent/deep_research/evofsm.md) |
 | **DeepVerifier** - 推理时验证缩放 | 2026.01 | ACL 2026 | [📝 笔记](papers/agent/deep_research/deep_verifier.md) |
+| **Argus** - 证据汇总多代理协同 ⭐ 2026.05 | 2026.05 | arXiv | [📝 笔记](papers/agent/deep_research/argus.md) |
+| **HDRI** - 假设驱动深度研究 ⭐ 2026.05 | 2026.05 | arXiv | [📝 笔记](papers/agent/deep_research/hdri.md) |
+
+#### 评测与领域特化（2026.05 新增）
+
+| 论文 | 年份 | 会议 | 导航 |
+|------|------|------|------|
+| **DeepWeb-Bench** - 跨源证据 + 长程推导基准 ⭐ | 2026.05 | arXiv | [📝 笔记](papers/agent/deep_research/deepweb_bench.md) |
+| **BioMedArena** - 生物医学 DR 工具包 ⭐ | 2026.05 | arXiv | [📝 笔记](papers/agent/deep_research/biomed_arena.md) |
+| **DoGMaTiQ** - 自动报告评估 (Nugget) ⭐ | 2026.05 | arXiv | [📝 笔记](papers/agent/deep_research/dogmatiq.md) |
 
 #### Deep Research 综述
 
@@ -168,6 +186,18 @@
 | 📖 Deep Research Agents Roadmap | 2025 | [📝 笔记](papers/agent/deep_research/deep_research_agents_roadmap.md) |
 | 📖 从搜索到深度研究演进 | 2025 | [📝 笔记](papers/agent/deep_research/web_search_to_deep_research.md) |
 | 📖 Deep Research of Deep Research | 2026.03 | [📝 笔记](papers/agent/deep_research/deep_research_of_deep_research.md) |
+
+### 🎓 后训练与蒸馏 OPD/OPSD (5篇)
+
+> **OPD (On-Policy Distillation) 与 OPSD (On-Policy Self-Distillation)** 是 2026 年最热门的 LLM 后训练技术之一，被 Qwen3、MiMo、GLM-5 等顶级模型采用。本目录提供从原始论文到机制分析到综述的完整体系。
+
+| 论文 | 年份 | 关注点 | 导航 |
+|------|------|--------|------|
+| **OPSD** - Self-Distilled Reasoner (原始论文) | 2026.01 | 单模型双角色自蒸馏 | [📝 笔记](papers/agent/post_training/opsd.md) |
+| **A Survey of OPD** - 综述 | 2026.04 | f-散度统一框架 + 三维分类 | [📝 笔记](papers/agent/post_training/opd_survey.md) |
+| **Rethinking OPD** - 现象/机制/配方 ⭐ | 2026.04 | OPD 成败的两个条件 + 修复配方 | [📝 笔记](papers/agent/post_training/rethinking_opd.md) |
+| **Lightning OPD** - 离线高效 OPD | 2026.04 | 4× 训练加速 + teacher consistency | [📝 笔记](papers/agent/post_training/lightning_opd.md) |
+| **OPSD Brief** - 简明综述 | 2026.05 | 新研究者入门视角 | [📝 笔记](papers/agent/post_training/opsd_brief.md) |
 
 ### 👥 多智能体系统
 
@@ -184,6 +214,7 @@
 |------|------|------|------|
 | **MemGPT / Letta** - 虚拟内存管理 | 2023 | ICLR 2024 Spotlight | [📝 笔记](papers/agent/memory/memgpt.md) |
 | **CoALA** - 认知架构框架 | 2024 | TMLR 2024 | [📝 笔记](papers/agent/memory/coala.md) |
+| **TriMem** - 三粒度记忆架构 ⭐ 2026.05 | 2026.05 | arXiv | [📝 笔记](papers/agent/memory/trimem.md) |
 | 📖 2026 记忆系统综述 | 2026 | arXiv | [📝 笔记](papers/agent/memory/memory_survey_2026.md) |
 
 ### 💻 编码智能体
@@ -217,7 +248,7 @@
 | **Self-RAG** - 自反思检索增强生成 | 2024 | [📝 笔记](papers/agent/agentic_rag/self_rag.md) |
 | 📖 Agentic RAG 综述 | 2025 | [📝 笔记](papers/agent/agentic_rag/agentic_rag_survey.md) |
 
-### 📊 基准测试 (12篇)
+### 📊 基准测试 (13篇)
 
 | 基准 | 年份 | 关注点 | 导航 |
 |------|------|--------|------|
@@ -233,6 +264,7 @@
 | **SAGE** | 2026 | DR 检索基准 | [📝 笔记](papers/agent/benchmark/sage_retrieval.md) |
 | **DeepSearchQA** | 2026 | Google DeepMind 900 提示 | [📝 笔记](papers/agent/benchmark/deepsearchqa.md) |
 | **DRACO** | 2026 | Perplexity 跨领域 | [📝 笔记](papers/agent/benchmark/draco.md) |
+| **LLM Agent Benchmark Audit** - 12 篇基准披露分析 ⭐ 2026.05 | 2026.05 | 元评测：披露分仅 0.38 | [📝 笔记](papers/agent/benchmark/llm_agent_benchmark_audit.md) |
 
 ### 🛡️ 安全
 
@@ -249,6 +281,7 @@
 | 从推理到智能体 | 2025 | [📝 笔记](papers/agent/survey/reasoning_to_agents_2025.md) |
 | RL Agentic Search 综述 | 2025 | [📝 笔记](papers/agent/survey/rl_agentic_search_survey.md) |
 | Deep Search Agents 综述 | ACL 2026 | [📝 笔记](papers/agent/survey/deep_search_agents_survey.md) |
+| **Code as Agent Harness** - 代码作为代理基础设施 ⭐ 2026.05 | 2026.05 | [📝 笔记](papers/agent/survey/code_as_agent_harness.md) |
 | LLM Agent 综述合集 | 2023-2024 | [📝 笔记](papers/llm/llm_agent_surveys.md) |
 
 ---
@@ -304,14 +337,20 @@
 ├── 深度研究方向（重点）：
 │   ├── 文献综合: STORM → OpenScholar → OpenResearcher
 │   ├── RL 搜索: R1-Searcher → Search-R1 → DeepResearcher → PANGU DeepDiver
-│   ├── Web Agent: MindSearch → WebDancer → WebSailor → WebThinker
+│   │            → T²PO → Rethinking RL-Based DR (设计空间分析)
+│   ├── Web Agent: MindSearch → WebDancer → WebSailor → WebThinker → Argus
 │   ├── 科研自动化: AI Scientist → Agent Laboratory → SciResearcher
-│   └── 训练基础设施: DeepResearch-9K → LiteResearcher → AgentIR
+│   ├── 训练基础设施: DeepResearch-9K → LiteResearcher → AgentIR
+│   ├── 检索方法学: SIRA → Pi-Serini (lexical retrieval 复兴)
+│   └── 评测与领域: DeepWeb-Bench → BioMedArena → DoGMaTiQ → HDRI
+
+├── 后训练 OPD/OPSD（2026 新热点）：
+│   OPSD (原始) → OPD Survey → Rethinking OPD (机制) → Lightning OPD (高效)
 
 ├── 多智能体方向：CAMEL → MetaGPT → AutoGen → ChatDev
-├── 记忆方向：Generative Agents → Reflexion → MemGPT → CoALA
-├── 编码智能体：SWE-Agent → CodeAct → Devin → OpenHands
-└── 综合理解：各综述论文 → 2026 全景
+├── 记忆方向：Generative Agents → Reflexion → MemGPT → CoALA → TriMem
+├── 编码智能体：SWE-Agent → CodeAct → Devin → OpenHands → MOSS (自演化)
+└── 综合理解：各综述论文 → Code as Agent Harness → 2026 全景
 ```
 
 ### 搜索与检索
@@ -336,5 +375,5 @@ grep -r "tags:.*deep-research" papers/
 ---
 
 <p align="center">
-  <sub>使用 Claude Code 构建 · 持续更新中 · 最后更新: 2026.05</sub>
+  <sub>使用 Claude Code 构建 · 持续更新中 · 最后更新: 2026.05.25</sub>
 </p>
